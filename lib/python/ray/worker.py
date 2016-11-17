@@ -417,7 +417,7 @@ class Worker(object):
     """
     # Serialize and put the object in the object store.
     schema, size, serialized = numbuf_serialize(value)
-    size = size + 4096 * 4 + 8 # The last 8 bytes are for the metadata offset. This is temporary.
+    size = size + 8 # The last 8 bytes are for the metadata offset. This is temporary.
     buff = self.plasma_client.create(objectid.id(), size, bytearray(schema))
     data = np.frombuffer(buff.buffer, dtype="byte")[8:]
     metadata_offset = numbuf.write_to_buffer(serialized, memoryview(data))
@@ -437,11 +437,10 @@ class Worker(object):
     Args:
       objectid (object_id.ObjectID): The object ID of the value to retrieve.
     """
-    buff = self.plasma_client.get(objectid.id())
-    metadata = self.plasma_client.get_metadata(objectid.id())
+    buff, metadata = self.plasma_client.get(objectid.id())
     metadata_size = len(metadata)
-    data = np.frombuffer(buff.buffer, dtype="byte")[8:]
-    metadata_offset = int(np.frombuffer(buff.buffer, dtype="int64", count=1)[0])
+    data = np.frombuffer(buff, dtype="byte")[8:]
+    metadata_offset = int(np.frombuffer(buff, dtype="int64", count=1)[0])
     serialized = numbuf.read_from_buffer(memoryview(data), bytearray(metadata), metadata_offset)
     # Create an ObjectFixture. If the object we are getting is backed by the
     # PlasmaBuffer, this ObjectFixture will keep the PlasmaBuffer in scope as

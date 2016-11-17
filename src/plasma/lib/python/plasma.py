@@ -109,8 +109,7 @@ class PlasmaClient(object):
     Args:
       object_id (str): A string used to identify an object.
     """
-    buff = libplasma.get(self.conn, object_id)[0]
-    return PlasmaBuffer(buff, object_id, self)
+    return libplasma.get(self.conn, object_id)
 
   def get_metadata(self, object_id):
     """Create a buffer from the PlasmaStore based on object ID.

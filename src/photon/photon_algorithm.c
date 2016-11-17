@@ -153,7 +153,7 @@ void handle_task_submitted(scheduler_info *info,
   };
   /* TODO(swang): This should be task_table_update if the task is already in the
    * log. */
-  task_table_add_task(info->db, task, &retry, NULL, NULL);
+  // task_table_add_task(info->db, task, &retry, NULL, NULL);
   if (schedule_locally) {
     /* If the task was scheduled locally, we need to free it. Otherwise,
      * ownership of the task is passed to the task_queue, and it will be freed

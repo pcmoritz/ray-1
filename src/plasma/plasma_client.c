@@ -261,7 +261,7 @@ void plasma_perform_release(plasma_connection *conn, object_id object_id) {
     CHECK(entry->count >= 0);
     /* If none are being used then unmap the file. */
     if (entry->count == 0) {
-      munmap(entry->pointer, entry->length);
+      // munmap(entry->pointer, entry->length);
       /* Remove the corresponding entry from the hash table. */
       HASH_DELETE(hh, conn->mmap_table, entry);
       free(entry);
@@ -309,9 +309,9 @@ void plasma_contains(plasma_connection *conn,
 void plasma_seal(plasma_connection *conn, object_id object_id) {
   plasma_request req = make_plasma_request(object_id);
   plasma_send_request(conn->store_conn, PLASMA_SEAL, &req);
-  if (conn->manager_conn >= 0) {
-    plasma_send_request(conn->manager_conn, PLASMA_SEAL, &req);
-  }
+  // if (conn->manager_conn >= 0) {
+  //   plasma_send_request(conn->manager_conn, PLASMA_SEAL, &req);
+  // }
 }
 
 void plasma_delete(plasma_connection *conn, object_id object_id) {
