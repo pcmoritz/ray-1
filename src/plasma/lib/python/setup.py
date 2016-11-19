@@ -6,7 +6,7 @@ import subprocess
 class install(_install.install):
   def run(self):
     subprocess.check_call(["make"], cwd="../../")
-    subprocess.check_call(["cmake", ".."], cwd="../../build")
+    subprocess.check_call(["cmake", "-DCMAKE_BUILD_TYPE=Release", ".."], cwd="../../build")
     subprocess.check_call(["make", "install"], cwd="../../build")
     # Calling _install.install.run(self) does not fetch required packages and
     # instead performs an old-style install. See command/install.py in

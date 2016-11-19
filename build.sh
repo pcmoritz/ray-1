@@ -27,15 +27,15 @@ PYTHON_PHOTON_DIR="$PYTHON_DIR/photon"
 
 pushd "$COMMON_DIR"
   make
-  make test
+  # make test
 popd
 cp "$COMMON_DIR/thirdparty/redis-3.2.3/src/redis-server" "$PYTHON_COMMON_DIR/thirdparty/redis-3.2.3/src/"
 
 pushd "$PLASMA_DIR"
   make
-  make test
+  # make test
   pushd "$PLASMA_DIR/build"
-    cmake ..
+    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-g" -DCMAKE_CXX_FLAGS="-g" ..
     make install
   popd
 popd
@@ -47,7 +47,7 @@ cp "$PLASMA_DIR/lib/python/libplasma.so" "$PYTHON_PLASMA_DIR/lib/python/"
 pushd "$PHOTON_DIR"
   make
   pushd "$PHOTON_DIR/build"
-    cmake ..
+    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-g" -DCMAKE_CXX_FLAGS="-g" ..
     make install
   popd
 popd

@@ -21,6 +21,7 @@ import pickling
 import serialization
 import services
 import numbuf
+import numbuf.libplasmabuf
 import photon
 import plasma
 
@@ -416,17 +417,20 @@ class Worker(object):
       value (serializable object): The value to put in the object store.
     """
     # Serialize and put the object in the object store.
-    schema, size, serialized = numbuf_serialize(value)
-    size = size + 8 # The last 8 bytes are for the metadata offset. This is temporary.
-    buff = self.plasma_client.create(objectid.id(), size, bytearray(schema))
-    data = np.frombuffer(buff.buffer, dtype="byte")[8:]
-    metadata_offset = numbuf.write_to_buffer(serialized, memoryview(data))
-    np.frombuffer(buff.buffer, dtype="int64", count=1)[0] = metadata_offset
-    self.plasma_client.seal(objectid.id())
+    ## size = size + 8 # The last 8 bytes are for the metadata offset. This is temporary.
+    ## buff = self.plasma_client.create(objectid.id(), size, bytearray(schema))
+    ## schema, size, serialized = numbuf_serialize(value)
+    # numbuf.libnumbuf.serialize_list([1])
+    numbuf.libplasmabuf.store_list(objectid.id(), self.plasma_client.conn, [value])
+    # buff = self.plasma_client.create(objectid.id(), 1000, bytearray(128*"x"))
+    ## data = np.frombuffer(buff.buffer, dtype="byte")[8:]
+    ## metadata_offset = numbuf.write_to_buffer(serialized, memoryview(data))
+    ## np.frombuffer(buff.buffer, dtype="int64", count=1)[0] = metadata_offset
+    # self.plasma_client.seal(objectid.id())
 
-    global contained_objectids
+    # global contained_objectids
     # Optionally do something with the contained_objectids here.
-    contained_objectids = []
+    # contained_objectids = []
 
   def get_object(self, objectid):
     """Get the value in the local object store associated with objectid.
@@ -437,18 +441,19 @@ class Worker(object):
     Args:
       objectid (object_id.ObjectID): The object ID of the value to retrieve.
     """
-    buff, metadata = self.plasma_client.get(objectid.id())
-    metadata_size = len(metadata)
-    data = np.frombuffer(buff, dtype="byte")[8:]
-    metadata_offset = int(np.frombuffer(buff, dtype="int64", count=1)[0])
-    serialized = numbuf.read_from_buffer(memoryview(data), bytearray(metadata), metadata_offset)
+    deserialized = numbuf.libplasmabuf.retrieve_list(objectid.id(), self.plasma_client.conn)
+    ## buff, metadata = self.plasma_client.get(objectid.id())
+    ## metadata_size = len(metadata)
+    ## data = np.frombuffer(buff, dtype="byte")[8:]
+    ## metadata_offset = int(np.frombuffer(buff, dtype="int64", count=1)[0])
+    ## serialized = numbuf.read_from_buffer(memoryview(data), bytearray(metadata), metadata_offset)
     # Create an ObjectFixture. If the object we are getting is backed by the
     # PlasmaBuffer, this ObjectFixture will keep the PlasmaBuffer in scope as
     # long as the object is in scope.
-    object_fixture = ObjectFixture(buff)
-    deserialized = numbuf.deserialize_list(serialized, object_fixture)
+    ## object_fixture = ObjectFixture(buff)
+    ## deserialized = numbuf.deserialize_list(serialized, object_fixture)
     # Unwrap the object from the list (it was wrapped put_object).
-    assert len(deserialized) == 1
+    ## assert len(deserialized) == 1
     return deserialized[0]
 
   def submit_task(self, function_id, func_name, args):
@@ -1092,7 +1097,11 @@ def main_loop(worker=global_worker):
                                             "message": traceback_str})
       worker.redis_client.rpush("ErrorKeys", error_key)
 
-  while True:
+  import line_profiler
+  profile = line_profiler.LineProfiler(process_task, store_outputs_in_objstore, main_loop)
+  profile.enable()
+  # while True:
+  for i in range(10000):
     task = worker.photon_client.get_task()
     function_id = task.function_id()
     # Check that the number of imports we have is at least as great as the
@@ -1105,6 +1114,7 @@ def main_loop(worker=global_worker):
     # Execute the task.
     with worker.lock:
       process_task(task)
+  profile.dump_stats("/home/pcmoritz/worker_profile")
 
 def _submit_task(function_id, func_name, args, worker=global_worker):
   """This is a wrapper around worker.submit_task.

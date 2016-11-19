@@ -49,7 +49,7 @@ const int GRANULARITY_MULTIPLIER = 2;
 /* Create a buffer. This is creating a temporary file and then
  * immediately unlinking it so we do not leave traces in the system. */
 int create_buffer(int64_t size) {
-  static char template[] = "/tmp/plasmaXXXXXX";
+  static char template[] = "/dev/shm/plasmaXXXXXX";
   char file_name[32];
   strncpy(file_name, template, 32);
   int fd = mkstemp(file_name);

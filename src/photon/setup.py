@@ -6,7 +6,7 @@ import setuptools.command.install as _install
 class install(_install.install):
   def run(self):
     subprocess.check_call(["make"])
-    subprocess.check_call(["cmake", ".."], cwd="build")
+    subprocess.check_call(["cmake", "-DCMAKE_C_FLAGS=\"-g\"", "-DCMAKE_CXX_FLAGS=\"-g\"", "-DCMAKE_BUILD_TYPE=Release", "", ".."], cwd="build")
     subprocess.check_call(["make", "install"], cwd="build")
     # Calling _install.install.run(self) does not fetch required packages and
     # instead performs an old-style install. See command/install.py in
