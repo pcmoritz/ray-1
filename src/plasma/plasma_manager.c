@@ -1421,6 +1421,7 @@ client_connection *new_client_connection(event_loop *loop,
                                          void *context,
                                          int events) {
   int new_socket = accept_client(listener_sock);
+  CHECK(new_socket != 0);
   /* Create a new data connection context per client. */
   client_connection *conn = malloc(sizeof(client_connection));
   conn->manager_state = (plasma_manager_state *) context;
