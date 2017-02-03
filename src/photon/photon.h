@@ -29,6 +29,8 @@ enum photon_message_type {
   EVENT_LOG_MESSAGE,
 };
 
+//THIS WORKER STRUCT AND THE WORKER INDEX STRUCT AND SO ON ARE COMPLETE NONSENSE
+//FIX THIS UP IN THIS PR.
 // clang-format off
 /** Contains all information that is associated to a worker. */
 typedef struct {
@@ -41,6 +43,17 @@ typedef struct {
 /* These are needed to define the UT_arrays. */
 UT_icd task_ptr_icd;
 UT_icd worker_icd;
+
+/** This struct is used to maintain a mapping from actor IDs to the ID of the
+ *  local scheduler that is responsible for the actor. */
+typedef struct {
+  /** The ID of the actor. This is used as a key in the hash table. */
+  actor_id actor_id;
+  /** The ID of the local scheduler that is responsible for the actor. */
+  db_client_id local_scheduler_id;
+  /** Handle fo the hash table. */
+  UT_hash_handle hh;
+} actor_map_entry;
 
 /** Internal state of the scheduling algorithm. */
 typedef struct scheduling_algorithm_state scheduling_algorithm_state;
@@ -65,6 +78,9 @@ typedef struct {
    *  structs when we free the scheduler state and also to access the worker
    *  structs in the tests. */
   UT_array *workers;
+  /** A hash table mapping actor IDs to the db_client_id of the local scheduler
+   *  that is responsible for the actor. */
+  actor_map_entry *actor_mapping;
   /** The handle to the database. */
   db_handle *db;
   /** The Plasma client. */
@@ -84,6 +100,9 @@ typedef struct {
    *  no task is running on the worker, this will be NULL. This is used to
    *  update the task table. */
   task *task_in_progress;
+  /** The ID of the actor on this worker. If there is no actor running on this
+   *  worker, this should be NIL_ID. */
+  actor_id actor_id;
   /** A pointer to the local scheduler state. */
   local_scheduler_state *local_scheduler_state;
 } local_scheduler_client;
