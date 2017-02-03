@@ -263,7 +263,13 @@ PyTypeObject PyObjectIDType = {
 /* Define the PyTask class. */
 
 static int PyTask_init(PyTask *self, PyObject *args, PyObject *kwds) {
+  /* ID of the driver that this task originates from. */
   unique_id driver_id;
+  /* ID of the actor this task should run on. */
+  unique_id actor_id = NIL_ID;
+  /* How many tasks have been launched on the actor so far? */
+  int actor_counter = 0;
+  /* ID of the function this task executes. */
   function_id function_id;
   /* Arguments of the task (can be PyObjectIDs or Python values). */
   PyObject *arguments;
@@ -275,10 +281,10 @@ static int PyTask_init(PyTask *self, PyObject *args, PyObject *kwds) {
   task_id parent_task_id;
   /* The number of tasks that the parent task has called prior to this one. */
   int parent_counter;
-  if (!PyArg_ParseTuple(args, "O&O&OiO&i", &PyObjectToUniqueID, &driver_id,
+  if (!PyArg_ParseTuple(args, "O&O&OiO&i|O&i", &PyObjectToUniqueID, &driver_id,
                         &PyObjectToUniqueID, &function_id, &arguments,
                         &num_returns, &PyObjectToUniqueID, &parent_task_id,
-                        &parent_counter)) {
+                        &parent_counter, &PyObjectToUniqueID, &actor_id, &actor_counter)) {
     return -1;
   }
   Py_ssize_t size = PyList_Size(arguments);
@@ -298,7 +304,8 @@ static int PyTask_init(PyTask *self, PyObject *args, PyObject *kwds) {
   /* Construct the task specification. */
   int val_repr_index = 0;
   self->spec = start_construct_task_spec(driver_id, parent_task_id,
-                                         parent_counter, function_id, size,
+                                         parent_counter, actor_id, actor_counter,
+                                         function_id, size,
                                          num_returns, value_data_bytes);
   /* Add the task arguments. */
   for (Py_ssize_t i = 0; i < size; ++i) {
