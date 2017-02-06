@@ -17,10 +17,12 @@ static int PyPhotonClient_init(PyPhotonClient *self,
                                PyObject *args,
                                PyObject *kwds) {
   char *socket_name;
-  if (!PyArg_ParseTuple(args, "s", &socket_name)) {
+  actor_id actor_id;
+  if (!PyArg_ParseTuple(args, "sO&", &socket_name, PyStringToUniqueID,
+                        &actor_id)) {
     return -1;
   }
-  self->photon_connection = photon_connect(socket_name);
+  self->photon_connection = photon_connect(socket_name, actor_id);
   return 0;
 }
 

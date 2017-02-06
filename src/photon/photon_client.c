@@ -4,9 +4,12 @@
 #include "common/task.h"
 #include <stdlib.h>
 
-photon_conn *photon_connect(const char *photon_socket) {
+photon_conn *photon_connect(const char *photon_socket, actor_id actor_id) {
   photon_conn *result = malloc(sizeof(photon_conn));
   result->conn = connect_ipc_sock(photon_socket);
+  /* Send a message to the local scheduler with this worker's actor ID. */
+  write_message(result->conn, LOCAL_SCHEDULER_CONNECT, sizeof(actor_id),
+                (uint8_t *) &actor_id);
   return result;
 }
 

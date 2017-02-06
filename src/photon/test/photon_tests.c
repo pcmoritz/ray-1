@@ -69,7 +69,7 @@ photon_mock *init_photon_mock(bool connect_to_redis) {
       utstring_body(photon_socket_name), plasma_store_socket_name,
       utstring_body(plasma_manager_socket_name), NULL, false, NULL);
   /* Connect a Photon client. */
-  mock->conn = photon_connect(utstring_body(photon_socket_name));
+  mock->conn = photon_connect(utstring_body(photon_socket_name), NIL_ID);
   new_client_connection(mock->loop, mock->photon_fd,
                         (void *) mock->photon_state, 0);
   utstring_free(plasma_manager_socket_name);

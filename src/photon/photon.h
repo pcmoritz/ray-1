@@ -27,6 +27,9 @@ enum photon_message_type {
   RECONSTRUCT_OBJECT,
   /** Log a message to the event table. */
   EVENT_LOG_MESSAGE,
+  /** Send an initial connection message to the local scheduler. This contains
+   *  the actor ID of the worker. */
+  LOCAL_SCHEDULER_CONNECT,
 };
 
 //THIS WORKER STRUCT AND THE WORKER INDEX STRUCT AND SO ON ARE COMPLETE NONSENSE
