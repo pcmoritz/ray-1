@@ -390,6 +390,7 @@ class Worker(object):
     self.worker_import_counter = 0
     self.fetch_and_register = {}
     self.actors = {}
+    self.actor_counters = collections.defaultdict(lambda: 0)
 
   def set_mode(self, mode):
     """Set the mode of the worker.
@@ -514,10 +515,13 @@ class Worker(object):
                          args_for_photon,
                          self.num_return_vals[function_id.id()],
                          self.current_task_id,
-                         self.task_index, actor_id)
+                         self.task_index,
+                         actor_id,
+                         self.actor_counters[actor_id])
       # Increment the worker's task index to track how many tasks have been
       # submitted by the current task so far.
       self.task_index += 1
+      self.actor_counters[actor_id] += 1
       self.photon_client.submit(task)
 
       return task.returns()
@@ -838,7 +842,7 @@ def _init(address_info=None, start_ray_local=False, object_id_seed=None,
         "manager_socket_name": address_info["object_store_addresses"][0].manager_name,
         "local_scheduler_socket_name": address_info["local_scheduler_socket_names"][0],
         }
-  connect(driver_address_info, object_id_seed=object_id_seed, mode=driver_mode, worker=global_worker)
+  connect(driver_address_info, object_id_seed=object_id_seed, mode=driver_mode, worker=global_worker, actor_id=20*b"\xff")
   return address_info
 
 def init(redis_address=None, node_ip_address=None, object_id_seed=None,
@@ -1083,7 +1087,9 @@ def import_thread(worker):
         worker.redis_client.hincrby(worker_info_key, "export_counter", 1)
         worker.worker_import_counter += 1
 
-def connect(info, object_id_seed=None, mode=WORKER_MODE, worker=global_worker, actor_id=None):
+
+
+def connect(info, object_id_seed=None, mode=WORKER_MODE, worker=global_worker, actor_id=20*b"\xff"):
   """Connect this worker to the local scheduler, to Plasma, and to Redis.
 
   Args:
@@ -1122,7 +1128,7 @@ def connect(info, object_id_seed=None, mode=WORKER_MODE, worker=global_worker, a
   # Create an object store client.
   worker.plasma_client = plasma.PlasmaClient(info["store_socket_name"], info["manager_socket_name"])
   # Create the local scheduler client.
-  worker.photon_client = photon.PhotonClient(info["local_scheduler_socket_name"])
+  worker.photon_client = photon.PhotonClient(info["local_scheduler_socket_name"], worker.actor_id)
   # Register the worker with Redis.
   if mode in [SCRIPT_MODE, SILENT_MODE]:
     worker.redis_client.hmset(b"Drivers:" + worker.worker_id, {"node_ip_address": worker.node_ip_address})
@@ -1549,8 +1555,9 @@ def main_loop(worker=global_worker):
     # Check that the number of imports we have is at least as great as the
     # export counter for the task. If not, wait until we have imported enough.
     # We will push warnings to the user if we spend too long in this loop.
-    with log_span("ray:wait_for_import_counter", worker=worker):
-      wait_for_valid_import_counter(function_id, task.driver_id().id(), worker=worker)
+    # TODO(pcm): XXX
+    # with log_span("ray:wait_for_import_counter", worker=worker):
+    #   wait_for_valid_import_counter(function_id, task.driver_id().id(), worker=worker)
 
     # Execute the task.
     # TODO(rkn): Consider acquiring this lock with a timeout and pushing a
