@@ -399,13 +399,15 @@ void redis_result_table_add(TableCallbackData *callback_data) {
   ResultTableAddInfo *info = (ResultTableAddInfo *) callback_data->data;
   int is_put = info->is_put ? 1 : 0;
 
+  redisAsyncContext *context = get_redis_context(db, id);
+
   /* Add the result entry to the result table. */
   int status = redisAsyncCommand(
-      db->context, redis_result_table_add_callback,
+      context, redis_result_table_add_callback,
       (void *) callback_data->timer_id, "RAY.RESULT_TABLE_ADD %b %b %d", id.id,
       sizeof(id.id), info->task_id.id, sizeof(info->task_id.id), is_put);
-  if ((status == REDIS_ERR) || db->context->err) {
-    LOG_REDIS_DEBUG(db->context, "Error in result table add");
+  if ((status == REDIS_ERR) || context->err) {
+    LOG_REDIS_DEBUG(context, "Error in result table add");
   }
 }
 
@@ -464,11 +466,13 @@ void redis_result_table_lookup(TableCallbackData *callback_data) {
   CHECK(callback_data);
   DBHandle *db = callback_data->db_handle;
   ObjectID id = callback_data->id;
+
+  redisAsyncContext *context = get_redis_context(db, id);
   int status =
-      redisAsyncCommand(db->context, redis_result_table_lookup_callback,
+      redisAsyncCommand(context, redis_result_table_lookup_callback,
                         (void *) callback_data->timer_id,
                         "RAY.RESULT_TABLE_LOOKUP %b", id.id, sizeof(id.id));
-  if ((status == REDIS_ERR) || db->context->err) {
+  if ((status == REDIS_ERR) || context->err) {
     LOG_REDIS_DEBUG(db->context, "Error in result table lookup");
   }
 }
