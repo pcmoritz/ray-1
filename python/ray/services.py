@@ -10,6 +10,7 @@ import random
 import redis
 import signal
 import socket
+import string
 import subprocess
 import sys
 import time
@@ -704,6 +705,7 @@ def start_ray_processes(address_info=None,
                         node_ip_address="127.0.0.1",
                         num_workers=0,
                         num_local_schedulers=1,
+                        redis_shards=None,
                         num_redis_shards=2,
                         worker_path=None,
                         cleanup=True,
@@ -798,8 +800,10 @@ def start_ray_processes(address_info=None,
                                     cleanup=cleanup)
         redis_shards.append(address(node_ip_address, redis_port))
       redis_shards = address_info["redis_shards"] = "[" + ",".join(redis_shards) + "]"
+      # Expected format: "[IP1:PORT1,IP2:PORT2]"
       time.sleep(0.1)
     else:
+      redis_shards = redis_shards
       # A Redis address was provided, so start a Redis server with the given
       # port. TODO(rkn): We should check that the IP address corresponds to the
       # machine that this method is running on.
@@ -818,6 +822,7 @@ def start_ray_processes(address_info=None,
                   stdout_file=monitor_stdout_file,
                   stderr_file=monitor_stderr_file)
   else:
+    redis_shards = redis_shards
     if redis_address is None:
       raise Exception("Redis address expected")
 
@@ -965,6 +970,7 @@ def start_ray_processes(address_info=None,
 
 def start_ray_node(node_ip_address,
                    redis_address,
+                   redis_shards=None,
                    object_manager_ports=None,
                    num_workers=0,
                    num_local_schedulers=1,
@@ -1004,6 +1010,7 @@ def start_ray_node(node_ip_address,
   return start_ray_processes(address_info=address_info,
                              node_ip_address=node_ip_address,
                              num_workers=num_workers,
+                             redis_shards=redis_shards,
                              num_local_schedulers=num_local_schedulers,
                              worker_path=worker_path,
                              include_log_monitor=True,
@@ -1014,6 +1021,7 @@ def start_ray_node(node_ip_address,
 
 
 def start_ray_head(address_info=None,
+                   num_redis_shards=2,
                    node_ip_address="127.0.0.1",
                    num_workers=0,
                    num_local_schedulers=1,
@@ -1058,6 +1066,7 @@ def start_ray_head(address_info=None,
       node_ip_address=node_ip_address,
       num_workers=num_workers,
       num_local_schedulers=num_local_schedulers,
+      num_redis_shards=num_redis_shards,
       worker_path=worker_path,
       cleanup=cleanup,
       redirect_output=redirect_output,

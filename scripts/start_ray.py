@@ -13,6 +13,10 @@ parser.add_argument("--node-ip-address", required=False, type=str,
                     help="the IP address of the worker's node")
 parser.add_argument("--redis-address", required=False, type=str,
                     help="the address to use for connecting to Redis")
+parser.add_argument("--redis-shards", required=False, type=str,
+                    help="Enumerated list of Redis shard ip:port pairs.")
+parser.add_argument("--num-redis-shards", default=2, required=False, type=int,
+                    help="the number of Redis shards to start on this node")
 parser.add_argument("--redis-port", required=False, type=str,
                     help="the port to use for starting Redis")
 parser.add_argument("--object-manager-port", required=False, type=int,
@@ -87,15 +91,17 @@ if __name__ == "__main__":
 
     address_info = services.start_ray_head(address_info=address_info,
                                            node_ip_address=node_ip_address,
+                                           num_redis_shards=args.num_redis_shards,
                                            num_workers=args.num_workers,
                                            cleanup=False,
                                            redirect_output=True,
                                            num_cpus=args.num_cpus,
                                            num_gpus=args.num_gpus)
     print(address_info)
-    print("\nStarted Ray with {} workers on this node. A different number of "
+    print("\nStarted Ray with {} workers and {} Redis shards on this node. Number of "
           "workers can be set with the --num-workers flag (but you have to "
-          "first terminate the existing cluster). You can add additional "
+          "first terminate the existing cluster). Number of Redis shards can be set with "
+          "--num-redis-shards if you are starting a head node. You can add additional "
           "nodes to the cluster by calling\n\n"
           "    ./scripts/start_ray.sh --redis-address {}\n\n"
           "from the node you wish to add. You can connect a driver to the "
@@ -106,6 +112,7 @@ if __name__ == "__main__":
           "that your firewall is configured properly. If you wish to "
           "terminate the processes that have been started, run\n\n"
           "    ./scripts/stop_ray.sh".format(args.num_workers,
+                                             args.num_redis_shards,
                                              address_info["redis_address"],
                                              address_info["redis_address"]))
   else:
@@ -117,6 +124,9 @@ if __name__ == "__main__":
       raise Exception("If --head is not passed in, --redis-address must be "
                       "provided.")
     redis_ip_address, redis_port = args.redis_address.split(":")
+    if args.redis_shards is None:
+      raise Exception("If --head is not passed in, --redis-shards must be "
+                "provided.")
     # Wait for the Redis server to be started. And throw an exception if we
     # can't connect to it.
     services.wait_for_redis_to_start(redis_ip_address, int(redis_port))
@@ -133,6 +143,7 @@ if __name__ == "__main__":
     address_info = services.start_ray_node(
         node_ip_address=node_ip_address,
         redis_address=args.redis_address,
+        redis_shards=args.redis_shards,
         object_manager_ports=[args.object_manager_port],
         num_workers=args.num_workers,
         cleanup=False,
