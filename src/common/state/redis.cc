@@ -207,7 +207,7 @@ DBHandle *db_connect(const std::vector<std::string>& db_addresses,
   db->db_client_cache = NULL;
 
   DCHECK(db_addresses.size() == db_ports.size());
-  for (int i = 0; i < db_addresses.size(); ++i) {
+  for (int i = 1; i < db_addresses.size(); ++i) {
     redisAsyncContext *context;
     redisAsyncContext *subscription_context;
     redisContext *sync_context;
@@ -215,12 +215,14 @@ DBHandle *db_connect(const std::vector<std::string>& db_addresses,
     db->contexts.push_back(context);
     db->subscription_contexts.push_back(subscription_context);
     db->sync_contexts.push_back(sync_context);
-    if (i == 0) {
-      db->context = context;
-      db->sub_context = subscription_context;
-      db->sync_context = sync_context;
-    }
   }
+  redisAsyncContext *context;
+  redisAsyncContext *subscription_context;
+  redisContext *sync_context;
+  db_connect_shard(db_addresses[0], db_ports[0], client, client_type, node_ip_address, num_args, args, db, &context, &subscription_context, &sync_context);
+  db->context = context;
+  db->sub_context = subscription_context;
+  db->sync_context = sync_context;
 
   return db;
 }
