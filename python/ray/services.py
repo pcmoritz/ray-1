@@ -48,6 +48,7 @@ all_processes = OrderedDict([(PROCESS_TYPE_MONITOR, []),
 
 # True if processes are run in the valgrind profiler.
 RUN_LOCAL_SCHEDULER_PROFILER = False
+RUN_GLOBAL_SCHEDULER_PROFILER = False
 RUN_PLASMA_MANAGER_PROFILER = False
 RUN_PLASMA_STORE_PROFILER = False
 
@@ -370,6 +371,7 @@ def start_global_scheduler(redis_address, redis_shards, node_ip_address, stdout_
   """
   p = global_scheduler.start_global_scheduler(redis_address,
                                               redis_shards,
+                                              use_profiler=RUN_GLOBAL_SCHEDULER_PROFILER,
                                               stdout_file=stdout_file,
                                               stderr_file=stderr_file)
   if cleanup:
