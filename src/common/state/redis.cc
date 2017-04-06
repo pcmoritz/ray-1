@@ -256,6 +256,20 @@ void db_attach(DBHandle *db, event_loop *loop, bool reattach) {
       CHECKM(err == REDIS_OK, "failed to attach the event loop");
     }
   }
+  {
+    int err = redisAeAttach(loop, db->context);
+    /* If the database is reattached in the tests, redis normally gives
+     * an error which we can safely ignore. */
+    if (!reattach) {
+      CHECKM(err == REDIS_OK, "failed to attach main context to "
+          "the event loop");
+    }
+    err = redisAeAttach(loop, db->sub_context);
+    if (!reattach) {
+      CHECKM(err == REDIS_OK, "failed to attach main subscription context to "
+          "the event loop");
+    }
+  }
 }
 
 /*
