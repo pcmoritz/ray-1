@@ -419,10 +419,19 @@ void redis_result_table_add(TableCallbackData *callback_data) {
   redisAsyncContext *context = get_redis_context(db, id);
 
   /* Add the result entry to the result table. */
-  int status = redisAsyncCommand(
+
+  // the redis protocol, see https://redis.io/topics/protocol
+  utstring_printf(db->command, "*4\r\n"); // number of entris in the array
+  utstring_printf(db->command, "$20\r\nRAY.RESULT_TABLE_ADD\r\n$%d\r\n", sizeof(id.id));
+  utstring_bincpy(db->command, id.id, sizeof(id.id));
+  utstring_printf(db->command, "\r\n$%d\r\n", sizeof(info->task_id.id));
+  utstring_bincpy(db->command, info->task_id.id, sizeof(info->task_id.id));
+  utstring_printf(db->command, "\r\n$1\r\n%d\r\n", is_put);
+  int status = redisAsyncFormattedCommand(
       context, redis_result_table_add_callback,
-      (void *) callback_data->timer_id, "RAY.RESULT_TABLE_ADD %b %b %d", id.id,
-      sizeof(id.id), info->task_id.id, sizeof(info->task_id.id), is_put);
+      (void *) callback_data->timer_id,
+      utstring_body(db->command), utstring_len(db->command));
+  utstring_clear(db->command);
   if ((status == REDIS_ERR) || context->err) {
     LOG_REDIS_DEBUG(context, "Error in result table add");
   }
