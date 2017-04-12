@@ -835,11 +835,17 @@ void redis_task_table_update(TableCallbackData *callback_data) {
   int state = Task_state(task);
 
   CHECKM(task != NULL, "NULL task passed to redis_task_table_update.");
-  int status = redisAsyncCommand(
+  
+  UT_string *command;
+  utstring_new(command);
+  utstring_printf(command, "RAY.TASK_TABLE_UPDATE ");
+  utstring_bincpy(command, task_id.id, sizeof(task_id.id));
+  utstring_printf(command, " %d ", state);
+  utstring_bincpy(command, local_scheduler_id.id, sizeof(local_scheduler_id.id));
+  int status = redisAsyncFormattedCommand(
       context, redis_task_table_update_callback,
-      (void *) callback_data->timer_id, "RAY.TASK_TABLE_UPDATE %b %d %b",
-      task_id.id, sizeof(task_id.id), state, local_scheduler_id.id,
-      sizeof(local_scheduler_id.id));
+      (void *) callback_data->timer_id, utstring_body(command), utstring_len(command));
+  utstring_free(command);
   if ((status == REDIS_ERR) || context->err) {
     LOG_REDIS_DEBUG(context, "error in redis_task_table_update");
   }
