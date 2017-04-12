@@ -205,6 +205,7 @@ DBHandle *db_connect(const std::vector<std::string>& db_addresses,
   db->client_type = strdup(client_type);
   db->client = client;
   db->db_client_cache = NULL;
+  utstring_new(db->command);
 
   DCHECK(db_addresses.size() == db_ports.size());
   for (int i = 1; i < db_addresses.size(); ++i) {
@@ -798,21 +799,19 @@ void redis_task_table_add_task(TableCallbackData *callback_data) {
   CHECKM(task != NULL, "NULL task passed to redis_task_table_add_task.");
 
   // the redis protocol, see https://redis.io/topics/protocol
-  UT_string *command;
-  utstring_new(command);
-    utstring_printf(command, "*5\r\n"); // number of entris in the array
-  utstring_printf(command, "$18\r\nRAY.TASK_TABLE_ADD\r\n$%d\r\n", sizeof(task_id.id));
-  utstring_bincpy(command, task_id.id, sizeof(task_id.id));
-  utstring_printf(command, "\r\n$1\r\n%d\r\n$%d\r\n", state, sizeof(local_scheduler_id.id));
-  utstring_bincpy(command, local_scheduler_id.id, sizeof(local_scheduler_id.id));
-  utstring_printf(command, "\r\n$%d\r\n", Task_task_spec_size(task));
-  utstring_bincpy(command, spec, Task_task_spec_size(task));
-  utstring_printf(command, "\r\n");
+  utstring_printf(db->command, "*5\r\n"); // number of entris in the array
+  utstring_printf(db->command, "$18\r\nRAY.TASK_TABLE_ADD\r\n$%d\r\n", sizeof(task_id.id));
+  utstring_bincpy(db->command, task_id.id, sizeof(task_id.id));
+  utstring_printf(db->command, "\r\n$1\r\n%d\r\n$%d\r\n", state, sizeof(local_scheduler_id.id));
+  utstring_bincpy(db->command, local_scheduler_id.id, sizeof(local_scheduler_id.id));
+  utstring_printf(db->command, "\r\n$%d\r\n", Task_task_spec_size(task));
+  utstring_bincpy(db->command, spec, Task_task_spec_size(task));
+  utstring_printf(db->command, "\r\n");
   int status = redisAsyncFormattedCommand(
       context, redis_task_table_add_task_callback,
       (void *) callback_data->timer_id,
-      utstring_body(command), utstring_len(command));
-  utstring_free(command);
+      utstring_body(db->command), utstring_len(db->command));
+  utstring_clear(db->command);
   if ((status == REDIS_ERR) || context->err) {
     LOG_REDIS_DEBUG(context, "error in redis_task_table_add_task");
   }
