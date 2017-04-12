@@ -47,7 +47,7 @@ all_processes = OrderedDict([(PROCESS_TYPE_MONITOR, []),
                              (PROCESS_TYPE_WEB_UI, [])],)
 
 # True if processes are run in the valgrind profiler.
-RUN_LOCAL_SCHEDULER_PROFILER = True
+RUN_LOCAL_SCHEDULER_PROFILER = False
 RUN_GLOBAL_SCHEDULER_PROFILER = False
 RUN_PLASMA_MANAGER_PROFILER = False
 RUN_PLASMA_STORE_PROFILER = False
