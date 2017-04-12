@@ -796,11 +796,20 @@ void redis_task_table_add_task(TableCallbackData *callback_data) {
   TaskSpec *spec = Task_task_spec(task);
 
   CHECKM(task != NULL, "NULL task passed to redis_task_table_add_task.");
-  int status = redisAsyncCommand(
+  
+  UT_string *command;
+  utstring_new(command);
+  utstring_printf(command, "RAY.TASK_TABLE_ADD ");
+  utstring_bincpy(command, task_id.id, sizeof(task_id.id));
+  utstring_printf(command, " %d ", state);
+  utstring_bincpy(command, local_scheduler_id.id, sizeof(local_scheduler_id.id));
+  utstring_printf(command, " ");
+  utstring_bincpy(command, spec, Task_task_spec_size(task));
+  int status = redisAsyncFormattedCommand(
       context, redis_task_table_add_task_callback,
-      (void *) callback_data->timer_id, "RAY.TASK_TABLE_ADD %b %d %b %b",
-      task_id.id, sizeof(task_id.id), state, local_scheduler_id.id,
-      sizeof(local_scheduler_id.id), spec, Task_task_spec_size(task));
+      (void *) callback_data->timer_id,
+      utstring_body(command), utstring_len(command));
+  utstring_free(command);
   if ((status == REDIS_ERR) || context->err) {
     LOG_REDIS_DEBUG(context, "error in redis_task_table_add_task");
   }
