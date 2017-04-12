@@ -207,6 +207,29 @@ DBHandle *db_connect(const std::vector<std::string>& db_addresses,
   db->db_client_cache = NULL;
   utstring_new(db->command);
 
+  // the redis protocol, see https://redis.io/topics/protocol
+  std::string result_table_header = "*4\r\n$20\r\nRAY.RESULT_TABLE_ADD\r\n$20\r\n";
+  std::copy(result_table_header.begin(), result_table_header.end(), std::back_inserter(db->result_table_buffer));
+  db->result_table_first_index = db->result_table_buffer.size();
+  // Placeholder for object ID.
+  for (int i = 0; i < 20; ++i) {
+    db->result_table_buffer.push_back('\0');
+  }
+  db->result_table_second_index = db->result_table_buffer.size();
+  std::string result_table_mid = "\r\n$20\r\n";
+  std::copy(result_table_mid.begin(), result_table_mid.end(), std::back_inserter(db->result_table_buffer));
+  db->result_table_second_index = db->result_table_buffer.size();
+  // Placeholder for task ID.
+  for (int i = 0; i < 20; ++i) {
+    db->result_table_buffer.push_back('\0');
+  }
+  std::string result_table_end = "\r\n$1\r\n";
+  std::copy(result_table_end.begin(), result_table_end.end(), std::back_inserter(db->result_table_buffer));
+  db->result_table_third_index = db->result_table_buffer.size();
+  db->result_table_buffer.push_back('\0');
+  std::string result_table_footer = "\r\n";
+  std::copy(result_table_footer.begin(), result_table_footer.end(), std::back_inserter(db->result_table_buffer));
+
   DCHECK(db_addresses.size() == db_ports.size());
   for (int i = 1; i < db_addresses.size(); ++i) {
     redisAsyncContext *context;
@@ -420,18 +443,18 @@ void redis_result_table_add(TableCallbackData *callback_data) {
 
   /* Add the result entry to the result table. */
 
-  // the redis protocol, see https://redis.io/topics/protocol
-  utstring_printf(db->command, "*4\r\n"); // number of entris in the array
-  utstring_printf(db->command, "$20\r\nRAY.RESULT_TABLE_ADD\r\n$%d\r\n", sizeof(id.id));
-  utstring_bincpy(db->command, id.id, sizeof(id.id));
-  utstring_printf(db->command, "\r\n$%d\r\n", sizeof(info->task_id.id));
-  utstring_bincpy(db->command, info->task_id.id, sizeof(info->task_id.id));
-  utstring_printf(db->command, "\r\n$1\r\n%d\r\n", is_put);
+  for (int i = 0; i < 20; ++i) {
+    db->result_table_buffer[db->result_table_first_index + i] = id.id[i];
+  }
+  for (int i = 0; i < 20; ++i) {
+    db->result_table_buffer[db->result_table_second_index + i] = info->task_id.id[i];
+  }
+  db->result_table_buffer[db->result_table_third_index] = '0' + is_put;
+
   int status = redisAsyncFormattedCommand(
       context, redis_result_table_add_callback,
       (void *) callback_data->timer_id,
-      utstring_body(db->command), utstring_len(db->command));
-  utstring_clear(db->command);
+      db->result_table_buffer.data(), db->result_table_buffer.size());
   if ((status == REDIS_ERR) || context->err) {
     LOG_REDIS_DEBUG(context, "Error in result table add");
   }
