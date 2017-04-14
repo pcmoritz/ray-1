@@ -12,6 +12,18 @@ from reinforce.policy import ProximalPolicyLoss
 from reinforce.filter import MeanStdFilter
 from reinforce.rollout import rollouts, add_advantage_values
 
+num_gpus = 1
+
+def make_loss(scope)
+
+def train():
+  tower_grads = []
+  with tf.variable_scope(tf.get_variable_scope()):
+    with tf.device('/gpu:%d' % i):
+      with tf.name_scope('%s_%d' % ("pi", i)) as scope:
+        
+      
+
 class Agent(object):
 
   def __init__(self, name, batchsize, preprocessor, config, use_gpu):

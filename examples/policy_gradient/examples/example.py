@@ -10,6 +10,8 @@ from reinforce.agent import Agent, RemoteAgent
 from reinforce.rollout import collect_samples
 from reinforce.utils import iterate, shuffle
 
+import tensorflow as tf
+
 config = {"kl_coeff": 0.2,
           "num_sgd_iter": 30,
           "sgd_stepsize": 5e-5,
@@ -66,6 +68,7 @@ if __name__ == "__main__":
     print(("{:>15}" * len(names)).format(*names))
     trajectory = shuffle(trajectory)
     ppo = agent.ppo
+    run_metadata = tf.RunMetadata()
     for i in range(config["num_sgd_iter"]):
       # Test on current set of rollouts
       loss, kl, entropy = agent.sess.run([ppo.loss, ppo.mean_kl, ppo.mean_entropy],
@@ -82,7 +85,13 @@ if __name__ == "__main__":
                                   ppo.advantages: batch["advantages"],
                                   ppo.actions: batch["actions"].squeeze(),
                                   ppo.prev_logits: batch["logprobs"],
-                                  ppo.kl_coeff: kl_coeff})
+                                  ppo.kl_coeff: kl_coeff},
+                       options=tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE),
+                       run_metadata=run_metadata)
+    from tensorflow.python.client import timeline
+    trace = timeline.Timeline(step_stats=run_metadata.step_stats)
+    trace_file = open('timeline.ctf.json', 'w')
+    trace_file.write(trace.generate_chrome_trace_format())
     if kl > 2.0 * config["kl_target"]:
       kl_coeff *= 1.5
     elif kl < 0.5 * config["kl_target"]:
