@@ -90,7 +90,7 @@ def fetch_and_register_actor(key, worker):
                                 data={"actor_id": actor_id.id()})
   else:
     # TODO(pcm): Why is the below line necessary?
-    unpickled_class.__init__module__ = module
+    unpickled_class.__module__ = module
     worker.actors[actor_id_str] = unpickled_class.__new__(unpickled_class)
     for (k, v) in inspect.getmembers(
         unpickled_class, predicate=(lambda x: (inspect.isfunction(x) or
