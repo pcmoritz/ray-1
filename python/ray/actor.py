@@ -51,17 +51,18 @@ def get_actor_method_function_id(attr):
 
 def fetch_and_register_actor(key, worker):
   """Import an actor."""
-  (driver_id, actor_id_str, actor_name,
+  (driver_id, class_id_str, actor_name,
    module, pickled_class, assigned_gpu_ids,
    actor_method_names) = worker.redis_client.hmget(
-       key, ["driver_id", "actor_id", "name", "module", "class", "gpu_ids",
+       key, ["driver_id", "class_id", "name", "module", "class", "gpu_ids",
              "actor_method_names"])
-  actor_id = ray.local_scheduler.ObjectID(actor_id_str)
+  actor_id_str = worker.actor_id
   actor_name = actor_name.decode("ascii")
   module = module.decode("ascii")
   actor_method_names = json.loads(actor_method_names.decode("ascii"))
   global gpu_ids
-  gpu_ids = json.loads(assigned_gpu_ids.decode("ascii"))
+  # gpu_ids = json.loads(assigned_gpu_ids.decode("ascii"))
+  gpu_ids = [0]
 
   # Create a temporary actor with some temporary methods so that if the actor
   # fails to be unpickled, the temporary actor can be used (just to produce
@@ -89,7 +90,7 @@ def fetch_and_register_actor(key, worker):
                                 data={"actor_id": actor_id.id()})
   else:
     # TODO(pcm): Why is the below line necessary?
-    unpickled_class.__module__ = module
+    unpickled_class.__init__module__ = module
     worker.actors[actor_id_str] = unpickled_class.__new__(unpickled_class)
     for (k, v) in inspect.getmembers(
         unpickled_class, predicate=(lambda x: (inspect.isfunction(x) or
@@ -99,6 +100,7 @@ def fetch_and_register_actor(key, worker):
       # We do not set worker.function_properties[driver_id][function_id]
       # because we currently do need the actor worker to submit new tasks for
       # the actor.
+
 
 
 def attempt_to_reserve_gpus(num_gpus, driver_id, local_scheduler, worker):
@@ -211,9 +213,22 @@ def select_local_scheduler(local_schedulers, num_gpus, worker):
                       .format(local_schedulers))
   return local_scheduler_id, gpus_aquired
 
+def export_class(class_id, actor_method_names, Class, worker):
+  ray.worker.check_main_thread()
+  if worker.mode is None:
+    raise NotImplemented("TODO(pcm): Cache actors")
+  key = "Class:{}".format(class_id.id())
 
-def export_actor(actor_id, Class, actor_method_names, num_cpus, num_gpus,
-                 worker):
+  d = {"driver_id": worker.task_driver_id.id(),
+       "class_id": class_id.id(),
+       "name": Class.__name__,
+       "module": Class.__module__,
+       "class": pickling.dumps(Class),
+       "actor_method_names": json.dumps(list(actor_method_names))}
+  worker.redis_client.hmset(key, d)
+  worker.redis_client.rpush("Exports", key)
+
+def export_actor(class_id, actor_id, actor_method_names, num_cpus, num_gpus, worker):
   """Export an actor to redis.
 
   Args:
@@ -226,8 +241,6 @@ def export_actor(actor_id, Class, actor_method_names, num_cpus, num_gpus,
   ray.worker.check_main_thread()
   if worker.mode is None:
     raise NotImplemented("TODO(pcm): Cache actors")
-  key = "Actor:{}".format(actor_id.id())
-  pickled_class = pickling.dumps(Class)
 
   # For now, all actor methods have 1 return value.
   driver_id = worker.task_driver_id.id()
@@ -252,17 +265,7 @@ def export_actor(actor_id, Class, actor_method_names, num_cpus, num_gpus,
   # builder.CreateString fails on byte strings that contain characters outside
   # range(128).
   worker.redis_client.publish("actor_notifications",
-                              actor_id.id() + driver_id + local_scheduler_id)
-
-  d = {"driver_id": driver_id,
-       "actor_id": actor_id.id(),
-       "name": Class.__name__,
-       "module": Class.__module__,
-       "class": pickled_class,
-       "gpu_ids": json.dumps(gpu_ids),
-       "actor_method_names": json.dumps(list(actor_method_names))}
-  worker.redis_client.hmset(key, d)
-  worker.redis_client.rpush("Exports", key)
+                              class_id.id() + actor_id.id() + driver_id + local_scheduler_id)
 
 
 def actor(*args, **kwargs):
@@ -287,6 +290,9 @@ def actor(*args, **kwargs):
           return object_ids
 
       class NewClass(object):
+        class_id = random_actor_id()
+        class_registered = False
+
         def __init__(self, *args, **kwargs):
           self._ray_actor_id = random_actor_id()
           self._ray_actor_methods = {
@@ -306,7 +312,11 @@ def actor(*args, **kwargs):
             self._ray_method_signatures[k] = signature.extract_signature(
                 v, ignore_first=True)
 
-          export_actor(self._ray_actor_id, Class,
+          if not NewClass.class_registered:
+            export_class(NewClass.class_id, self._ray_actor_methods.keys(), Class, ray.worker.global_worker)
+            NewClass.class_registered = True
+
+          export_actor(NewClass.class_id, self._ray_actor_id,
                        self._ray_actor_methods.keys(), num_cpus, num_gpus,
                        ray.worker.global_worker)
           # Call __init__ as a remote function.
@@ -360,4 +370,4 @@ def actor(*args, **kwargs):
                   "'ray.actor(num_gpus=1)'.")
 
 
-ray.worker.global_worker.fetch_and_register["Actor"] = fetch_and_register_actor
+ray.worker.global_worker.fetch_and_register["Class"] = fetch_and_register_actor

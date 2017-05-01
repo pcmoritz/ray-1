@@ -570,7 +570,7 @@ void dispatch_tasks(LocalSchedulerState *state,
       if (state->child_pids.size() == 0) {
         /* If there are no workers, including those pending PID registration,
          * then we must start a new one to replenish the worker pool. */
-        start_worker(state, NIL_ACTOR_ID);
+        start_worker(state, NIL_ACTOR_ID, NIL_ACTOR_ID);
       }
       return;
     }

@@ -24,6 +24,8 @@ parser.add_argument("--local-scheduler-name", required=True, type=str,
                     help="the local scheduler's name")
 parser.add_argument("--actor-id", required=False, type=str,
                     help="the actor ID of this worker")
+parser.add_argument("--class-id", required=False, type=str,
+                    help="the class ID that corresponds to this actor ID")
 
 
 def random_string():
@@ -40,10 +42,15 @@ if __name__ == "__main__":
 
   if args.actor_id is not None:
     actor_id = binascii.unhexlify(args.actor_id)
+    if args.class_id is not None:
+      class_id = binascii.unhexlify(args.class_id)
+    else:
+      class_id = ray.worker.NIL_ACTOR_ID
   else:
     actor_id = ray.worker.NIL_ACTOR_ID
+    class_id = ray.worker.NIL_ACTOR_ID
 
-  ray.worker.connect(info, mode=ray.WORKER_MODE, actor_id=actor_id)
+  ray.worker.connect(info, mode=ray.WORKER_MODE, actor_id=actor_id, class_id=class_id)
 
   error_explanation = """
 This error is unexpected and should not have happened. Somehow a worker crashed

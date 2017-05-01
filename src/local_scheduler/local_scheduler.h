@@ -106,7 +106,7 @@ void kill_worker(LocalSchedulerState *state,
  *        actor, then NIL_ACTOR_ID should be used.
  * @param Void.
  */
-void start_worker(LocalSchedulerState *state, ActorID actor_id);
+void start_worker(LocalSchedulerState *state, ActorID class_id, ActorID actor_id);
 
 /**
  * Check if a certain quantity of dynamic resources are available. If num_cpus

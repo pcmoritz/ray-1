@@ -214,7 +214,7 @@ void LocalSchedulerState_free(LocalSchedulerState *state) {
  * @param state The state of the local scheduler.
  * @return Void.
  */
-void start_worker(LocalSchedulerState *state, ActorID actor_id) {
+void start_worker(LocalSchedulerState *state, ActorID class_id, ActorID actor_id) {
   /* We can't start a worker if we don't have the path to the worker script. */
   if (state->config.start_worker_command == NULL) {
     LOG_WARN("No valid command to start worker provided. Cannot start worker.");
@@ -228,20 +228,24 @@ void start_worker(LocalSchedulerState *state, ActorID actor_id) {
     return;
   }
 
-  char id_string[ID_STRING_SIZE];
-  ObjectID_to_string(actor_id, id_string, ID_STRING_SIZE);
+  char actor_id_string[ID_STRING_SIZE];
+  ObjectID_to_string(actor_id, actor_id_string, ID_STRING_SIZE);
+  char class_id_string[ID_STRING_SIZE];
+  ObjectID_to_string(class_id, class_id_string, ID_STRING_SIZE);
   /* Figure out how many arguments there are in the start_worker_command. */
   int num_args = 0;
   for (; state->config.start_worker_command[num_args] != NULL; ++num_args) {
   }
   const char **start_actor_worker_command =
-      (const char **) malloc((num_args + 3) * sizeof(const char *));
+      (const char **) malloc((num_args + 5) * sizeof(const char *));
   for (int i = 0; i < num_args; ++i) {
     start_actor_worker_command[i] = state->config.start_worker_command[i];
   }
   start_actor_worker_command[num_args] = "--actor-id";
-  start_actor_worker_command[num_args + 1] = (const char *) id_string;
-  start_actor_worker_command[num_args + 2] = NULL;
+  start_actor_worker_command[num_args + 1] = (const char *) actor_id_string;
+  start_actor_worker_command[num_args + 2] = "--class-id";
+  start_actor_worker_command[num_args + 3] = (const char *) class_id_string;
+  start_actor_worker_command[num_args + 4] = NULL;
   /* Try to execute the worker command. Exit if we're not successful. */
   execvp(start_actor_worker_command[0],
          (char *const *) start_actor_worker_command);
@@ -387,7 +391,7 @@ LocalSchedulerState *LocalSchedulerState_init(
 
   /* Start the initial set of workers. */
   for (int i = 0; i < num_workers; ++i) {
-    start_worker(state, NIL_ACTOR_ID);
+    start_worker(state, NIL_ACTOR_ID, NIL_ACTOR_ID);
   }
 
   return state;
@@ -1033,7 +1037,8 @@ void handle_task_scheduled_callback(Task *original_task,
  *        for creating the actor.
  * @return Void.
  */
-void handle_actor_creation_callback(ActorID actor_id,
+void handle_actor_creation_callback(ActorID class_id,
+                                    ActorID actor_id,
                                     WorkerID driver_id,
                                     DBClientID local_scheduler_id,
                                     void *context) {
@@ -1060,7 +1065,7 @@ void handle_actor_creation_callback(ActorID actor_id,
   /* If this local scheduler is responsible for the actor, then start a new
    * worker for the actor. */
   if (DBClientID_equal(local_scheduler_id, get_db_client_id(state->db))) {
-    start_worker(state, actor_id);
+    start_worker(state, class_id, actor_id);
   }
   /* Let the scheduling algorithm process the fact that a new actor has been
    * created. */
