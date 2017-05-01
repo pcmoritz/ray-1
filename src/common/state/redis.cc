@@ -1304,20 +1304,22 @@ void redis_actor_notification_table_subscribe_callback(redisAsyncContext *c,
     redisReply *payload = reply->element[2];
     ActorNotificationTableSubscribeData *data =
         (ActorNotificationTableSubscribeData *) callback_data->data;
-    /* The payload should be the concatenation of three IDs. */
+    /* The payload should be the concatenation of four IDs. */
+    ActorID class_id;
     ActorID actor_id;
     WorkerID driver_id;
     DBClientID local_scheduler_id;
-    CHECK(sizeof(actor_id) + sizeof(driver_id) + sizeof(local_scheduler_id) ==
+    CHECK(sizeof(class_id) + sizeof(actor_id) + sizeof(driver_id) + sizeof(local_scheduler_id) ==
           payload->len);
-    memcpy(&actor_id, payload->str, sizeof(actor_id));
-    memcpy(&driver_id, payload->str + sizeof(actor_id), sizeof(driver_id));
+    memcpy(&class_id, payload->str, sizeof(class_id));
+    memcpy(&actor_id, payload->str + sizeof(class_id), sizeof(actor_id));
+    memcpy(&driver_id, payload->str + sizeof(class_id) + sizeof(actor_id), sizeof(driver_id));
     memcpy(&local_scheduler_id,
-           payload->str + sizeof(actor_id) + sizeof(driver_id),
+           payload->str + sizeof(class_id) + sizeof(actor_id) + sizeof(driver_id),
            sizeof(local_scheduler_id));
     if (data->subscribe_callback) {
-      data->subscribe_callback(actor_id, driver_id, local_scheduler_id,
-                               data->subscribe_context);
+      data->subscribe_callback(class_id, actor_id, driver_id,
+                               local_scheduler_id, data->subscribe_context);
     }
   } else if (strcmp(message_type->str, "subscribe") == 0) {
     /* The reply for the initial SUBSCRIBE command. */
