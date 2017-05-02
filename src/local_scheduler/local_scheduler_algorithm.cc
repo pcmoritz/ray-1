@@ -312,6 +312,7 @@ bool dispatch_actor_task(LocalSchedulerState *state,
   TaskQueueEntry first_task = entry.task_queue->front();
   int64_t next_task_counter = TaskSpec_actor_counter(first_task.spec);
   if (next_task_counter != entry.task_counter) {
+    printf("XXX next_task_counter = %" PRId64 ",  entry.task_counter = %" PRId64, next_task_counter, entry.task_counter);
     /* We cannot execute the next task on this actor without violating the
      * in-order execution guarantee for actor tasks. */
     CHECK(next_task_counter > entry.task_counter);
