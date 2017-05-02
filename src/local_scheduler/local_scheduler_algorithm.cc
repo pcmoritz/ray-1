@@ -311,8 +311,11 @@ bool dispatch_actor_task(LocalSchedulerState *state,
   }
   TaskQueueEntry first_task = entry.task_queue->front();
   int64_t next_task_counter = TaskSpec_actor_counter(first_task.spec);
+  printf("XXX next_task_counter = %" PRId64 ",  entry.task_counter = %" PRId64 "\n", next_task_counter, entry.task_counter);
+  char actor_id_string[ID_STRING_SIZE];
+  ObjectID_to_string(actor_id, actor_id_string, ID_STRING_SIZE);
+  printf("XXX actor_id is %s\n", actor_id_string);
   if (next_task_counter != entry.task_counter) {
-    printf("XXX next_task_counter = %" PRId64 ",  entry.task_counter = %" PRId64, next_task_counter, entry.task_counter);
     /* We cannot execute the next task on this actor without violating the
      * in-order execution guarantee for actor tasks. */
     CHECK(next_task_counter > entry.task_counter);

@@ -220,6 +220,14 @@ void start_worker(LocalSchedulerState *state, ActorID class_id, ActorID actor_id
     LOG_WARN("No valid command to start worker provided. Cannot start worker.");
     return;
   }
+
+  char actor_id_string[ID_STRING_SIZE];
+  ObjectID_to_string(actor_id, actor_id_string, ID_STRING_SIZE);
+  char class_id_string[ID_STRING_SIZE];
+  ObjectID_to_string(class_id, class_id_string, ID_STRING_SIZE);
+
+  LOG_INFO("Started worker with actor ID %s and class ID %s", actor_id_string, class_id_string);
+
   /* Launch the process to create the worker. */
   pid_t pid = fork();
   if (pid != 0) {
@@ -228,10 +236,6 @@ void start_worker(LocalSchedulerState *state, ActorID class_id, ActorID actor_id
     return;
   }
 
-  char actor_id_string[ID_STRING_SIZE];
-  ObjectID_to_string(actor_id, actor_id_string, ID_STRING_SIZE);
-  char class_id_string[ID_STRING_SIZE];
-  ObjectID_to_string(class_id, class_id_string, ID_STRING_SIZE);
   /* Figure out how many arguments there are in the start_worker_command. */
   int num_args = 0;
   for (; state->config.start_worker_command[num_args] != NULL; ++num_args) {
