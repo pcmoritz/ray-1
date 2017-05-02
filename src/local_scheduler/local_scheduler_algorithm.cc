@@ -312,7 +312,7 @@ bool dispatch_actor_task(LocalSchedulerState *state,
   TaskQueueEntry first_task = entry.task_queue->front();
   int64_t next_task_counter = TaskSpec_actor_counter(first_task.spec);
   printf("XXX next_task_counter = %" PRId64 ",  entry.task_counter = %" PRId64 "\n", next_task_counter, entry.task_counter);
-  printf("XXX worker socket is %d", entry.worker);
+  printf("XXX worker socket is %d", entry.worker->sock);
   char actor_id_string[ID_STRING_SIZE];
   ObjectID_to_string(actor_id, actor_id_string, ID_STRING_SIZE);
   printf("XXX actor_id is %s\n", actor_id_string);
