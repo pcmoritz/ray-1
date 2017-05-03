@@ -318,6 +318,7 @@ bool dispatch_actor_task(LocalSchedulerState *state,
   ObjectID_to_string(actor_id, actor_id_string, ID_STRING_SIZE);
   printf("XXX actor_id is %s\n", actor_id_string);
   if (next_task_counter != entry.task_counter) {
+    printf("XXX bailing\n");
     /* We cannot execute the next task on this actor without violating the
      * in-order execution guarantee for actor tasks. */
     CHECK(next_task_counter > entry.task_counter);
@@ -325,10 +326,12 @@ bool dispatch_actor_task(LocalSchedulerState *state,
   }
   /* If the worker is not available, we cannot assign a task to it. */
   if (!entry.worker_available) {
+    printf("XXX worker not available\n");
     return false;
   }
   /* Assign the first task in the task queue to the worker and mark the worker
    * as unavailable. */
+  printf("XXX incrementing\n");
   entry.task_counter += 1;
   assign_task_to_worker(state, first_task.spec, first_task.task_spec_size,
                         entry.worker);
