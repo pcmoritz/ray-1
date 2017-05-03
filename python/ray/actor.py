@@ -290,11 +290,12 @@ def actor(*args, **kwargs):
           return object_ids
 
       class NewClass(object):
-        class_id = random_actor_id()
+        random_state = np.random.RandomState()
+        class_id = ray.local_scheduler.ObjectID(random_state.bytes(20))
         class_registered = False
 
         def __init__(self, *args, **kwargs):
-          self._ray_actor_id = random_actor_id()
+          self._ray_actor_id = ray.local_scheduler.ObjectID(NewClass.random_state.bytes(20))
           self._ray_actor_methods = {
               k: v for (k, v) in inspect.getmembers(
                   Class, predicate=(lambda x: (inspect.isfunction(x) or
