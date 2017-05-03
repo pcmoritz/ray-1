@@ -304,7 +304,7 @@ bool dispatch_actor_task(LocalSchedulerState *state,
   LocalActorInfo &entry =
       algorithm_state->local_actor_infos.find(actor_id)->second;
 
-  if (entry.task_queue->empty()) {
+  if (entry.task_queue->empty() || !entry.worker) {
     /* There are no queued tasks for this actor, so we cannot dispatch a task to
      * the actor. */
     return false;
@@ -312,6 +312,7 @@ bool dispatch_actor_task(LocalSchedulerState *state,
   TaskQueueEntry first_task = entry.task_queue->front();
   int64_t next_task_counter = TaskSpec_actor_counter(first_task.spec);
   printf("XXX next_task_counter = %" PRId64 ",  entry.task_counter = %" PRId64 "\n", next_task_counter, entry.task_counter);
+  CHECK(entry.worker);
   printf("XXX worker socket is %d", entry.worker->sock);
   char actor_id_string[ID_STRING_SIZE];
   ObjectID_to_string(actor_id, actor_id_string, ID_STRING_SIZE);
