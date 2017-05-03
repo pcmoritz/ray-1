@@ -1285,12 +1285,6 @@ def import_thread(worker):
         fetch_and_register_environment_variable(key, worker=worker)
       elif key.startswith(b"FunctionsToRun"):
         fetch_and_execute_function_to_run(key, worker=worker)
-      elif key.startswith(b"Actor"):
-        # Only get the actor if the actor ID matches the actor ID of this
-        # worker.
-        actor_id, = worker.redis_client.hmget(key, "actor_id")
-        if worker.actor_id == actor_id:
-          worker.fetch_and_register["Actor"](key, worker)
       else:
         raise Exception("This code should be unreachable.")
       num_imported += 1
@@ -1314,12 +1308,6 @@ def import_thread(worker):
           elif key.startswith(b"FunctionsToRun"):
             with log_span("ray:import_function_to_run", worker=worker):
               fetch_and_execute_function_to_run(key, worker=worker)
-          elif key.startswith(b"Actor"):
-            # Only get the actor if the actor ID matches the actor ID of this
-            # worker.
-            actor_id, = worker.redis_client.hmget(key, "actor_id")
-            if worker.actor_id == actor_id:
-              worker.fetch_and_register["Actor"](key, worker)
           else:
             raise Exception("This code should be unreachable.")
           num_imported += 1

@@ -45,6 +45,10 @@ if __name__ == "__main__":
 
   ray.worker.connect(info, mode=ray.WORKER_MODE, actor_id=actor_id)
 
+  if actor_id != ray.worker.NIL_ACTOR_ID:
+    actor_key = "Actor:{}".format(actor_id)
+    ray.worker.global_worker.fetch_and_register["Actor"](actor_id, ray.worker.global_worker)
+
   error_explanation = """
 This error is unexpected and should not have happened. Somehow a worker crashed
 in an unanticipated way causing the main_loop to throw an exception, which is

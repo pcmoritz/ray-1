@@ -54,8 +54,9 @@ def get_actor_method_function_id(attr):
   return ray.local_scheduler.ObjectID(function_id)
 
 
-def fetch_and_register_actor(key, worker):
+def fetch_and_register_actor(actor_id, worker):
   """Import an actor."""
+  key = "Actor:{}".format(actor_id)
   (driver_id, actor_id_str, actor_name,
    module, pickled_class, assigned_gpu_ids,
    actor_method_names) = worker.redis_client.hmget(
@@ -252,13 +253,6 @@ def export_actor(actor_id, Class, actor_method_names, num_cpus, num_gpus,
   local_scheduler_id, gpu_ids = select_local_scheduler(local_schedulers,
                                                        num_gpus, worker)
 
-  # Really we should encode this message as a flatbuffer object. However, we're
-  # having trouble getting that to work. It almost works, but in Python 2.7,
-  # builder.CreateString fails on byte strings that contain characters outside
-  # range(128).
-  worker.redis_client.publish("actor_notifications",
-                              actor_id.id() + driver_id + local_scheduler_id)
-
   d = {"driver_id": driver_id,
        "actor_id": actor_id.id(),
        "name": Class.__name__,
@@ -267,7 +261,13 @@ def export_actor(actor_id, Class, actor_method_names, num_cpus, num_gpus,
        "gpu_ids": json.dumps(gpu_ids),
        "actor_method_names": json.dumps(list(actor_method_names))}
   worker.redis_client.hmset(key, d)
-  worker.redis_client.rpush("Exports", key)
+
+  # Really we should encode this message as a flatbuffer object. However, we're
+  # having trouble getting that to work. It almost works, but in Python 2.7,
+  # builder.CreateString fails on byte strings that contain characters outside
+  # range(128).
+  worker.redis_client.publish("actor_notifications",
+                              actor_id.id() + driver_id + local_scheduler_id)
 
 
 def actor(*args, **kwargs):
