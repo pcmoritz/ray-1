@@ -452,7 +452,7 @@ class Worker(object):
     # Use a defaultdict for the actor counts. If this is accessed with a
     # missing key, the default value of 0 is returned, and that key value pair
     # is added to the dict.
-    self.actor_counters = collections.defaultdict(lambda: 0)
+    self.actor_counters = collections.defaultdict(lambda: -1)
 
   def set_mode(self, mode):
     """Set the mode of the worker.

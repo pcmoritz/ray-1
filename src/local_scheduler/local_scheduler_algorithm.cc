@@ -242,7 +242,7 @@ void create_actor(SchedulingAlgorithmState *algorithm_state,
                   LocalSchedulerClient *worker) {
   LocalActorInfo entry;
   entry.actor_id = actor_id;
-  entry.task_counter = 0;
+  entry.task_counter = -1;
   entry.task_queue = new std::list<TaskQueueEntry>();
   entry.worker = worker;
   entry.worker_available = false;
