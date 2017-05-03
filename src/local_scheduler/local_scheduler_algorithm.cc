@@ -316,7 +316,10 @@ bool dispatch_actor_task(LocalSchedulerState *state,
   printf("XXX worker socket is %d", entry.worker->sock);
   char actor_id_string[ID_STRING_SIZE];
   ObjectID_to_string(actor_id, actor_id_string, ID_STRING_SIZE);
+  char task_id_string[ID_STRING_SIZE];
+  ObjectID_to_string(TaskSpec_task_id(first_task.spec), task_id_string, ID_STRING_SIZE);
   printf("XXX actor_id is %s\n", actor_id_string);
+  printf("XXX task_id is %s\n", task_id_string);
   if (next_task_counter != entry.task_counter) {
     printf("XXX bailing\n");
     /* We cannot execute the next task on this actor without violating the
