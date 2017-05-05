@@ -290,6 +290,7 @@ def actor(*args, **kwargs):
           return object_ids
 
       class NewClass(object):
+        import numpy as np
         random_state = np.random.RandomState()
         class_id = ray.local_scheduler.ObjectID(random_state.bytes(20))
         class_registered = False
