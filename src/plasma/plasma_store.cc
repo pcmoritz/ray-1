@@ -61,7 +61,7 @@ struct Client {
 struct NotificationQueue {
   /** The object notifications for clients. We notify the client about the
    *  objects in the order that the objects were sealed or deleted. */
-  std::deque<uint8_t *> object_notifications;
+  std::deque<std::shared_ptr<ObjectInfoT>> object_notifications;
 };
 
 struct GetRequest {
@@ -149,18 +149,10 @@ void PlasmaStoreState_free(PlasmaStoreState *state) {
   for (const auto &it : state->plasma_store_info->objects) {
     delete it.second;
   }
-  for (const auto &element : state->pending_notifications) {
-    auto object_notifications = element.second.object_notifications;
-    for (int i = 0; i < object_notifications.size(); ++i) {
-      uint8_t *notification = (uint8_t *) object_notifications.at(i);
-      uint8_t *data = notification;
-      free(data);
-    }
-  }
 }
 
 void push_notification(PlasmaStoreState *state,
-                       ObjectInfoT *object_notification);
+                       std::shared_ptr<ObjectInfoT> object_notification);
 
 /* If this client is not already using the object, add the client to the
  * object's list of clients, otherwise do nothing. */
@@ -237,9 +229,10 @@ int create_object(Client *client_context,
 
   ObjectTableEntry *entry = new ObjectTableEntry();
   entry->object_id = obj_id;
-  entry->info.object_id = std::string((char *) &obj_id.id[0], sizeof(obj_id));
-  entry->info.data_size = data_size;
-  entry->info.metadata_size = metadata_size;
+  entry->info = std::make_shared<ObjectInfoT>();
+  entry->info->object_id = std::string((char *) &obj_id.id[0], sizeof(obj_id));
+  entry->info->data_size = data_size;
+  entry->info->metadata_size = metadata_size;
   entry->pointer = pointer;
   /* TODO(pcm): set the other fields */
   entry->fd = fd;
@@ -519,11 +512,11 @@ void delete_object(PlasmaStoreState *plasma_state, ObjectID object_id) {
   plasma_state->plasma_store_info->objects.erase(object_id);
   delete entry;
   /* Inform all subscribers that the object has been deleted. */
-  ObjectInfoT notification;
-  notification.object_id =
+  auto notification = std::make_shared<ObjectInfoT>();
+  notification->object_id =
       std::string((char *) &object_id.id[0], sizeof(object_id));
-  notification.is_deletion = true;
-  push_notification(plasma_state, &notification);
+  notification->is_deletion = true;
+  push_notification(plasma_state, notification);
 }
 
 void remove_objects(PlasmaStoreState *plasma_state,
@@ -540,10 +533,9 @@ void remove_objects(PlasmaStoreState *plasma_state,
 }
 
 void push_notification(PlasmaStoreState *plasma_state,
-                       ObjectInfoT *object_info) {
+                       std::shared_ptr<ObjectInfoT> object_info) {
   for (auto &element : plasma_state->pending_notifications) {
-    uint8_t *notification = create_object_info_buffer(object_info);
-    element.second.object_notifications.push_back(notification);
+    element.second.object_notifications.push_back(object_info);
     send_notifications(plasma_state->loop, element.first, plasma_state, 0);
     /* The notification gets freed in send_notifications when the notification
      * is sent over the socket. */
@@ -563,12 +555,12 @@ void send_notifications(event_loop *loop,
   /* Loop over the array of pending notifications and send as many of them as
    * possible. */
   for (int i = 0; i < it->second.object_notifications.size(); ++i) {
-    uint8_t *notification = (uint8_t *) it->second.object_notifications.at(i);
-    /* Decode the length, which is the first bytes of the message. */
-    int64_t size = *((int64_t *) notification);
+    auto notification = it->second.object_notifications.at(i);
+    int64_t size;
+    uint8_t *buffer = create_object_info_buffer(notification.get(), size);
 
     /* Attempt to send a notification about this object ID. */
-    int nbytes = send(client_sock, notification, sizeof(int64_t) + size, 0);
+    int nbytes = send(client_sock, buffer, sizeof(int64_t) + size, 0);
     if (nbytes >= 0) {
       CHECK(nbytes == sizeof(int64_t) + size);
     } else if (nbytes == -1 &&
@@ -593,7 +585,7 @@ void send_notifications(event_loop *loop,
     num_processed += 1;
     /* The corresponding malloc happened in create_object_info_buffer
      * within push_notification. */
-    free(notification);
+    free(buffer);
   }
   /* Remove the sent notifications from the array. */
   it->second.object_notifications.erase(

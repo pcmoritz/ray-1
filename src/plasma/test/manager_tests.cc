@@ -267,8 +267,8 @@ TEST object_notifications_test(void) {
   ASSERT(!is_local);
 
   /* Check that the object is local after receiving an object notification. */
-  uint8_t *notification = create_object_info_buffer(&info);
-  int64_t size = *((int64_t *) notification);
+  int64_t size;
+  uint8_t *notification = create_object_info_buffer(&info, size);
   send(fd[1], notification, sizeof(int64_t) + size, 0);
   process_object_notification(local_mock->loop, fd[0], local_mock->state, 0);
   is_local = is_object_local(local_mock->state, object_id);
@@ -278,8 +278,7 @@ TEST object_notifications_test(void) {
   /* Check that the object is not local after receiving a notification about
    * the object deletion. */
   info.is_deletion = true;
-  notification = create_object_info_buffer(&info);
-  size = *((int64_t *) notification);
+  notification = create_object_info_buffer(&info, size);
   send(fd[1], notification, sizeof(int64_t) + size, 0);
   process_object_notification(local_mock->loop, fd[0], local_mock->state, 0);
   is_local = is_object_local(local_mock->state, object_id);

@@ -101,7 +101,7 @@ struct ObjectTableEntry {
   /** Object id of this object. */
   ObjectID object_id;
   /** Object info like size, creation time and owner. */
-  ObjectInfoT info;
+  std::shared_ptr<ObjectInfoT> info;
   /** Memory mapped file containing the object. */
   int fd;
   /** Size of the underlying map. */
@@ -138,7 +138,7 @@ struct PlasmaStoreInfo {
  * @return The entry associated with the object_id or NULL if the object_id
  *         is not present.
  */
-ObjectTableEntry *get_object_table_entry(PlasmaStoreInfo *store_info,
+ObjectTableEntry* get_object_table_entry(PlasmaStoreInfo *store_info,
                                          ObjectID object_id);
 
 /**
@@ -159,6 +159,6 @@ ObjectTableEntry *get_object_table_entry(PlasmaStoreInfo *store_info,
  */
 int warn_if_sigpipe(int status, int client_sock);
 
-uint8_t *create_object_info_buffer(ObjectInfoT *object_info);
+uint8_t *create_object_info_buffer(ObjectInfoT *object_info, int64_t &size);
 
 #endif /* PLASMA_H */
