@@ -384,20 +384,14 @@ int plasma_send_GetRequest(int sock,
                        fbb.GetBufferPointer());
 }
 
-int64_t plasma_read_GetRequest_num_objects(uint8_t *data) {
-  DCHECK(data);
-  auto message = flatbuffers::GetRoot<PlasmaGetRequest>(data);
-  return message->object_ids()->size();
-}
-
 void plasma_read_GetRequest(uint8_t *data,
-                            ObjectID object_ids[],
-                            int64_t *timeout_ms,
-                            int64_t num_objects) {
+                            std::vector<ObjectID>& object_ids,
+                            int64_t *timeout_ms) {
   DCHECK(data);
   auto message = flatbuffers::GetRoot<PlasmaGetRequest>(data);
-  for (int64_t i = 0; i < num_objects; ++i) {
-    object_ids[i] = ObjectID::from_binary(message->object_ids()->Get(i)->str());
+  for (int64_t i = 0; i < message->object_ids()->size(); ++i) {
+    auto object_id = message->object_ids()->Get(i)->str();
+    object_ids.push_back(ObjectID::from_binary(object_id));
   }
   *timeout_ms = message->timeout_ms();
 }

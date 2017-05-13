@@ -68,12 +68,9 @@ int plasma_send_GetRequest(int sock,
                            int64_t num_objects,
                            int64_t timeout_ms);
 
-int64_t plasma_read_GetRequest_num_objects(uint8_t *data);
-
 void plasma_read_GetRequest(uint8_t *data,
-                            ObjectID object_ids[],
-                            int64_t *timeout_ms,
-                            int64_t num_objects);
+                            std::vector<ObjectID>& object_ids,
+                            int64_t *timeout_ms);
 
 int plasma_send_GetReply(
     int sock,

@@ -547,11 +547,9 @@ void PlasmaStore::process_message(int client_fd) {
     }
   } break;
   case MessageType_PlasmaGetRequest: {
-    int num_objects = plasma_read_GetRequest_num_objects(input);
-    std::vector<ObjectID> object_ids_to_get(num_objects);
+    std::vector<ObjectID> object_ids_to_get;
     int64_t timeout_ms;
-    plasma_read_GetRequest(input, object_ids_to_get.data(), &timeout_ms,
-                           num_objects);
+    plasma_read_GetRequest(input, object_ids_to_get, &timeout_ms);
     process_get_request(client_fd, object_ids_to_get, timeout_ms);
   } break;
   case MessageType_PlasmaReleaseRequest:
