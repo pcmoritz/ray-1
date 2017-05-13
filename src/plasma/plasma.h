@@ -12,7 +12,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "common.h"
+#include "plasma_common.h"
+
 #include "format/common_generated.h"
 
 #include <inttypes.h>
@@ -113,7 +114,7 @@ struct ObjectTableEntry {
   /** The state of the object, e.g., whether it is open or sealed. */
   object_state state;
   /** The digest of the object. Used to see if two objects are the same. */
-  unsigned char digest[DIGEST_SIZE];
+  unsigned char digest[kDigestSize];
 };
 
 /** The plasma store information that is exposed to the eviction policy. */

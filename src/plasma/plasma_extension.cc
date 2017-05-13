@@ -1,9 +1,8 @@
 #include <Python.h>
 #include "bytesobject.h"
 
-#include "common_extension.h"
-#include "common.h"
 #include "io.h"
+#include "plasma_common.h"
 #include "plasma_protocol.h"
 #include "plasma_client.h"
 
@@ -36,7 +35,7 @@ PyObject *PyPlasma_disconnect(PyObject *self, PyObject *args) {
   if (!PyArg_ParseTuple(args, "O", &conn_capsule)) {
     return NULL;
   }
-  CHECK(PyObjectToPlasmaConnection(conn_capsule, &conn));
+  ARROW_CHECK(PyObjectToPlasmaConnection(conn_capsule, &conn));
   plasma_disconnect(conn);
   /* We use the context of the connection capsule to indicate if the connection
    * is still active (if the context is NULL) or if it is closed (if the context
@@ -75,7 +74,7 @@ PyObject *PyPlasma_create(PyObject *self, PyObject *args) {
                     "this object.");
     return NULL;
   }
-  CHECK(error_code == PlasmaError_OK);
+  ARROW_CHECK(error_code == PlasmaError_OK);
 
 #if PY_MAJOR_VERSION >= 3
   return PyMemoryView_FromMemory((char *) data, (Py_ssize_t) size, PyBUF_WRITE);
@@ -91,11 +90,11 @@ PyObject *PyPlasma_hash(PyObject *self, PyObject *args) {
                         PyStringToUniqueID, &object_id)) {
     return NULL;
   }
-  unsigned char digest[DIGEST_SIZE];
+  unsigned char digest[kDigestSize];
   bool success = plasma_compute_object_hash(conn, object_id, digest);
   if (success) {
     PyObject *digest_string =
-        PyBytes_FromStringAndSize((char *) digest, DIGEST_SIZE);
+        PyBytes_FromStringAndSize((char *) digest, kDigestSize);
     return digest_string;
   } else {
     Py_RETURN_NONE;
@@ -254,8 +253,8 @@ PyObject *PyPlasma_wait(PyObject *self, PyObject *args) {
   ObjectRequest *object_requests =
       (ObjectRequest *) malloc(sizeof(ObjectRequest) * n);
   for (int i = 0; i < n; ++i) {
-    CHECK(PyStringToUniqueID(PyList_GetItem(object_id_list, i),
-                             &object_requests[i].object_id) == 1);
+    ARROW_CHECK(PyStringToUniqueID(PyList_GetItem(object_id_list, i),
+                                   &object_requests[i].object_id) == 1);
     object_requests[i].type = PLASMA_QUERY_ANYWHERE;
   }
   /* Drop the global interpreter lock while we are waiting, so other threads can
@@ -266,7 +265,7 @@ PyObject *PyPlasma_wait(PyObject *self, PyObject *args) {
                                    (uint64_t) timeout);
   Py_END_ALLOW_THREADS;
 
-  int num_to_return = MIN(num_return_objects, num_returns);
+  int num_to_return = std::min(num_return_objects, num_returns);
   PyObject *ready_ids = PyList_New(num_to_return);
   PyObject *waiting_ids = PySet_New(object_id_list);
   int num_returned = 0;
@@ -277,16 +276,16 @@ PyObject *PyPlasma_wait(PyObject *self, PyObject *args) {
     if (object_requests[i].status == ObjectStatus_Local ||
         object_requests[i].status == ObjectStatus_Remote) {
       PyObject *ready =
-          PyBytes_FromStringAndSize((char *) object_requests[i].object_id.id,
+          PyBytes_FromStringAndSize((char *) &object_requests[i].object_id,
                                     sizeof(object_requests[i].object_id));
       PyList_SetItem(ready_ids, num_returned, ready);
       PySet_Discard(waiting_ids, ready);
       num_returned += 1;
     } else {
-      CHECK(object_requests[i].status == ObjectStatus_Nonexistent);
+      ARROW_CHECK(object_requests[i].status == ObjectStatus_Nonexistent);
     }
   }
-  CHECK(num_returned == num_to_return);
+  ARROW_CHECK(num_returned == num_to_return);
   /* Return both the ready IDs and the remaining IDs. */
   PyObject *t = PyTuple_New(2);
   PyTuple_SetItem(t, 0, ready_ids);

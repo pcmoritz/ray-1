@@ -1,9 +1,9 @@
 #ifndef PLASMA_STORE_H
 #define PLASMA_STORE_H
 
-#include "common.h"
 #include "eviction_policy.h"
 #include "plasma.h"
+#include "plasma_common.h"
 #include "plasma_events.h"
 #include "plasma_protocol.h"
 

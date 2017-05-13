@@ -3,7 +3,6 @@
 
 #include "format/plasma_generated.h"
 
-#include "common.h"
 #include "plasma.h"
 
 typedef void protocol_builder;

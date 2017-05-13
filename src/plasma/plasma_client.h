@@ -8,7 +8,7 @@
 
 #define PLASMA_DEFAULT_RELEASE_DELAY 64
 /* Use 100MB as an overestimate of the L3 cache size. */
-#define L3_CACHE_SIZE_BYTES 100000000
+constexpr int64_t kL3CacheSizeBytes = 100000000;
 
 typedef struct PlasmaConnection PlasmaConnection;
 
