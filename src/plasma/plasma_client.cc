@@ -202,13 +202,12 @@ int plasma_create(PlasmaConnection *conn,
                    << " with size " << data_size << " and metadata size " << metadata_size;
   ARROW_CHECK(plasma_send_CreateRequest(conn->store_conn, conn->builder, obj_id,
                                         data_size, metadata_size) >= 0);
-  uint8_t *reply_data =
-      plasma_receive(conn->store_conn, MessageType_PlasmaCreateReply);
+  std::vector<uint8_t> buffer;
+  plasma_receive(conn->store_conn, MessageType_PlasmaCreateReply, buffer);
   int error;
   ObjectID id;
   PlasmaObject object;
-  plasma_read_CreateReply(reply_data, &id, &object, &error);
-  free(reply_data);
+  plasma_read_CreateReply(buffer.data(), &id, &object, &error);
   if (error != PlasmaError_OK) {
     ARROW_LOG(WARNING) << "returned from plasma_create with error " << error;
     ARROW_CHECK(error == PlasmaError_OutOfMemory ||
@@ -287,15 +286,14 @@ void plasma_get(PlasmaConnection *conn,
    * client, so we need to send a request to the plasma store. */
   ARROW_CHECK(plasma_send_GetRequest(conn->store_conn, conn->builder, object_ids,
                                      num_objects, timeout_ms) >= 0);
-  uint8_t *reply_data =
-      plasma_receive(conn->store_conn, MessageType_PlasmaGetReply);
+  std::vector<uint8_t> buffer;
+  plasma_receive(conn->store_conn, MessageType_PlasmaGetReply, buffer);
   ObjectID *received_obj_ids =
       (ObjectID *) malloc(num_objects * sizeof(ObjectID));
   PlasmaObject *object_data =
       (PlasmaObject *) malloc(num_objects * sizeof(PlasmaObject));
   PlasmaObject *object;
-  plasma_read_GetReply(reply_data, received_obj_ids, object_data, num_objects);
-  free(reply_data);
+  plasma_read_GetReply(buffer.data(), received_obj_ids, object_data, num_objects);
 
   for (int i = 0; i < num_objects; ++i) {
     DCHECK(ObjectID_equal(received_obj_ids[i], object_ids[i]));
@@ -419,11 +417,10 @@ void plasma_contains(PlasmaConnection *conn, ObjectID obj_id, int *has_object) {
     /* If we don't already have a reference to the object, check with the store
      * to see if we have the object. */
     plasma_send_ContainsRequest(conn->store_conn, conn->builder, obj_id);
-    uint8_t *reply_data =
-        plasma_receive(conn->store_conn, MessageType_PlasmaContainsReply);
+    std::vector<uint8_t> buffer;
+    plasma_receive(conn->store_conn, MessageType_PlasmaContainsReply, buffer);
     ObjectID object_id2;
-    plasma_read_ContainsReply(reply_data, &object_id2, has_object);
-    free(reply_data);
+    plasma_read_ContainsReply(buffer.data(), &object_id2, has_object);
   }
 }
 
@@ -587,10 +584,9 @@ PlasmaConnection *plasma_connect(const char *store_socket_name,
   result->in_use_object_bytes = 0;
   /* Send a ConnectRequest to the store to get its memory capacity. */
   plasma_send_ConnectRequest(result->store_conn, result->builder);
-  uint8_t *reply_data =
-      plasma_receive(result->store_conn, MessageType_PlasmaConnectReply);
-  plasma_read_ConnectReply(reply_data, &result->store_capacity);
-  free(reply_data);
+  std::vector<uint8_t> buffer;
+  plasma_receive(result->store_conn, MessageType_PlasmaConnectReply, buffer);
+  plasma_read_ConnectReply(buffer.data(), &result->store_capacity);
   return result;
 }
 
@@ -646,11 +642,10 @@ int plasma_status(PlasmaConnection *conn, ObjectID object_id) {
   ARROW_CHECK(conn->manager_conn >= 0);
 
   plasma_send_StatusRequest(conn->manager_conn, conn->builder, &object_id, 1);
-  uint8_t *reply_data =
-      plasma_receive(conn->manager_conn, MessageType_PlasmaStatusReply);
+  std::vector<uint8_t> buffer;
+  plasma_receive(conn->manager_conn, MessageType_PlasmaStatusReply, buffer);
   int object_status;
-  plasma_read_StatusReply(reply_data, &object_id, &object_status, 1);
-  free(reply_data);
+  plasma_read_StatusReply(buffer.data(), &object_id, &object_status, 1);
   return object_status;
 }
 
@@ -673,10 +668,9 @@ int plasma_wait(PlasmaConnection *conn,
   ARROW_CHECK(plasma_send_WaitRequest(conn->manager_conn, conn->builder,
                                       object_requests, num_object_requests,
                                       num_ready_objects, timeout_ms) >= 0);
-  uint8_t *reply_data =
-      plasma_receive(conn->manager_conn, MessageType_PlasmaWaitReply);
-  plasma_read_WaitReply(reply_data, object_requests, &num_ready_objects);
-  free(reply_data);
+  std::vector<uint8_t> buffer;
+  plasma_receive(conn->manager_conn, MessageType_PlasmaWaitReply, buffer);
+  plasma_read_WaitReply(buffer.data(), object_requests, &num_ready_objects);
 
   int num_objects_ready = 0;
   for (int i = 0; i < num_object_requests; ++i) {

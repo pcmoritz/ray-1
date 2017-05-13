@@ -16,7 +16,7 @@ void free_protocol_builder(protocol_builder *builder);
 
 /* Plasma receive message. */
 
-uint8_t *plasma_receive(int sock, int64_t message_type);
+void plasma_receive(int sock, int64_t message_type, std::vector<uint8_t>& buffer);
 
 /* Plasma Create message functions. */
 

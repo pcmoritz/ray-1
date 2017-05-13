@@ -25,13 +25,10 @@ protocol_builder *make_protocol_builder(void) {
 
 void free_protocol_builder(protocol_builder *builder) {}
 
-uint8_t *plasma_receive(int sock, int64_t message_type) {
+void plasma_receive(int sock, int64_t message_type, std::vector<uint8_t> &buffer) {
   int64_t type;
-  int64_t length;
-  uint8_t *reply_data;
-  read_message(sock, &type, &length, &reply_data);
+  read_message(sock, &type, buffer);
   ARROW_CHECK(type == message_type) << "type = " << type << ", message_type = " << message_type;
-  return reply_data;
 }
 
 /* Create messages. */

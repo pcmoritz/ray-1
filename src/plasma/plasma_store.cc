@@ -33,7 +33,7 @@
 #include "plasma_store.h"
 
 #include "format/common_generated.h"
-#include "io.h"
+#include "plasma_io.h"
 #include "malloc.h"
 
 extern "C" {
@@ -523,7 +523,7 @@ void PlasmaStore::subscribe_to_updates(int client_fd) {
 
 void PlasmaStore::process_message(int client_fd) {
   int64_t type;
-  read_vector(client_fd, &type, input_buffer_);
+  read_message(client_fd, &type, input_buffer_);
 
   uint8_t *input = input_buffer_.data();
   ObjectID object_id;
