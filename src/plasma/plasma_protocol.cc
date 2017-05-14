@@ -19,12 +19,6 @@ to_flatbuf(flatbuffers::FlatBufferBuilder &fbb,
   return fbb.CreateVector(results);
 }
 
-protocol_builder *make_protocol_builder(void) {
-  return NULL;
-}
-
-void free_protocol_builder(protocol_builder *builder) {}
-
 void plasma_receive(int sock, int64_t message_type, std::vector<uint8_t> &buffer) {
   int64_t type;
   read_message(sock, &type, buffer);
