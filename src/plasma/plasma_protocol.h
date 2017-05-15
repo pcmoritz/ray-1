@@ -155,6 +155,6 @@ void plasma_read_WaitReply(uint8_t *data,
 
 /* Plasma Subscribe message functions. */
 
-int plasma_send_SubscribeRequest(int sock, protocol_builder *B);
+int plasma_send_SubscribeRequest(int sock);
 
 #endif /* PLASMA_PROTOCOL */
