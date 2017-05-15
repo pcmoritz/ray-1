@@ -78,8 +78,7 @@ GetRequest::GetRequest(int client_fd, const std::vector<ObjectID> &object_ids)
 PlasmaStore::PlasmaStore(EventLoop *loop, int64_t system_memory)
     : loop_(loop),
       store_info_(new PlasmaStoreInfo()),
-      eviction_policy_(new EvictionPolicy(store_info_.get())),
-      builder_(make_protocol_builder()) {
+      eviction_policy_(new EvictionPolicy(store_info_.get())) {
   store_info_->memory_capacity = system_memory;
 }
 
@@ -92,7 +91,6 @@ PlasmaStore::~PlasmaStore() {
       free(data);
     }
   }
-  free_protocol_builder(builder_);
 }
 
 /* If this client is not already using the object, add the client to the
@@ -201,9 +199,8 @@ void PlasmaObject_init(PlasmaObject *object, ObjectTableEntry *entry) {
 
 void PlasmaStore::return_from_get(GetRequest *get_req) {
   /* Send the get reply to the client. */
-  int status = plasma_send_GetReply(get_req->client_fd, builder_,
-                                    &get_req->object_ids[0], get_req->objects,
-                                    get_req->object_ids.size());
+  int status = SendGetReply(get_req->client_fd, &get_req->object_ids[0],
+                            get_req->objects, get_req->object_ids.size());
   warn_if_sigpipe(status, get_req->client_fd);
   /* If we successfully sent the get reply message to the client, then also send
    * the file descriptors. */
@@ -536,10 +533,10 @@ void PlasmaStore::process_message(int client_fd) {
   case MessageType_PlasmaCreateRequest: {
     int64_t data_size;
     int64_t metadata_size;
-    plasma_read_CreateRequest(input, &object_id, &data_size, &metadata_size);
+    ReadCreateRequest(input, &object_id, &data_size, &metadata_size);
     int error_code =
         create_object(object_id, data_size, metadata_size, client_fd, &object);
-    warn_if_sigpipe(plasma_send_CreateReply(client_fd, builder_, object_id,
+    warn_if_sigpipe(SendCreateReply(client_fd, object_id,
                                             &object, error_code),
                     client_fd);
     if (error_code == PlasmaError_OK) {
@@ -549,48 +546,43 @@ void PlasmaStore::process_message(int client_fd) {
   case MessageType_PlasmaGetRequest: {
     std::vector<ObjectID> object_ids_to_get;
     int64_t timeout_ms;
-    plasma_read_GetRequest(input, object_ids_to_get, &timeout_ms);
+    ReadGetRequest(input, object_ids_to_get, &timeout_ms);
     process_get_request(client_fd, object_ids_to_get, timeout_ms);
   } break;
   case MessageType_PlasmaReleaseRequest:
-    plasma_read_ReleaseRequest(input, &object_id);
+    ReadReleaseRequest(input, &object_id);
     release_object(object_id, client_fd);
     break;
   case MessageType_PlasmaContainsRequest:
-    plasma_read_ContainsRequest(input, &object_id);
+    ReadContainsRequest(input, &object_id);
     if (contains_object(object_id) == OBJECT_FOUND) {
-      warn_if_sigpipe(
-          plasma_send_ContainsReply(client_fd, builder_, object_id, 1),
-          client_fd);
+      warn_if_sigpipe(SendContainsReply(client_fd, object_id, 1), client_fd);
     } else {
-      warn_if_sigpipe(
-          plasma_send_ContainsReply(client_fd, builder_, object_id, 0),
-          client_fd);
+      warn_if_sigpipe(SendContainsReply(client_fd, object_id, 0), client_fd);
     }
     break;
   case MessageType_PlasmaSealRequest: {
     unsigned char digest[kDigestSize];
-    plasma_read_SealRequest(input, &object_id, &digest[0]);
+    ReadSealRequest(input, &object_id, &digest[0]);
     seal_object(object_id, &digest[0]);
   } break;
   case MessageType_PlasmaEvictRequest: {
     /* This code path should only be used for testing. */
     int64_t num_bytes;
-    plasma_read_EvictRequest(input, &num_bytes);
+    ReadEvictRequest(input, &num_bytes);
     std::vector<ObjectID> objects_to_evict;
     int64_t num_bytes_evicted =
         eviction_policy_->choose_objects_to_evict(num_bytes, objects_to_evict);
     delete_objects(objects_to_evict);
     warn_if_sigpipe(
-        plasma_send_EvictReply(client_fd, builder_, num_bytes_evicted),
+        SendEvictReply(client_fd, num_bytes_evicted),
         client_fd);
   } break;
   case MessageType_PlasmaSubscribeRequest:
     subscribe_to_updates(client_fd);
     break;
   case MessageType_PlasmaConnectRequest: {
-    warn_if_sigpipe(plasma_send_ConnectReply(client_fd, builder_,
-                                             store_info_->memory_capacity),
+    warn_if_sigpipe(SendConnectReply(client_fd, store_info_->memory_capacity),
                     client_fd);
   } break;
   case DISCONNECT_CLIENT:

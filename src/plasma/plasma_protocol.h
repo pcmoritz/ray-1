@@ -83,78 +83,120 @@ int SendDeleteReply(int sock, ObjectID object_id, int error);
 
 void ReadDeleteReply(uint8_t *data, ObjectID *object_id, int *error);
 
+/* Satus messages. */
+
+int SendStatusRequest(int sock,
+                              ObjectID object_ids[],
+                              int64_t num_objects);
+
+int64_t ReadStatusRequest_num_objects(uint8_t *data);
+
+void ReadStatusRequest(uint8_t *data,
+                               ObjectID object_ids[],
+                               int64_t num_objects);
+
+int SendStatusReply(int sock,
+                            ObjectID object_ids[],
+                            int object_status[],
+                            int64_t num_objects);
+
+int64_t ReadStatusReply_num_objects(uint8_t *data);
+
+void ReadStatusReply(uint8_t *data,
+                             ObjectID object_ids[],
+                             int object_status[],
+                             int64_t num_objects);
+
 /* Plasma Constains message functions. */
 
-int plasma_send_ContainsRequest(int sock, ObjectID object_id);
+int SendContainsRequest(int sock, ObjectID object_id);
 
-void plasma_read_ContainsRequest(uint8_t *data, ObjectID *object_id);
+void ReadContainsRequest(uint8_t *data, ObjectID *object_id);
 
-int plasma_send_ContainsReply(int sock,
-                              ObjectID object_id,
-                              int has_object);
+int SendContainsReply(int sock, ObjectID object_id, int has_object);
 
-void plasma_read_ContainsReply(uint8_t *data,
-                               ObjectID *object_id,
-                               int *has_object);
+void ReadContainsReply(uint8_t *data, ObjectID *object_id, int *has_object);
 
 /* Plasma Connect message functions. */
 
-int plasma_send_ConnectRequest(int sock);
+int SendConnectRequest(int sock);
 
-void plasma_read_ConnectRequest(uint8_t *data);
+void ReadConnectRequest(uint8_t *data);
 
-int plasma_send_ConnectReply(int sock, int64_t memory_capacity);
+int SendConnectReply(int sock, int64_t memory_capacity);
 
-void plasma_read_ConnectReply(uint8_t *data, int64_t *memory_capacity);
+void ReadConnectReply(uint8_t *data, int64_t *memory_capacity);
 
 /* Plasma Evict message functions (no reply so far). */
 
-int plasma_send_EvictRequest(int sock, int64_t num_bytes);
+int SendEvictRequest(int sock, int64_t num_bytes);
 
-void plasma_read_EvictRequest(uint8_t *data, int64_t *num_bytes);
+void ReadEvictRequest(uint8_t *data, int64_t *num_bytes);
 
-int plasma_send_EvictReply(int sock, int64_t num_bytes);
+int SendEvictReply(int sock, int64_t num_bytes);
 
-void plasma_read_EvictReply(uint8_t *data, int64_t *num_bytes);
+void ReadEvictReply(uint8_t *data, int64_t *num_bytes);
 
 /* Plasma Fetch Remote message functions. */
 
-int plasma_send_FetchRequest(int sock,
+int SendFetchRequest(int sock,
                              ObjectID object_ids[],
                              int64_t num_objects);
 
-int64_t plasma_read_FetchRequest_num_objects(uint8_t *data);
+int64_t ReadFetchRequest_num_objects(uint8_t *data);
 
-void plasma_read_FetchRequest(uint8_t *data,
+void ReadFetchRequest(uint8_t *data,
                               ObjectID object_ids[],
                               int64_t num_objects);
 
 /* Plasma Wait message functions. */
 
-int plasma_send_WaitRequest(int sock,
+int SendWaitRequest(int sock,
                             ObjectRequest object_requests[],
                             int num_requests,
                             int num_ready_objects,
                             int64_t timeout_ms);
 
-int plasma_read_WaitRequest_num_object_ids(uint8_t *data);
+int ReadWaitRequest_num_object_ids(uint8_t *data);
 
-void plasma_read_WaitRequest(uint8_t *data,
+void ReadWaitRequest(uint8_t *data,
                              ObjectRequestMap &object_requests,
                              int num_object_ids,
                              int64_t *timeout_ms,
                              int *num_ready_objects);
 
-int plasma_send_WaitReply(int sock,
+int SendWaitReply(int sock,
                           const ObjectRequestMap &object_requests,
                           int num_ready_objects);
 
-void plasma_read_WaitReply(uint8_t *data,
+void ReadWaitReply(uint8_t *data,
                            ObjectRequest object_requests[],
                            int *num_ready_objects);
 
 /* Plasma Subscribe message functions. */
 
-int plasma_send_SubscribeRequest(int sock);
+int SendSubscribeRequest(int sock);
+
+/* Data messages. */
+
+int SendDataRequest(int sock,
+                    ObjectID object_id,
+                    const char *address,
+                    int port);
+
+void ReadDataRequest(uint8_t *data,
+                     ObjectID *object_id,
+                     char **address,
+                     int *port);
+
+int SendDataReply(int sock,
+                  ObjectID object_id,
+                  int64_t object_size,
+                  int64_t metadata_size);
+
+void ReadDataReply(uint8_t *data,
+                   ObjectID *object_id,
+                   int64_t *object_size,
+                   int64_t *metadata_size);
 
 #endif /* PLASMA_PROTOCOL */
