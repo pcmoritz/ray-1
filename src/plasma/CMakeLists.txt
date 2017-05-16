@@ -72,6 +72,7 @@ add_library(plasma_lib STATIC
   plasma_common.cc
   plasma_io.cc
   plasma_protocol.cc
+  status.cc
   fling.c
   thirdparty/xxhash.c)
 

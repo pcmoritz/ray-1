@@ -1,5 +1,10 @@
 #include "plasma_common.h"
 
+#include "format/plasma_generated.h"
+
+using arrow::Status;
+using arrow::StatusCode;
+
 UniqueID UniqueID::from_binary(const std::string& binary) {
   UniqueID id;
   std::memcpy(&id, binary.data(), sizeof(id));
@@ -27,4 +32,17 @@ std::string UniqueID::sha1() const {
 
 bool UniqueID::operator==(const UniqueID &rhs) const {
   return std::memcmp(data(), rhs.data(), kUniqueIDSize) == 0;
+}
+
+Status plasma_error_status(int plasma_error) {
+  switch (plasma_error) {
+    case PlasmaError_OK:
+      return Status::OK();
+    case PlasmaError_ObjectExists:
+      return Status(StatusCode::PlasmaStoreFull, "object already exists in the plasma store");
+    case PlasmaError_ObjectNonexistent:
+      return Status(StatusCode::PlasmaObjectNonexistent, "object does not exist in the plasma store");
+    default:
+      ARROW_CHECK(false);
+  }
 }

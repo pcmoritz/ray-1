@@ -5,6 +5,7 @@
 #include <string>
 
 #include "logging.h"
+#include "status.h"
 
 extern "C" {
 #include "sha256.h"
@@ -40,5 +41,7 @@ struct UniqueIDHasher {
 typedef UniqueID ObjectID;
 
 constexpr int64_t kDigestSize = SHA256_BLOCK_SIZE;
+
+arrow::Status plasma_error_status(int plasma_error);
 
 #endif // PLASMA_COMMON_H

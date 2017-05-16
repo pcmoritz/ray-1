@@ -9,7 +9,7 @@ using arrow::Status;
 
 /* Plasma receive message. */
 
-Status plasma_receive(int sock, int64_t message_type, std::vector<uint8_t>& buffer);
+Status PlasmaReceive(int sock, int64_t message_type, std::vector<uint8_t>& buffer);
 
 /* Plasma Create message functions. */
 
@@ -29,9 +29,8 @@ Status SendCreateReply(int sock,
                     int error);
 
 Status ReadCreateReply(uint8_t *data,
-                     ObjectID *object_id,
-                     PlasmaObject *object,
-                     int *error);
+                       ObjectID *object_id,
+                       PlasmaObject *object);
 
 /* Plasma Seal message functions. */
 
@@ -41,7 +40,7 @@ Status ReadSealRequest(uint8_t *data, ObjectID *object_id, unsigned char *digest
 
 Status SendSealReply(int sock, ObjectID object_id, int error);
 
-Status ReadSealReply(uint8_t *data, ObjectID *object_id, int *error);
+Status ReadSealReply(uint8_t *data, ObjectID *object_id);
 
 /* Plasma Get message functions. */
 
@@ -73,7 +72,7 @@ Status ReadReleaseRequest(uint8_t *data, ObjectID *object_id);
 
 Status SendReleaseReply(int sock, ObjectID object_id, int error);
 
-Status ReadReleaseReply(uint8_t *data, ObjectID *object_id, int *error);
+Status ReadReleaseReply(uint8_t *data, ObjectID *object_id);
 
 /* Plasma Delete message functions. */
 
@@ -83,7 +82,7 @@ Status ReadDeleteRequest(uint8_t *data, ObjectID *object_id);
 
 Status SendDeleteReply(int sock, ObjectID object_id, int error);
 
-Status ReadDeleteReply(uint8_t *data, ObjectID *object_id, int *error);
+Status ReadDeleteReply(uint8_t *data, ObjectID *object_id);
 
 /* Satus messages. */
 
@@ -137,7 +136,7 @@ Status ReadEvictRequest(uint8_t *data, int64_t *num_bytes);
 
 Status SendEvictReply(int sock, int64_t num_bytes);
 
-Status ReadEvictReply(uint8_t *data, int64_t *num_bytes);
+Status ReadEvictReply(uint8_t *data, int64_t &num_bytes);
 
 /* Plasma Fetch Remote message functions. */
 
@@ -159,7 +158,7 @@ Status SendWaitRequest(int sock,
                             int num_ready_objects,
                             int64_t timeout_ms);
 
-Status ReadWaitRequest_num_object_ids(uint8_t *data);
+int ReadWaitRequest_num_object_ids(uint8_t *data);
 
 Status ReadWaitRequest(uint8_t *data,
                              ObjectRequestMap &object_requests,

@@ -127,7 +127,7 @@ class PlasmaStore {
 
   void send_notifications(int client_fd);
 
-  void process_message(int client_fd);
+  Status process_message(int client_fd);
 
  private:
   void push_notification(ObjectInfoT *object_notification);
