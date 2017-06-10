@@ -66,6 +66,8 @@ def train_cnn_and_compute_accuracy(params, steps, train_images, train_labels,
   batch_size = 128
   # Create the network and related variables.
   tf.reset_default_graph()
+  import gc
+  gc.collect()
   with tf.Graph().as_default():
     with tf.Session() as sess:
       # Create the input placeholders for the network.
