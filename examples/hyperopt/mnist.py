@@ -67,13 +67,14 @@ def train_cnn_and_compute_accuracy(params, steps, train_images, train_labels,
   # Create the network and related variables.
   tf.reset_default_graph()
   with tf.Graph().as_default():
-    # Create the input placeholders for the network.
-    images = tf.placeholder(tf.float32, shape=[None, 28, 28, 1])
-    labels = tf.placeholder(tf.float32, shape=[None, 10])
-    # Create the network.
-    train_step, accuracy, loss = cnn_setup(params, images, labels, 10)
-    # Do the training and evaluation.
     with tf.Session() as sess:
+      # Create the input placeholders for the network.
+      images = tf.placeholder(tf.float32, shape=[None, 28, 28, 1])
+      labels = tf.placeholder(tf.float32, shape=[None, 10])
+      # Create the network.
+      train_step, accuracy, loss = cnn_setup(params, images, labels, 10)
+      # Do the training and evaluation.
+
       # Use the TensorFlowVariables utility. This is only necessary if we want
       # to set and get the weights.
       variables = ray.experimental.TensorFlowVariables(loss, sess)
