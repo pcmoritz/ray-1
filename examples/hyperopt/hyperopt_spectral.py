@@ -67,5 +67,5 @@ if __name__ == "__main__":
   validation_labels = ray.put(dataset.validation.labels)
 
   accuracy_id = mnist.train_cnn_and_compute_accuracy.remote(
-        hyperparameters, 1000, train_images, train_labels, validation_images,
-        validation_labels)
+        hyperparameters, 2000, train_images, train_labels, validation_images,
+        validation_labels, "/gpu:0")

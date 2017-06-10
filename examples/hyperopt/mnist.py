@@ -57,12 +57,12 @@ def cnn_setup(params, images, labels, num_classes, is_training=True, scope='LeNe
 # data, consructs and trains a network, and returns the validation accuracy.
 @ray.remote
 def train_cnn_and_compute_accuracy(params, steps, train_images, train_labels,
-                                   validation_images, validation_labels,
+                                   validation_images, validation_labels, device,
                                    weights=None):
   # Extract the hyperparameters from the params dictionary.
   batch_size = 128
   # Create the network and related variables.
-  with tf.Graph().as_default():
+  with tf.device(device), tf.Graph().as_default():
     # Create the input placeholders for the network.
     images = tf.placeholder(tf.float32, shape=[None, 28, 28, 1])
     labels = tf.placeholder(tf.float32, shape=[None, 10])
