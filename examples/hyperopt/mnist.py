@@ -65,6 +65,7 @@ def train_cnn_and_compute_accuracy(params, steps, train_images, train_labels,
   # Extract the hyperparameters from the params dictionary.
   batch_size = 128
   # Create the network and related variables.
+  tf.reset_default_graph()
   with tf.Graph().as_default():
     # Create the input placeholders for the network.
     images = tf.placeholder(tf.float32, shape=[None, 28, 28, 1])
@@ -94,5 +95,4 @@ def train_cnn_and_compute_accuracy(params, steps, train_images, train_labels,
                                           labels: validation_labels})
       new_weights = variables.get_weights()
       sess.close()
-      tf.reset_default_graph()
   return float(totalacc), new_weights
