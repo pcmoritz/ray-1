@@ -93,4 +93,5 @@ def train_cnn_and_compute_accuracy(params, steps, train_images, train_labels,
       totalacc = accuracy.eval(feed_dict={images: validation_images,
                                           labels: validation_labels})
       new_weights = variables.get_weights()
+      sess.close()
   return float(totalacc), new_weights
