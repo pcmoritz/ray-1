@@ -6,6 +6,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import os
+
 import ray
 import tensorflow as tf
 
@@ -59,10 +61,11 @@ def cnn_setup(params, images, labels, num_classes, is_training=True, scope='LeNe
 def train_cnn_and_compute_accuracy(params, steps, train_images, train_labels,
                                    validation_images, validation_labels, device,
                                    weights=None):
+  os.environ["CUDA_VISIBLE_DEVICES"] = device
   # Extract the hyperparameters from the params dictionary.
   batch_size = 128
   # Create the network and related variables.
-  with tf.device(device), tf.Graph().as_default():
+  with tf.Graph().as_default():
     # Create the input placeholders for the network.
     images = tf.placeholder(tf.float32, shape=[None, 28, 28, 1])
     labels = tf.placeholder(tf.float32, shape=[None, 10])

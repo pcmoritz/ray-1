@@ -9,7 +9,7 @@ d = 2
 config = OrderedDict([("optimizer", ("SGD", "Adam")),
                       ("learning_rate", (0.01, 0.003, 0.001, 0.0003, 0.0001, 0.00003)),
                       ("layer1_num_filters", (16, 32, 64)),
-                      ("layer1_num_filters", (16, 32, 64)),
+                      ("layer2_num_filters", (16, 32, 64)),
                       ("layer3_num_filters", (512, 1024, 2048)),
                       ("layer1_stddev", (0.001, 0.003, 0.01, 0.03)),
                       ("layer2_stddev", (0.001, 0.003, 0.01, 0.03)),
@@ -66,6 +66,5 @@ if __name__ == "__main__":
   validation_images = ray.put(dataset.validation.images.reshape(-1, 28, 28, 1))
   validation_labels = ray.put(dataset.validation.labels)
 
-  accuracy_id = mnist.train_cnn_and_compute_accuracy.remote(
-        hyperparameters, 2000, train_images, train_labels, validation_images,
-        validation_labels, "/gpu:0")
+  params = [sample_params(config) for i in range(16)]
+  accuracy_ids = [mnist.train_cnn_and_compute_accuracy.remote(params[i], 2000, train_images, train_labels, validation_images, validation_labels, str(i)) for i in range(15)]
