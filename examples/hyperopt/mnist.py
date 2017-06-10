@@ -94,4 +94,5 @@ def train_cnn_and_compute_accuracy(params, steps, train_images, train_labels,
                                           labels: validation_labels})
       new_weights = variables.get_weights()
       sess.close()
+      tf.reset_default_graph()
   return float(totalacc), new_weights
