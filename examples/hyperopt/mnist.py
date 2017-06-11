@@ -61,6 +61,8 @@ def cnn_setup(params, images, labels, num_classes, is_training=True, scope='LeNe
 def train_cnn_and_compute_accuracy(params, steps, train_images, train_labels,
                                    validation_images, validation_labels, device,
                                    weights=None):
+  import time
+  time.sleep(2) # TODO(pcm): Get rid of this
   os.environ["CUDA_VISIBLE_DEVICES"] = device
   # Extract the hyperparameters from the params dictionary.
   batch_size = 128
