@@ -58,12 +58,12 @@ def cnn_setup(params, images, labels, num_classes, is_training=True, scope='LeNe
 # Define a remote function that takes a set of hyperparameters as well as the
 # data, consructs and trains a network, and returns the validation accuracy.
 @ray.remote(max_num_tasks=1)
-def train_cnn_and_compute_accuracy(params, steps, train_images, train_labels,
-                                   validation_images, validation_labels, device,
+def train_cnn_and_compute_accuracy(device, params, steps, train_images, train_labels,
+                                   validation_images, validation_labels,
                                    weights=None):
   import time
   time.sleep(2) # TODO(pcm): Get rid of this
-  os.environ["CUDA_VISIBLE_DEVICES"] = device
+  os.environ["CUDA_VISIBLE_DEVICES"] = str(device)
   # Extract the hyperparameters from the params dictionary.
   batch_size = 128
   # Create the network and related variables.
