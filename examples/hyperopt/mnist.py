@@ -24,11 +24,11 @@ def get_batch(data, batch_index, batch_size):
 
 def cnn_setup(params, images, labels, num_classes, is_training=True, scope='LeNet'):
   with tf.variable_scope(scope, 'LeNet', [images, num_classes]):
-    net = slim.conv2d(images, params["layer1_num_filters"], [5, 5],
+    net = slim.conv2d(images, params["layer1_num_filters"], [param["layer1_filter_size"], param["layer1_filter_size"]],
                       weights_initializer=tf.truncated_normal_initializer(stddev=params["layer1_stddev"]),
                       scope='conv1')
     net = slim.max_pool2d(net, [2, 2], 2, scope='pool1')
-    net = slim.conv2d(net, params["layer2_num_filters"], [5, 5],
+    net = slim.conv2d(net, params["layer2_num_filters"], [param["layer2_filter_size"], param["layer2_filter_size"]],
                       weights_initializer=tf.truncated_normal_initializer(stddev=params["layer2_stddev"]),
                       scope='conv2')
     net = slim.max_pool2d(net, [2, 2], 2, scope='pool2')
@@ -37,7 +37,7 @@ def cnn_setup(params, images, labels, num_classes, is_training=True, scope='LeNe
     net = slim.fully_connected(net, params["layer3_num_filters"],
                                weights_initializer=tf.truncated_normal_initializer(stddev=params["layer3_stddev"]),
                                scope='fc3')
-    net = slim.dropout(net, 0.5, is_training=True, scope='dropout3')
+    net = slim.dropout(net, params["dropout_keep_prob"], is_training=True, scope='dropout3')
     logits = slim.fully_connected(net, num_classes, activation_fn=None,
                                   weights_initializer=tf.truncated_normal_initializer(stddev=params["layer4_stddev"]),
                                   scope='fc4')
@@ -45,9 +45,9 @@ def cnn_setup(params, images, labels, num_classes, is_training=True, scope='LeNe
   cross_entropy = tf.reduce_mean(-tf.reduce_sum(labels * tf.log(output),
                                  reduction_indices=[1]))
   correct_pred = tf.equal(tf.argmax(output, 1), tf.argmax(labels, 1))
-  if params["optimizer"] == "Adam":
+  if params["optimizer"] > 0.0:
     optimizer = tf.train.AdamOptimizer(params["learning_rate"])
-  elif params["optimizer"] == "SGD":
+  elif params["optimizer"] < 0.0:
     optimizer = tf.train.GradientDescentOptimizer(params["learning_rate"])
   else:
     assert False, "Unknown optimizer {}".format(params["optimizer"])
@@ -61,8 +61,6 @@ def cnn_setup(params, images, labels, num_classes, is_training=True, scope='LeNe
 def train_cnn_and_compute_accuracy(device, params, steps, train_images, train_labels,
                                    validation_images, validation_labels,
                                    weights=None):
-  import time
-  time.sleep(2) # TODO(pcm): Get rid of this
   os.environ["CUDA_VISIBLE_DEVICES"] = str(device)
   # Extract the hyperparameters from the params dictionary.
   batch_size = 128
