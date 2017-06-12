@@ -102,7 +102,7 @@ if __name__ == "__main__":
 
   params = [sample_params(config) for i in range(128)]
   
-  args = [(param, 2000, train_images, train_labels, validation_images, validation_labels) for param in params]
+  args = [(param, 4000, train_images, train_labels, validation_images, validation_labels) for param in params]
   result_dict = execute_rounds(mnist.train_cnn_and_compute_accuracy, args, 16)
   # accuracy_ids = [mnist.train_cnn_and_compute_accuracy.remote(params[i], 2000, train_images, train_labels, validation_images, validation_labels, str(i % 16)) for i in range(len(params))]
 

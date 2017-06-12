@@ -24,11 +24,11 @@ def get_batch(data, batch_index, batch_size):
 
 def cnn_setup(params, images, labels, num_classes, is_training=True, scope='LeNet'):
   with tf.variable_scope(scope, 'LeNet', [images, num_classes]):
-    net = slim.conv2d(images, params["layer1_num_filters"], [param["layer1_filter_size"], param["layer1_filter_size"]],
+    net = slim.conv2d(images, params["layer1_num_filters"], [params["layer1_filter_size"], params["layer1_filter_size"]],
                       weights_initializer=tf.truncated_normal_initializer(stddev=params["layer1_stddev"]),
                       scope='conv1')
     net = slim.max_pool2d(net, [2, 2], 2, scope='pool1')
-    net = slim.conv2d(net, params["layer2_num_filters"], [param["layer2_filter_size"], param["layer2_filter_size"]],
+    net = slim.conv2d(net, params["layer2_num_filters"], [params["layer2_filter_size"], params["layer2_filter_size"]],
                       weights_initializer=tf.truncated_normal_initializer(stddev=params["layer2_stddev"]),
                       scope='conv2')
     net = slim.max_pool2d(net, [2, 2], 2, scope='pool2')
