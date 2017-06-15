@@ -84,6 +84,7 @@ script:
   - python python/ray/global_scheduler/test/test.py
 
   - python test/runtest.py
+  - bash multiple_local_schedulers.sh
   - python test/array_test.py
   - python test/actor_test.py
   - python test/tensorflow_test.py
