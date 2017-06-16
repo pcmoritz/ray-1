@@ -86,18 +86,21 @@ def collect_samples(agents, num_timesteps, gamma, lam, horizon,
   trajectories = []
   total_rewards = []
   traj_len_means = []
+  trajectories_in_progress = {agent.compute_trajectory.remote(gamma, lam, horizon): agent for agent in agents}
   while num_timesteps_so_far < num_timesteps:
-    trajectory_batch = ray.get(
-        [agent.compute_trajectory.remote(gamma, lam, horizon)
-         for agent in agents])
-    trajectory = concatenate(trajectory_batch)
+    next_trajectory, waiting_trajectories = ray.wait(list(trajectories_in_progress.keys()))
+    assert len(next_trajectory) == 1
+    agent = trajectories_in_progress.pop(next_trajectory[0])
+    trajectory = ray.get(next_trajectory[0])
     trajectory = flatten(trajectory)
     not_done = np.logical_not(trajectory["dones"])
     total_rewards.append(
-        trajectory["raw_rewards"][not_done].sum(axis=0).mean() / len(agents))
-    traj_len_means.append(not_done.sum(axis=0).mean() / len(agents))
+        trajectory["raw_rewards"][not_done].sum(axis=0).mean())
+    traj_len_means.append(not_done.sum(axis=0).mean())
     trajectory = {key: val[not_done] for key, val in trajectory.items()}
     num_timesteps_so_far += len(trajectory["dones"])
     trajectories.append(trajectory)
+    trajectories_in_progress[agent.compute_trajectory.remote(gamma, lam, horizon)] = agent
+    
   return (concatenate(trajectories), np.mean(total_rewards),
           np.mean(traj_len_means))
