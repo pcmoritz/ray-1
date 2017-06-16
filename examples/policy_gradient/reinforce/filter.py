@@ -70,6 +70,7 @@ class RunningStat(object):
 
 class MeanStdFilter(object):
   def __init__(self, shape, demean=True, destd=True, clip=10.0):
+    self.shape = shape
     self.demean = demean
     self.destd = destd
     self.clip = clip

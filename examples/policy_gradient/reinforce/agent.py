@@ -6,9 +6,11 @@ from collections import namedtuple
 
 import gym.spaces
 import tensorflow as tf
+import tensorflow.contrib.slim as slim
 import os
 
 from tensorflow.python.client import timeline
+from tensorflow.python.ops import control_flow_ops
 
 import ray
 
@@ -21,7 +23,7 @@ from reinforce.utils import make_divisible_by, average_gradients
 
 
 # Each tower is a copy of the policy graph pinned to a specific device
-Tower = namedtuple("Tower", ["init_op", "grads", "policy"])
+Tower = namedtuple("Tower", ["init_op", "grads", "policy", "batchnorm_update_op"])
 
 
 class Agent(object):
@@ -56,7 +58,7 @@ class Agent(object):
       config_proto = tf.ConfigProto()
     else:
       config_proto = tf.ConfigProto(**config["tf_session_args"])
-    self.preprocessor = preprocessor
+    self.preprocessor = MeanStdFilter(shape=(376,)) # preprocessor
     self.sess = tf.Session(config=config_proto)
 
     # Defines the training inputs.
@@ -102,7 +104,8 @@ class Agent(object):
     else:
       self.batch_size = config["sgd_batchsize"]
       self.per_device_batch_size = int(self.batch_size / len(devices))
-    self.optimizer = tf.train.AdamOptimizer(self.config["sgd_stepsize"])
+    self.sgd_stepsize = tf.placeholder(tf.float32, shape=[])
+    self.optimizer = tf.train.AdamOptimizer(self.sgd_stepsize)
     self.setup_common_policy(
         self.observations, self.advantages, self.actions, self.prev_logits)
     for device, (obs, adv, acts, plog) in zip(devices, data_splits):
@@ -110,6 +113,7 @@ class Agent(object):
           self.setup_per_device_policy(device, obs, adv, acts, plog))
 
     avg = average_gradients([t.grads for t in self.towers])
+    # avg_op = control_flow_ops.with_dependencies([tf.group(*self.towers[-1].batchnorm_update_op)], avg)
     self.train_op = self.optimizer.apply_gradients(avg)
 
     # Metric ops
@@ -166,8 +170,10 @@ class Agent(object):
             self.env.observation_space, self.env.action_space,
             obs_slice, adv_slice, acts_slice, plog_slice, self.logit_dim,
             self.kl_coeff, self.distribution_class, self.config, self.sess)
+        # loss = control_flow_ops.with_dependencies([tf.group(*policy.batchnorm_update_op)], policy.loss)
+        loss = policy.loss
         grads = self.optimizer.compute_gradients(
-            policy.loss, colocate_gradients_with_ops=True)
+            loss, colocate_gradients_with_ops=True)
 
       return Tower(
           tf.group(
@@ -176,7 +182,8 @@ class Agent(object):
                 all_acts.initializer,
                 all_plog.initializer]),
           grads,
-          policy)
+          policy,
+          policy.batchnorm_update_op)
 
   def load_data(self, trajectories, full_trace):
     """
@@ -217,7 +224,7 @@ class Agent(object):
     assert tuples_per_device % self.per_device_batch_size == 0
     return tuples_per_device
 
-  def run_sgd_minibatch(self, batch_index, kl_coeff, full_trace, file_writer):
+  def run_sgd_minibatch(self, batch_index, kl_coeff, sgd_stepsize, full_trace, file_writer):
     """
     Run a single step of SGD.
 
@@ -238,7 +245,8 @@ class Agent(object):
         [self.train_op, self.mean_loss, self.mean_kl, self.mean_entropy],
         feed_dict={
             self.batch_index: batch_index,
-            self.kl_coeff: kl_coeff},
+            self.kl_coeff: kl_coeff,
+            self.sgd_stepsize: sgd_stepsize},
         options=run_options,
         run_metadata=run_metadata)
 

@@ -13,29 +13,30 @@ import tensorflow as tf
 
 from reinforce.env import (NoPreprocessor, AtariRamPreprocessor,
                            AtariPixelPreprocessor)
+from reinforce.filter import MeanStdFilter
 from reinforce.agent import Agent, RemoteAgent
 from reinforce.rollout import collect_samples
 from reinforce.utils import shuffle
 
 
-config = {"kl_coeff": 0.2,
-          "num_sgd_iter": 30,
+config = {"kl_coeff": 5.0,
+          "num_sgd_iter": 20,
           "max_iterations": 1000,
-          "sgd_stepsize": 5e-5,
+          "sgd_stepsize": 1e-4,
           # TODO(pcm): Expose the choice between gpus and cpus
           # as a command line argument.
-          "devices": ["/cpu:%d" % i for i in range(4)],
+          "devices": ["/gpu:%d" % i for i in range(8)],
           "tf_session_args": {
-              "device_count": {"CPU": 4},
+              "device_count": {"GPU": 8},
               "log_device_placement": False,
               "allow_soft_placement": True,
           },
-          "sgd_batchsize": 128,  # total size across all devices
+          "sgd_batchsize": 32768,  # total size across all devices
           "entropy_coeff": 0.0,
           "clip_param": 0.3,
           "kl_target": 0.01,
-          "timesteps_per_batch": 40000,
-          "num_agents": 5,
+          "timesteps_per_batch": 160000,
+          "num_agents": 64,
           "tensorboard_log_dir": "/tmp/ray",
           "full_trace_nth_sgd_batch": -1,
           "full_trace_data_load": False}
@@ -61,6 +62,8 @@ if __name__ == "__main__":
   elif mdp_name == "CartPole-v0":
     preprocessor = NoPreprocessor()
   elif mdp_name == "Walker2d-v1":
+    preprocessor = NoPreprocessor()
+  elif mdp_name == "Humanoid-v1":
     preprocessor = NoPreprocessor()
   else:
     print("No environment was chosen, so defaulting to Pong-v0.")
@@ -129,7 +132,7 @@ if __name__ == "__main__":
             batch_index == config["full_trace_nth_sgd_batch"])
         batch_loss, batch_kl, batch_entropy = agent.run_sgd_minibatch(
             permutation[batch_index] * agent.per_device_batch_size,
-            kl_coeff, full_trace, file_writer)
+            kl_coeff, min(i + 1, 5) * config["sgd_stepsize"] / 5.0, full_trace, file_writer)
         loss.append(batch_loss)
         kl.append(batch_kl)
         entropy.append(batch_entropy)
