@@ -37,6 +37,6 @@ def fc_net(inputs, num_classes=10, free_logstd=False):
       logstd = tf.get_variable(name="logstd", shape=[1, num_classes],
                                initializer=tf.zeros_initializer)
       # Broadcast logstd to the right size.
-      return tf.concat(1, [fc4, fc4 * 0.0 + logstd])
+      return tf.concat([fc4, fc4 * 0.0 + logstd], axis=1)
     else:
       return fc4
