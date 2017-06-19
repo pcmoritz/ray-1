@@ -18,28 +18,34 @@ from reinforce.rollout import collect_samples
 from reinforce.utils import shuffle
 
 
-config = {"kl_coeff": 0.2,
+config = {"kl_coeff": 1.0,
           "num_sgd_iter": 30,
           "max_iterations": 1000,
-          "sgd_stepsize": 5e-5,
+          "sgd_stepsize": 1e-4,
           # TODO(pcm): Expose the choice between gpus and cpus
           # as a command line argument.
-          "devices": ["/cpu:%d" % i for i in range(4)],
+          "devices": ["/gpu:%d" % i for i in range(8)],
           "tf_session_args": {
-              "device_count": {"CPU": 4},
+              "device_count": {"GPU": 8},
               "log_device_placement": False,
               "allow_soft_placement": True,
           },
-          "sgd_batchsize": 128,  # total size across all devices
+          "sgd_batchsize": 32768,  # total size across all devices
           "entropy_coeff": 0.0,
           "clip_param": 0.3,
           "kl_target": 0.01,
-          "timesteps_per_batch": 40000,
-          "num_agents": 5,
+          "timesteps_per_batch": 320000,
+          "num_agents": 64,
           "tensorboard_log_dir": "/tmp/ray",
           "full_trace_nth_sgd_batch": -1,
           "full_trace_data_load": False,
-          "model_checkpoint_file": "/tmp/iteration-%s.ckpt"}
+          "model_checkpoint_file": "/tmp/iteration-%s.ckpt",
+          # If use_free_logstd is True, the policy will sample actions with
+          # a standard deviation that is optimized over separately from
+          # the policy network (a "free" variable). Otherwise the standard
+          # deviation is computed as part of the network, based on the
+          # observations.
+          "use_free_logstd": False}
 
 
 if __name__ == "__main__":
@@ -68,11 +74,15 @@ if __name__ == "__main__":
     preprocessor = NoPreprocessor()
   elif mdp_name == "Walker2d-v1":
     preprocessor = NoPreprocessor()
+  elif mdp_name == "Humanoid-v1":
+    preprocessor = NoPreprocessor()
+    config["use_free_logstd"] = True
   else:
     print("No environment was chosen, so defaulting to Pong-v0.")
     mdp_name = "Pong-v0"
     preprocessor = AtariPixelPreprocessor()
 
+  print("Using configuration {}".format(config))
   print("Using the environment {}.".format(mdp_name))
   agents = [RemoteAgent.remote(mdp_name, 1, preprocessor, config, True)
             for _ in range(config["num_agents"])]
@@ -147,7 +157,7 @@ if __name__ == "__main__":
             batch_index == config["full_trace_nth_sgd_batch"])
         batch_loss, batch_kl, batch_entropy = agent.run_sgd_minibatch(
             permutation[batch_index] * agent.per_device_batch_size,
-            kl_coeff, full_trace, file_writer)
+            kl_coeff, config["sgd_stepsize"], full_trace, file_writer)
         loss.append(batch_loss)
         kl.append(batch_kl)
         entropy.append(batch_entropy)

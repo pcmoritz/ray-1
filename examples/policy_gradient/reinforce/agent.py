@@ -62,7 +62,7 @@ class Agent(object):
       config_proto = tf.ConfigProto()
     else:
       config_proto = tf.ConfigProto(**config["tf_session_args"])
-    self.preprocessor = preprocessor
+    self.preprocessor = MeanStdFilter(shape=(376,)) # preprocessor for humanoid, TODO(pcm): Make this generic
     self.sess = tf.Session(config=config_proto)
     if config["use_tf_debugger"] and not is_remote:
       self.sess = tf_debug.LocalCLIDebugWrapperSession(self.sess)
@@ -111,7 +111,8 @@ class Agent(object):
     else:
       self.batch_size = config["sgd_batchsize"]
       self.per_device_batch_size = int(self.batch_size / len(devices))
-    self.optimizer = tf.train.AdamOptimizer(self.config["sgd_stepsize"])
+    self.sgd_stepsize = tf.placeholder(tf.float32, shape=[])
+    self.optimizer = tf.train.AdamOptimizer(self.sgd_stepsize)
     self.setup_common_policy(
         self.observations, self.advantages, self.actions, self.prev_logits)
     for device, (obs, adv, acts, plog) in zip(devices, data_splits):
@@ -226,7 +227,7 @@ class Agent(object):
     assert tuples_per_device % self.per_device_batch_size == 0
     return tuples_per_device
 
-  def run_sgd_minibatch(self, batch_index, kl_coeff, full_trace, file_writer):
+  def run_sgd_minibatch(self, batch_index, kl_coeff, sgd_stepsize, full_trace, file_writer):
     """
     Run a single step of SGD.
 
@@ -247,7 +248,8 @@ class Agent(object):
         [self.train_op, self.mean_loss, self.mean_kl, self.mean_entropy],
         feed_dict={
             self.batch_index: batch_index,
-            self.kl_coeff: kl_coeff},
+            self.kl_coeff: kl_coeff,
+            self.sgd_stepsize: sgd_stepsize},
         options=run_options,
         run_metadata=run_metadata)
 
