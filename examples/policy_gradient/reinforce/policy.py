@@ -25,7 +25,8 @@ class ProximalPolicyLoss(object):
       self.curr_logits = vision_net(observations, num_classes=logit_dim)
     else:
       assert len(observation_space.shape) == 1
-      self.curr_logits = fc_net(observations, num_classes=logit_dim)
+      self.curr_logits = fc_net(observations, num_classes=logit_dim,
+                                logstd=config["use_free_logstd"])
     self.curr_dist = distribution_class(self.curr_logits)
     self.sampler = self.curr_dist.sample()
 

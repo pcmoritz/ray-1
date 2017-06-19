@@ -16,7 +16,10 @@ def normc_initializer(std=1.0):
   return _initializer
 
 
-def fc_net(inputs, num_classes=10, logstd=False):
+def fc_net(inputs, num_classes=10, free_logstd=False):
+  if free_logstd:
+    assert num_classes % 2 == 0
+    num_classes = num_classes // 2
   with tf.name_scope("fc_net"):
     fc1 = slim.fully_connected(inputs, 128,
                                weights_initializer=normc_initializer(1.0),
@@ -30,9 +33,10 @@ def fc_net(inputs, num_classes=10, logstd=False):
     fc4 = slim.fully_connected(fc3, num_classes,
                                weights_initializer=normc_initializer(0.01),
                                activation_fn=None, scope="fc4")
-    if logstd:
-      logstd = tf.get_variable(name="logstd", shape=[num_classes],
+    if free_logstd:
+      logstd = tf.get_variable(name="logstd", shape=[1, num_classes],
                                initializer=tf.zeros_initializer)
-      return tf.concat(1, [fc4, logstd])
+      # Broadcast logstd to the right size.
+      return tf.concat(1, [fc4, fc4 * 0.0 + logstd])
     else:
       return fc4
