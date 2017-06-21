@@ -21,14 +21,14 @@ def fc_net(inputs, num_classes=10, free_logstd=False):
     assert num_classes % 2 == 0
     num_classes = num_classes // 2
   with tf.name_scope("fc_net"):
-    fc1 = slim.fully_connected(inputs, 128,
-                               weights_initializer=normc_initializer(1.0),
+    fc1 = slim.fully_connected(inputs, 64,
+                               weights_initializer=normc_initializer(0.5),
                                scope="fc1")
-    fc2 = slim.fully_connected(fc1, 128,
-                               weights_initializer=normc_initializer(1.0),
+    fc2 = slim.fully_connected(fc1, 64,
+                               weights_initializer=normc_initializer(0.5),
                                scope="fc2")
-    fc3 = slim.fully_connected(fc2, 128,
-                               weights_initializer=normc_initializer(1.0),
+    fc3 = slim.fully_connected(fc2, 64,
+                               weights_initializer=normc_initializer(0.5),
                                scope="fc3")
     fc4 = slim.fully_connected(fc3, num_classes,
                                weights_initializer=normc_initializer(0.01),
