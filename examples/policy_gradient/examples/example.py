@@ -24,18 +24,18 @@ config = {"kl_coeff": 1.0,
           "sgd_stepsize": 1e-4,
           # TODO(pcm): Expose the choice between gpus and cpus
           # as a command line argument.
-          "devices": ["/gpu:%d" % i for i in range(8)],
+          "devices": ["/gpu:%d" % i for i in range(4)],
           "tf_session_args": {
-              "device_count": {"GPU": 8},
+              "device_count": {"GPU": 4},
               "log_device_placement": False,
               "allow_soft_placement": True,
           },
-          "sgd_batchsize": 32768,  # total size across all devices
+          "sgd_batchsize": 65536,  # total size across all devices
           "entropy_coeff": 0.0,
-          "clip_param": 0.3,
+          "clip_param": 0.2,
           "kl_target": 0.01,
           "timesteps_per_batch": 320000,
-          "num_agents": 64,
+          "num_agents": 320,
           "tensorboard_log_dir": "/tmp/ray",
           "full_trace_nth_sgd_batch": -1,
           "full_trace_data_load": False,
