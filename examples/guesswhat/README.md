@@ -4,7 +4,7 @@ This repo aim at reproducing the results from the series of GuessWhat?! papers, 
 - GuessWhat?! Visual object discovery through multi-modal dialogue - https://arxiv.org/abs/1611.08481
 - End-to-end optimization of goal-driven and visually grounded dialogue systems - https://arxiv.org/abs/1703.05423
 
-The code was equally developed bu Florian Strub (University of Lille) and Harm de Vries (University of Montreal)
+The code was equally developed bu Florian Strub (University of Lille) and Harm de Vries (University of Montreal). This version of the code was modified by the Ray team.
 
 The project is part of the CHISTERA - IGLU Project.
 
@@ -32,14 +32,6 @@ Higher-level image understanding, like spatial reasoning and language grounding,
 
 ## Installation
 
-
-### Download
-
-Our code has internal dependences called submodules. To properly clone the repository, please use the following git command:\
-
-```
-git clone --recursive git@github.com:GuessWhatGame/guesswhat.git
-```
 
 ### Requirements
 
@@ -83,16 +75,6 @@ guesswhat
 |
 └── src            # source files
 ```
-
-To complete the git-clone file arhictecture, you can do:
-
-```
-cd guesswhat
-mkdir data; mkdir data/img ; mkdir data/img/raw
-mkdir out; mkdir out/oracle ; mkdir out/guesser; mkdir out/qgen; mkdir out/looper ; 
-```
-
-Of course, one is free to change this file architecture!
 
 ### Data
 GuessWhat?! relies on two datasets:
@@ -310,8 +292,3 @@ year = {2017}
  - Mila Team
 
 We would also like people that help improving the code base namely: Rui Zhao, Hannes Schulz.
-
-
-
-
-
