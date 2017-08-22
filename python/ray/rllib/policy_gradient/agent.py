@@ -78,7 +78,7 @@ class Agent(object):
                 "action space" + str(type(action_space)) +
                 "currently not supported")
         self.distribution_class, self.logit_dim = ModelCatalog.get_action_dist(
-            action_space)
+            action_space, dist_type=config["model"].get("dist_type"))
         self.prev_logits = tf.placeholder(
             tf.float32, shape=(None, self.logit_dim))
 

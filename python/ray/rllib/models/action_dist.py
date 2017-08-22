@@ -29,6 +29,27 @@ class ActionDistribution(object):
         raise NotImplementedError
 
 
+class Beta(ActionDistribution):
+    """Beta distribution for continuous action spaces."""
+
+    def __init__(self, inputs):
+        alpha, beta = tf.split(inputs, 2, axis=1)
+        self.dist = tf.contrib.distributions.Beta(alpha, beta)
+
+    def logp(self, x):
+        return self.dist.log_prob(x)
+
+    def entropy(self):
+        return self.dist.entropy()
+
+    def kl(self, other):
+        assert isinstance(other, Beta)
+        return tf.contrib.distributions.kl_divergence(self.dist, other.dist)
+
+    def sample(self):
+        return self.dist.sample()
+
+
 class Categorical(ActionDistribution):
     """Categorical distribution for discrete action spaces."""
 

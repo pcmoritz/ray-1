@@ -5,7 +5,7 @@ from __future__ import print_function
 import gym
 
 from ray.rllib.models.action_dist import (
-    Categorical, Deterministic, DiagGaussian)
+    Categorical, Beta, Deterministic, DiagGaussian)
 from ray.rllib.models.preprocessors import (
     NoPreprocessor, AtariRamPreprocessor, AtariPixelPreprocessor)
 from ray.rllib.models.fcnet import FullyConnectedNetwork
@@ -39,6 +39,8 @@ class ModelCatalog(object):
         if isinstance(action_space, gym.spaces.Box):
             if dist_type is None:
                 return DiagGaussian, action_space.shape[0] * 2
+            elif dist_type == 'beta':
+                return Beta, action_space.shape[0] * 2
             elif dist_type == 'deterministic':
                 return Deterministic, action_space.shape[0]
         elif isinstance(action_space, gym.spaces.Discrete):
