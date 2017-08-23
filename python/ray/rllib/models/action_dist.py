@@ -37,14 +37,15 @@ class Beta(ActionDistribution):
         self.dist = tf.contrib.distributions.Beta(alpha, beta)
 
     def logp(self, x):
-        return self.dist.log_prob(x)
+        return tf.reduce_sum(self.dist.log_prob(x), reduction_indices=[1])
 
     def entropy(self):
-        return self.dist.entropy()
+        return tf.reduce_sum(self.dist.entropy(), reduction_indices=[1])
 
     def kl(self, other):
         assert isinstance(other, Beta)
-        return tf.contrib.distributions.kl_divergence(self.dist, other.dist)
+        kl_div = tf.contrib.distributions.kl_divergence(self.dist, other.dist)
+        return tf.reduce_sum(kl_div, reduction_indices=[1])
 
     def sample(self):
         return self.dist.sample()
