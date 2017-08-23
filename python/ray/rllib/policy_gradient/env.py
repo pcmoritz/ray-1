@@ -32,7 +32,7 @@ class BatchedEnv(object):
                 rewards.append(0.0)
                 continue
             new_action = self.action_space.low + action * (self.action_space.high - self.action_space.low)
-            observation, reward, done, info = self.envs[i].step(action)
+            observation, reward, done, info = self.envs[i].step(new_action)
             if render:
                 self.envs[0].render()
             observations.append(self.preprocessor.transform(observation))
