@@ -34,7 +34,7 @@ class Beta(ActionDistribution):
 
     def __init__(self, inputs):
         alpha, beta = tf.split(inputs, 2, axis=1)
-        self.dist = tf.contrib.distributions.Beta(alpha, beta)
+        self.dist = tf.contrib.distributions.Beta(1.0 + tf.exp(alpha), 1.0 + tf.exp(beta))
 
     def logp(self, x):
         return tf.reduce_sum(self.dist.log_prob(x), reduction_indices=[1])
