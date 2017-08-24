@@ -110,7 +110,7 @@ def collect_samples(agents,
     agent_dict = {agent.compute_steps.remote(
                       config["gamma"], config["lambda"],
                       config["horizon"], config["min_steps_per_task"]):
-                  agent for agent in agents}
+                  agent for agent in agents + agents}
     while num_timesteps_so_far < config["timesteps_per_batch"]:
         # TODO(pcm): Make wait support arbitrary iterators and remove the
         # conversion to list here.
