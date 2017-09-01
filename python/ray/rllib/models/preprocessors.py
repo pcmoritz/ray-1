@@ -17,12 +17,12 @@ class Preprocessor(object):
 
 class AtariPixelPreprocessor(Preprocessor):
     def transform_shape(self, obs_shape):
-        return (80, 80, 3)
+        return (40, 40, 3)
 
     # TODO(ekl) why does this need to return an extra size-1 dim (the [None])
     def transform(self, observation):
         """Downsamples images from (210, 160, 3) to (80, 80, 3)."""
-        return (observation[25:-25:2, ::2, :][None] - 128) / 128
+        return (observation[25:-25:4, ::4, :][None] - 128) / 128
 
 
 class AtariRamPreprocessor(Preprocessor):
