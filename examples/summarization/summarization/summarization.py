@@ -8,12 +8,13 @@ import gym
 import gym.spaces
 import random
 
-from rouge import Rouge
+from .rouge import Rouge
 
 Datapoint = collections.namedtuple('Datapoint', ['text', 'summary'])
 
 class WordSequencePair(gym.Space):
     def __init__(self, past_context_size, future_context_size):
+        self.shape = None
         self.past_context_size = past_context_size
         self.future_context_size = future_context_size
 

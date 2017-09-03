@@ -55,7 +55,7 @@ class NoPreprocessor(Preprocessor):
     def transform(self, observation):
         return observation
 
-model = gensim.models.KeyedVectors.load_word2vec_format('GoogleNews-vectors-negative300.bin', binary=True)
+model = gensim.models.KeyedVectors.load_word2vec_format('/mnt/data/GoogleNews-vectors-negative300.bin', binary=True)
 
 class Word2VecPreprocessor(Preprocessor):
     def transform_shape(self, obs_shape):
