@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import gensim
+
 
 class Preprocessor(object):
     """Defines an abstract observation preprocessor function."""
@@ -52,3 +54,13 @@ class NoPreprocessor(Preprocessor):
 
     def transform(self, observation):
         return observation
+
+model = gensim.models.KeyedVectors.load_word2vec_format('GoogleNews-vectors-negative300.bin', binary=True)
+
+class Word2VecPreprocessor(Preprocessor):
+    def transform_shape(self, obs_shape):
+        return (4, 300)
+
+    def transform(self, observation):
+        past, future = observation
+        return np.concatenate([model.wv[word] for word in past + future])
