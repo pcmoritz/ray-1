@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import print_function
 
 import gensim
+import numpy as np
 
 
 class Preprocessor(object):
@@ -58,9 +59,19 @@ class NoPreprocessor(Preprocessor):
 model = gensim.models.KeyedVectors.load_word2vec_format('/mnt/data/GoogleNews-vectors-negative300.bin', binary=True)
 
 class Word2VecPreprocessor(Preprocessor):
+    def transform_word(self, word):
+        word = word.strip(",.!?")
+        if word == "":
+            return np.zeros(300)
+        else:
+            try:
+                return model.wv[word]
+            except:
+                return np.zeros(300)
+    
     def transform_shape(self, obs_shape):
-        return (4, 300)
+        return (4 * 300,)
 
     def transform(self, observation):
         past, future = observation
-        return np.concatenate([model.wv[word] for word in past + future])
+        return np.concatenate([self.transform_word(word) for word in past + future])[:]

@@ -14,7 +14,7 @@ Datapoint = collections.namedtuple('Datapoint', ['text', 'summary'])
 
 class WordSequencePair(gym.Space):
     def __init__(self, past_context_size, future_context_size):
-        self.shape = None
+        self.shape = (4 * 300,)
         self.past_context_size = past_context_size
         self.future_context_size = future_context_size
 
@@ -40,18 +40,22 @@ class SummarizationEnv(gym.Env):
         self.current_token = 0
         self.prediction_so_far = []
         self.last_score = 0.0
+        self.done = False
+        return (self.observation_space.past_context_size * [""], self.observation_space.future_context_size * [""])
 
     def step(self, action):
         text = self.data[self.current_document].text
         if action == 1:
             self.prediction_so_far.append(text[self.current_token])
+        if self.done:
+            return (self.observation_space.past_context_size * [""], self.observation_space.future_context_size * [""]), 0.0, self.done, {}
         self.current_token += 1
         score = self.scorer.calculate_score(text, self.prediction_so_far)
         reward = score - self.last_score
         self.last_score = reward
-        done = self.current_token == len(self.data[self.current_document].summary)
+        self.done = self.current_token == len(self.data[self.current_document].summary) or self.current_token >= len(text) - 1
         p = self.observation_space.past_context_size
         f = self.observation_space.future_context_size
         past = (p * [""] + text[:self.current_token])[-p:]
         future = (text[self.current_token:] + f * [""])[0:f]
-        return (past, future), reward, done
+        return (past, future), reward, self.done, {}

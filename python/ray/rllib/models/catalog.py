@@ -7,7 +7,7 @@ import gym
 from ray.rllib.models.action_dist import (
     Categorical, Deterministic, DiagGaussian)
 from ray.rllib.models.preprocessors import (
-    NoPreprocessor, AtariRamPreprocessor, AtariPixelPreprocessor)
+    NoPreprocessor, AtariRamPreprocessor, AtariPixelPreprocessor, Word2VecPreprocessor)
 from ray.rllib.models.fcnet import FullyConnectedNetwork
 from ray.rllib.models.visionnet import VisionNetwork
 
@@ -103,6 +103,9 @@ class ModelCatalog(object):
         elif obs_shape == ATARI_RAM_OBS_SHAPE:
             print("Assuming Atari ram env, using AtariRamPreprocessor.")
             return AtariRamPreprocessor(options)
+
+        if env_name == "SimpleSummarization-v0":
+            return Word2VecPreprocessor(options)
 
         print("Non-atari env, not using any observation preprocessor.")
         return NoPreprocessor(options)

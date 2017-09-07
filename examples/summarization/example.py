@@ -1,9 +1,14 @@
 import numpy as np
 
-from gym.envs.registration import register
+import ray
 import ray.rllib.ppo as ppo
+import summarization
 
-register(id='SimpleSummarization-v0', entry_point='summarization:SummarizationEnv', kwargs={"filepath": "/mnt/data/news_summary.csv"}, nondeterministic=False)
+ray.init()
+
+@ray.remote
+def import_summarization():
+    summarization
 
 config = ppo.DEFAULT_CONFIG.copy()
 alg = ppo.PPOAgent("SimpleSummarization-v0", config)
