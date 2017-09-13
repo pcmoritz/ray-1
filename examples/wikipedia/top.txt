@@ -1,0 +1,990 @@
+United States: 2832466
+Brazil: 2064729
+India: 2057714
+World War II: 2003491
+World War I: 1973067
+Adolf Hitler: 1748913
+United Kingdom: 1635020
+Sex: 1500447
+Germany: 1491947
+Australia: 1385041
+Canada: 1343337
+China: 1257435
+Indonesia: 1210195
+Global warming: 1197596
+Japan: 1190207
+William Shakespeare: 1189930
+Russia: 1176992
+France: 1148555
+Albert Einstein: 1140862
+New York City: 1135126
+Internet: 1112769
+Automobile: 1111057
+Abraham Lincoln: 1048416
+European Union: 1001114
+Singapore: 997160
+London: 990914
+Mahatma Gandhi: 984292
+Spain: 930430
+Leonardo da Vinci: 926702
+The Beatles: 918846
+Nigeria: 902224
+Mexico: 900091
+Italy: 863909
+United Nations: 860368
+Nelson Mandela: 847279
+Elvis Presley: 835849
+Taj Mahal: 803484
+Cold War: 796203
+Nikola Tesla: 794636
+Europe: 790747
+Hong Kong: 788772
+Philippines: 774997
+South Africa: 767474
+Computer: 761916
+Turkey: 757765
+Walt Disney: 746462
+Isaac Newton: 745701
+Mount Everest: 735289
+Joseph Stalin: 731664
+Black Death: 713949
+Pakistan: 712871
+Association football: 712269
+Genghis Khan: 711620
+English language: 705791
+Iran: 704553
+Winston Churchill: 698597
+Ottoman Empire: 687494
+Earth: 682773
+Soviet Union: 672570
+Schizophrenia: 671738
+The Holocaust: 670038
+Islam: 669753
+Solar System: 659546
+Tuberculosis: 640247
+Jesus: 633789
+Korean War: 633737
+French Revolution: 633203
+George Washington: 632542
+Alexander the Great: 629895
+Opera: 628237
+Meat: 625838
+NATO: 625232
+Napoleon: 621841
+Egypt: 620281
+Dog: 608837
+Greek alphabet: 599604
+Christopher Columbus: 583721
+Paris: 579878
+Elizabeth I of England: 576311
+Ernest Hemingway: 575586
+Periodic table: 570543
+Poverty: 565753
+Buddhism: 565699
+Jimi Hendrix: 564478
+Sun: 562663
+Thomas Edison: 555624
+Pablo Picasso: 548498
+Julius Caesar: 546900
+Great Wall of China: 540056
+Bangladesh: 536418
+DNA: 533127
+Fascism: 523521
+Film: 522676
+Industrial Revolution: 521649
+Africa: 521135
+Benjamin Franklin: 516563
+Muhammad: 516442
+Great Depression: 515872
+Charlie Chaplin: 515639
+Vincent van Gogh: 510040
+Cancer: 505197
+Mars: 486083
+Circulatory system: 485376
+Science: 480126
+Autism: 479039
+Diabetes mellitus: 474441
+Carbon dioxide: 470905
+Karl Marx: 467849
+Human: 465690
+Pi: 462742
+Mona Lisa: 462576
+Maize: 460927
+Gautama Buddha: 455211
+Galileo Galilei: 454026
+Newton's laws of motion: 449049
+Love: 441877
+Hinduism: 440088
+Wolfgang Amadeus Mozart: 439837
+Aristotle: 438463
+Moon: 438245
+Rice: 435709
+Great Pyramid of Giza: 435233
+Rome: 434415
+Continent: 434177
+Mumbai: 433841
+Machu Picchu: 431642
+Mahabharata: 431398
+Psychology: 431022
+HIV/AIDS: 430933
+Pneumonia: 430546
+Nuclear power: 428952
+Charles Darwin: 427750
+Asia: 425750
+Water: 425405
+Physics: 423798
+North America: 423200
+Ludwig van Beethoven: 422969
+Edgar Allan Poe: 422480
+Mao Zedong: 419697
+Communism: 418782
+Sigmund Freud: 418561
+Istanbul: 417446
+Democracy: 416270
+Gold: 414860
+Philosophy: 414232
+Neil Armstrong: 409977
+Earthquake: 409881
+Pollution: 406722
+Food: 405062
+Malaria: 404043
+Wheat: 403438
+Globalization: 400319
+Big Bang: 395905
+Tokyo: 391769
+Milk: 390567
+Scientific method: 389993
+Dinosaur: 389932
+Jakarta: 389090
+British Empire: 387234
+Michelangelo: 386405
+São Paulo: 383678
+Jupiter: 382208
+Marie Curie: 381580
+Fruit: 381293
+Christianity: 381021
+Stonehenge: 379911
+Communication: 378437
+Colosseum: 377095
+Music: 373071
+Meningitis: 372766
+Martin Luther: 372760
+Economics: 372037
+Antarctica: 370274
+Smallpox: 369348
+Salvador Dalí: 367700
+Alzheimer's disease: 365737
+Middle Ages: 365625
+Animal: 364590
+South America: 363929
+Jerusalem: 363422
+Venus: 360830
+Olympic Games: 358671
+Hydrogen: 357960
+Democratic Republic of the Congo: 357659
+Plato: 354874
+Cheese: 354754
+Mobile phone: 354032
+Black hole: 352893
+Romanticism: 352719
+Mathematics: 350111
+Friedrich Nietzsche: 348517
+International Space Station: 347278
+Technology: 343381
+Hypertension: 338148
+Judaism: 337967
+Socialism: 337367
+Soybean: 336596
+Global Positioning System: 335718
+Photosynthesis: 334775
+Volcano: 334320
+Egg: 334259
+Aluminium: 332679
+Age of Enlightenment: 331857
+Tornado: 331161
+Feminism: 330384
+Board game: 330121
+Education: 329295
+Crusades: 328981
+Quantum mechanics: 328314
+Byzantine Empire: 327809
+Milky Way: 326502
+Capitalism: 322843
+Ancient Egypt: 318409
+Atheism: 317444
+Biology: 316847
+Evolution: 316543
+Shia Islam: 313835
+Video game: 313802
+Transistor: 313301
+Horse: 313163
+Charlemagne: 312792
+Artificial intelligence: 312760
+Myocardial infarction: 312129
+Alfred Hitchcock: 309466
+Bread: 308561
+Religion: 308357
+Mercury: 307958
+Moses: 307926
+Algorithm: 307230
+Speed of light: 304958
+Saturn: 304075
+Frida Kahlo: 303677
+History of India: 303145
+Augustus: 301309
+Alan Turing: 300814
+Vegetable: 300267
+Heart: 298378
+Computer science: 297976
+Mexico City: 296530
+Stroke: 296439
+French language: 296058
+Advertising: 295787
+Electricity: 295013
+Cereal: 293363
+Sociology: 292906
+Pythagoras: 292449
+Agriculture: 292076
+Virus: 291474
+Time: 291106
+John Locke: 290883
+Copper: 290851
+Anthropology: 290525
+Ethics: 289277
+Cloud: 289163
+Management: 288871
+Video: 288628
+Delhi: 287340
+Obesity: 285119
+God: 284956
+Spice: 284848
+Holy Roman Empire: 284720
+Human rights: 283633
+Bacteria: 283377
+Statistics: 282860
+Solar energy: 282247
+Sunni Islam: 281685
+Spanish language: 281666
+Prime number: 280036
+Steel: 278348
+Tea: 277862
+Liver: 277471
+Mechanical engineering: 277460
+Jazz: 276523
+Beijing: 276173
+Middle East: 276137
+Bible: 275743
+Pregnancy: 275587
+Moscow: 275433
+Chemistry: 275335
+Coffee: 273847
+Quran: 272377
+Mesopotamia: 271747
+Cell: 271640
+Epistemology: 271079
+Stone Age: 270735
+Nuclear weapon: 270392
+Energy: 270382
+Ship: 270019
+Immanuel Kant: 269768
+Indus Valley Civilization: 269719
+German language: 269358
+Racism: 268517
+Marriage: 267846
+Television: 267626
+Renewable energy: 267030
+Grand Canyon: 266604
+Iron: 266269
+Oxygen: 265038
+Nut: 264760
+Arabic language: 263740
+Don Quixote: 262652
+Plate tectonics: 262335
+Paul the Apostle: 261710
+Himalayas: 261640
+Set: 261558
+Flower: 261302
+Johann Sebastian Bach: 260645
+Bird: 259789
+Bahá'í Faith: 257161
+Sikhism: 254387
+Michael Faraday: 253736
+Biotechnology: 253086
+Literature: 252337
+Franz Kafka: 251766
+Acid: 251656
+Logarithm: 251554
+Fish: 251257
+Japanese language: 250193
+René Descartes: 250080
+Petroleum: 249623
+Logic: 249280
+Asthma: 249013
+Latin: 248682
+Ancient Greece: 247635
+Archimedes: 246881
+Potato: 246777
+Metaphysics: 246670
+Business: 246052
+International Monetary Fund: 245816
+Nervous system: 245195
+Claude Monet: 244792
+Ancient Rome: 244334
+Sexually transmitted disease: 242613
+Hip hop music: 242509
+Postmodernism: 242180
+Liberalism: 241929
+Atom: 241609
+Adam Smith: 241144
+Catholic Church: 240788
+Neptune: 240722
+Atmosphere of Earth: 239397
+Language: 237701
+Mammal: 236405
+Slavery: 236370
+Laser: 236154
+Game: 234305
+Universe: 233447
+Human body: 232235
+Sea: 231549
+Health: 231073
+Virginia Woolf: 230218
+Angkor Wat: 229981
+Gastroenteritis: 229809
+Force: 229347
+Blood: 228952
+Calculus: 228828
+Uranus: 228775
+Electromagnetic radiation: 228571
+Caspian Sea: 227028
+Law: 226311
+Confucius: 226245
+Color: 225441
+Abraham: 224923
+Nature: 224450
+Brain: 222395
+Protestant Reformation: 222285
+Carbon: 221171
+Jainism: 220496
+Plastic: 220234
+Modernism: 219885
+Greek language: 219269
+Nitrogen: 219051
+Star: 218942
+Beer: 218920
+Great Lakes: 217962
+Rock music: 217695
+Chinese language: 217520
+Taoism: 217494
+History: 216635
+Five Pillars of Islam: 216608
+Pop music: 213847
+Ecosystem: 213549
+Abortion: 213458
+Engineering: 212051
+James Cook: 211498
+e: 211404
+Culture: 211251
+Fungus: 211117
+Suleiman the Magnificent: 209863
+Amazon River: 208712
+Electric motor: 208440
+Suicide: 207454
+Ontology: 207402
+Light: 207379
+Plant: 207281
+Mississippi River: 205922
+0: 205804
+Desert: 205614
+Tourism: 204695
+Battery: 203766
+Bhagavad Gita: 203599
+Human sexuality: 202919
+Integer: 202861
+Galaxy: 202272
+Theory of relativity: 200885
+Baroque: 198917
+Natural selection: 198876
+Photography: 197477
+World Health Organization: 197448
+Nile: 197194
+Portuguese language: 196779
+Ecology: 196702
+Wind power: 196064
+Mongol Empire: 194881
+Nationalism: 194685
+Hubble Space Telescope: 194509
+Marco Polo: 194313
+Influenza: 193976
+Leo Tolstoy: 193950
+Russian Empire: 193949
+Death: 193753
+Family: 193736
+Life: 192313
+Bank: 191544
+Oceania: 191493
+Nicolaus Copernicus: 191086
+War: 190684
+Aesthetics: 190304
+Parthenon: 189886
+Species: 189875
+Euclid: 189418
+Government: 189132
+Protestantism: 188556
+Bicycle: 188531
+Russian language: 188324
+Real number: 188225
+Moon landing: 187908
+Medicine: 187409
+Flood: 186566
+Pacific Ocean: 186282
+Silicon: 186189
+Meditation: 185664
+Confucianism: 185558
+Geography: 184653
+Silver: 184115
+Napoleonic Wars: 184011
+Internal combustion engine: 183216
+Planet: 183200
+James Joyce: 182315
+Terrorism: 182170
+Ethnic group: 181719
+Sport: 180545
+Tree: 180243
+Trigonometry: 179709
+J. Robert Oppenheimer: 179622
+Frédéric Chopin: 179442
+Knowledge: 179005
+Poetry: 178914
+Cryptography: 178825
+Pragmatism: 178636
+Fossil fuel: 178614
+Momentum: 178350
+Money: 178329
+Ramesses II: 178245
+World Trade Organization: 178135
+Linguistics: 178092
+Shinto: 178051
+Emotion: 177854
+Great Barrier Reef: 176862
+Community: 176508
+Women's suffrage: 176283
+Indo-European languages: 176075
+Integrated circuit: 176014
+Mass media: 174703
+Mediterranean Sea: 174627
+Genetics: 174551
+Dante Alighieri: 174241
+Ferdinand Magellan: 173447
+Architecture: 172794
+Genetic engineering: 172566
+Gravitation: 172378
+Rumi: 172045
+Mental disorder: 171830
+Incandescent light bulb: 171191
+Sahara: 171102
+Movements for civil rights: 170914
+Sleep: 170745
+Lake Baikal: 170534
+Retail: 170208
+Imperialism: 169775
+Thomas Aquinas: 169152
+Catherine the Great: 169080
+Nutrition: 168660
+Temperature: 167950
+Social science: 167923
+Function: 167902
+Robot: 167378
+Soil: 167152
+Metric system: 166850
+Supernova: 166827
+Salt: 166705
+Newspaper: 166651
+Glass: 166586
+Satellite: 166147
+Vasco da Gama: 165928
+Sumer: 165818
+Electron: 165608
+Gene: 164905
+Tropical cyclone: 164785
+Submarine: 164752
+Consciousness: 164517
+Number: 163852
+Immune system: 163640
+Insect: 162950
+Finance: 162892
+Alcoholism: 162762
+Season: 162408
+Thermodynamics: 161894
+Photon: 161770
+Epic of Gilgamesh: 161354
+Matter: 160755
+Richard Wagner: 160336
+State of matter: 160309
+Woman: 159976
+Map: 159736
+Politics: 159635
+Political science: 158625
+Atlantic Ocean: 158447
+Autoimmune disease: 158421
+Corporation: 158205
+Homer: 158001
+Algebra: 157914
+Alphabet: 157009
+Gasoline: 156739
+Anarchism: 156572
+Sound: 156491
+Fire: 156322
+Pyotr Ilyich Tchaikovsky: 155998
+Radio: 155946
+Rembrandt: 155526
+Rocky Mountains: 155448
+Achaemenid Empire: 155001
+Disease: 154674
+Infinity: 154405
+Fyodor Dostoyevsky: 154375
+Telecommunication: 153926
+Dream: 153529
+Bengali language: 152725
+Bronze Age: 152568
+Muscle: 151115
+Metal: 150542
+Radar: 150282
+Telephone: 148750
+Reptile: 148707
+Triangle: 148397
+Chemical element: 148090
+Astronomy: 147792
+Extinction: 147450
+Fertilizer: 147405
+Shamanism: 146562
+Amphibian: 146446
+Eukaryote: 146230
+Mass: 145774
+Algae: 145407
+Burn: 145263
+Eastern Orthodox Church: 144821
+Wine: 144768
+Supply and demand: 144503
+Vedas: 144350
+News: 144306
+Motion: 143854
+Painting: 143642
+Werner Heisenberg: 142332
+Mineral: 142151
+Civilization: 141581
+Antibiotics: 140728
+Complex number: 140519
+Common cold: 139866
+Cairo: 139350
+RNA: 139176
+Qin Shi Huang: 138117
+Erosion: 138042
+Abacus: 137903
+Monarchy: 137493
+Clothing: 137430
+Tank: 136887
+Infrastructure: 136708
+Ravi Shankar: 136362
+Steam engine: 136078
+Compass: 135770
+Cyrus the Great: 134979
+Forest: 134921
+Assyria: 134870
+Electromagnetism: 134760
+Constitution: 134719
+Archaea: 134620
+Organic chemistry: 134607
+Proton: 134406
+Folk music: 133562
+Gender: 133371
+Library: 133033
+Classical music: 132973
+Sphere: 132423
+Colonialism: 131620
+Drug: 131322
+Space: 131219
+Talmud: 130485
+Discrimination: 129931
+Heat: 129738
+Indian Ocean: 129696
+Measurement: 129366
+Police: 128939
+Niels Bohr: 128878
+Infant: 128587
+Tang dynasty: 128336
+Electronics: 127853
+Book: 127684
+Macroeconomics: 127438
+Dance: 127438
+City: 127345
+Tax: 127325
+Han dynasty: 126463
+Short story: 126441
+Avicenna: 126065
+Rational number: 125709
+Carl Friedrich Gauss: 124949
+Johannes Gutenberg: 124880
+Novel: 124868
+Biochemistry: 124860
+Duke Ellington: 124813
+Eye: 124665
+Vacuum: 124605
+Physical exercise: 124474
+Archaeology: 123938
+Sexual orientation: 123584
+Golden Rule: 123540
+Bronze: 123489
+Society: 123147
+James Clerk Maxwell: 122890
+Birth control: 122071
+Microscope: 122061
+Ion: 121926
+Probability: 121127
+Neutrino: 120777
+Geometry: 120690
+Construction: 120343
+Gyroscope: 120331
+Climate: 120044
+Conservatism: 119756
+Smoking: 119733
+Leonhard Euler: 119268
+Skin: 119168
+Mythology: 118391
+Iron Age: 117955
+River: 117927
+Akira Kurosawa: 117758
+Alloy: 117497
+Mining: 117491
+Viking Age: 117313
+Polygon: 117015
+Asteroid: 116738
+Andes: 116326
+Geology: 115934
+Alps: 115933
+Allergy: 115713
+Rain: 115629
+Human gastrointestinal tract: 115620
+Simón Bolívar: 114593
+History of mathematics: 114523
+Country: 114370
+Topology: 114189
+Pasteurization: 114162
+Gunpowder: 113548
+Transport: 113400
+Organism: 113354
+Abiogenesis: 112805
+Sexism: 112195
+Circle: 111951
+Manufacturing: 111943
+Wave: 111910
+Comet: 111496
+Natural number: 111394
+Camera: 110763
+Microeconomics: 110552
+Mountain: 110275
+Lens: 109957
+Cyrillic script: 109758
+Lung: 109573
+Fraction: 109287
+History of the Earth: 109078
+Indigenous peoples: 108932
+Wood: 108926
+Anesthesia: 108749
+Crime: 108338
+Paper: 108291
+Glacier: 107912
+Arabic alphabet: 107872
+Scramble for Africa: 107559
+Herodotus: 107400
+Sculpture: 106951
+Pendulum: 106575
+Volume: 106120
+Vaccine: 106119
+Carl Linnaeus: 105986
+Industry: 104623
+Gottfried Wilhelm Leibniz: 103780
+House: 103658
+Engine: 103518
+Clock: 103290
+Happiness: 102803
+Currency: 102541
+Magnetism: 102040
+Fear: 101788
+Orchestra: 101591
+Anatomy: 101469
+Justice: 100775
+Seed: 100251
+Arab–Israeli conflict: 99926
+Dam: 99672
+Spirituality: 99519
+Chemical reaction: 99417
+Outer space: 99290
+History of the world: 99015
+Jet engine: 98917
+Botany: 98611
+Free will: 98453
+Structure of the Earth: 98419
+Prose: 98406
+Deity: 98186
+Grammar: 98121
+State: 97907
+Soul: 97574
+Rock: 97571
+Weather: 97460
+Wind: 97022
+Neutron: 96812
+Ideology: 96694
+Sword: 96189
+Truth: 96166
+Musical theatre: 96068
+Electrolysis: 96033
+Natural rubber: 95696
+Fiction: 95175
+Ancient history: 95149
+Age of Discovery: 93837
+Aircraft: 93621
+Laozi: 93577
+Bridge: 93568
+Knife: 93551
+Textile: 93452
+Calculator: 90890
+Molecule: 90701
+Arctic: 90599
+Rocket: 90438
+Man: 90268
+Miguel de Cervantes: 89983
+Zoology: 89948
+Standard Model: 89304
+Base: 89222
+Scientific revolution: 89064
+European colonization of the Americas: 89057
+Tanakh: 89011
+Surgery: 88287
+Popular culture: 87145
+Shaka: 86973
+Musical instrument: 86613
+Year: 86455
+Drawing: 86039
+Angle: 85869
+Comedy: 85475
+Hatshepsut: 85023
+Optics: 84579
+Chemical compound: 83547
+Catalysis: 83409
+Tool: 83382
+Lake: 83248
+Heredity: 82988
+Dictatorship: 82929
+Afterlife: 82694
+Islamic Golden Age: 82447
+Wheel: 82051
+Theocracy: 81881
+Dmitri Mendeleev: 81675
+Singing: 81620
+Kahlil Gibran: 81328
+Artillery: 81028
+Chinese characters: 80788
+Peace: 80570
+Theatre: 80474
+Neolithic Revolution: 80081
+El Greco: 80010
+Prehistory: 79822
+Visual arts: 79763
+Drinking water: 79188
+Simple machine: 78921
+Employment: 78246
+Ibn Battuta: 77922
+Chemical bond: 77698
+East–West Schism: 77606
+Virgil: 77492
+Female: 77461
+Hydropower: 77424
+Addiction: 77306
+Space exploration: 77257
+Antoine Lavoisier: 77161
+Military: 77046
+Athletics: 76454
+Writing: 76297
+Entertainment: 76234
+Zoroaster: 76066
+Zheng He: 75779
+Pericles: 75105
+Trade: 74570
+Hospital: 74427
+Pottery: 74410
+Mesoamerica: 74346
+Journalism: 74239
+Cooking: 73822
+Animal husbandry: 73805
+Giuseppe Verdi: 73572
+Telescope: 73571
+Exponentiation: 73239
+Museum: 72967
+Anger: 72720
+Metallurgy: 72472
+International Red Cross and Red Crescent Movement: 72322
+Printing: 72295
+Mary Wollstonecraft: 72086
+Earth science: 70785
+Sundial: 70340
+Upanishads: 70293
+Tragedy: 69954
+Adi Shankara: 69934
+Lake Victoria: 69524
+Reproduction: 69384
+Thought: 69320
+Calendar: 69314
+Masonry: 69227
+Southern Ocean: 68640
+Division: 68251
+History of Europe: 68015
+Child: 67449
+Privacy: 67152
+Diplomacy: 67113
+Gambling: 67044
+Esotericism: 66969
+Sophocles: 66396
+Magazine: 66088
+Ageing: 65691
+Abolitionism: 65541
+Hildegard of Bingen: 65412
+Sanitation: 65404
+Theravada: 65179
+Rail transport: 64931
+Dentistry: 64783
+Adult: 64568
+Area: 64512
+Molecular biology: 64259
+Domestication: 64100
+Prayer: 64050
+Publishing: 63898
+Hunting: 63896
+Computing: 63800
+Antonie van Leeuwenhoek: 63583
+Male: 63548
+History of science: 63235
+History of agriculture: 62663
+Weapon: 62619
+Reason: 62078
+Subatomic particle: 62042
+Number theory: 61969
+Theism: 61616
+Pharmaceutical drug: 61344
+Arctic Ocean: 61291
+Refrigeration: 61261
+Broadcasting: 61258
+Arithmetic: 60778
+Dimension: 60066
+Environmentalism: 59919
+Card game: 59596
+Hokusai: 59424
+Word: 59373
+Bow and arrow: 59328
+History of Africa: 59248
+Mathematical optimization: 58882
+Mahayana: 58650
+Day: 58435
+Navigation: 58393
+Classical mechanics: 58227
+Property: 57383
+Speech: 56754
+Series: 56658
+Orbit: 56611
+Mind: 56319
+Roald Amundsen: 55860
+Combinatorics: 55511
+Leif Erikson: 55206
+Hammurabi: 55016
+Natural satellite: 54688
+Multiplication: 54178
+Arch: 53987
+David Hilbert: 53920
+Firearm: 53568
+Vajrayana: 53221
+Medical imaging: 53044
+Existence: 52773
+Polyhedron: 52628
+Coordinate system: 52300
+Particle physics: 52018
+Road: 51687
+Yangtze: 51611
+History of medicine: 51445
+The arts: 51106
+Philosophy of science: 50345
+Guru Granth Sahib: 50181
+Weak interaction: 49485
+Conic section: 49290
+Gothic art: 49093
+Recreation: 48945
+Performing arts: 48271
+Explosive material: 48265
+History of technology: 47526
+Ancient Greek philosophy: 46747
+Limit: 46741
+Plane: 46382
+Mail: 45713
+The Renaissance: 45489
+Skeleton: 44930
+Canal: 44798
+Strong interaction: 44787
+Belief: 44768
+Muḥammad ibn Mūsā al-Khwārizmī: 44142
+Civil liberties: 43974
+Pierre-Simon Laplace: 43752
+Inorganic chemistry: 43439
+Equation: 43006
+Analytic philosophy: 42888
+Latin script: 41967
+Ibn Khaldun: 41081
+Line: 40944
+Addition: 40456
+Candle: 40347
+Toy: 40304
+Nagarjuna: 39866
+Physical chemistry: 38939
+Hindustani language: 38889
+Sergei Eisenstein: 38813
+Fortification: 38755
+Shape: 38684
+History of art: 37778
+Mathematical analysis: 36455
+Factory: 36168
+Semiconductor device: 35623
+Variable: 34640
+Job: 34396
+Land: 34035
+Subtraction: 33312
+Medieval philosophy: 32699
+Humanitarianism: 32269
+Mathematical proof: 32044
+History of the Middle East: 31888
+Contemporary philosophy: 31384
+Western philosophy: 31354
+Physical cosmology: 30653
+Worship: 29154
+Li Bai: 29126
+Shahnameh: 27723
+Numerical digit: 26977
+Spaceflight: 26111
+Personal name: 25374
+Good and evil: 24361
+Eastern philosophy: 23777
+History of Asia: 23223
+Jābir ibn Hayyān: 22697
+nth root: 21815
+Stove: 20783
+Tower: 20344
+Nuclear technology: 19364
+Point: 18303
+History of South America: 17700
+History of North America: 15331
+Political freedom: 15080
+Fishing industry: 13885
+Personal life: 13836
+Imperial and US customary measurement systems: 13335
+Major trauma: 11583
+Brahmic scripts: 9123
+Shen Kuo: 8966
+History of East Asia: 6734
+End of Communism in 1989: 830
