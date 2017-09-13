@@ -36,7 +36,7 @@ class SummarizationEnv(gym.Env):
         self.reset()
 
     def reset(self):
-        self.current_document = random.randint(1, len(self.data))
+        self.current_document = random.randint(1, len(self.data)-1)
         self.current_token = 0
         self.prediction_so_far = []
         self.last_score = 0.0
