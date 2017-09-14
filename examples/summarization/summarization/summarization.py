@@ -7,8 +7,8 @@ import csv
 import gym
 import gym.spaces
 import random
-
-from nltk.stem.wordnet import WordNetLemmatizer
+import sys
+from spacy.en import English
 
 from .rouge import Rouge
 
@@ -24,18 +24,21 @@ class SummarizationEnv(gym.Env):
 
     def __init__(self, filepath):
         self.action_space = gym.spaces.Discrete(2)
-        lemmatizer = WordNetLemmatizer()
         # Word2Vec of the last two words in the text and the last two
         # words in the summary
         self.observation_space = WordSequencePair(2, 2)
         self.scorer = Rouge()
         self.data = []
-        with open(filepath, encoding='iso-8859-1') as f:
-            news_reader = csv.reader(f, delimiter=",")
-            for row in news_reader:
-                 text = [lemmatizer.lemmatize(word) for word in row[4].split(" ")]
-                 summary = [lemmatizer.lemmatize(word) for word in row[5].split(" ")]
-                 self.data.append(Datapoint(text=text, summary=summary))
+        nlp = English()
+        csv.field_size_limit(sys.maxsize)
+        with open(filepath) as f:
+            reader = csv.reader(f, delimiter=",", quotechar="|", quoting=csv.QUOTE_MINIMAL)
+            for row in reader:
+                doc1 = nlp(row[0])
+                sentences1 = [sent.string.strip() for sent in doc1.sents]
+                doc2 = nlp(row[1])
+                sentences2 = [sent.string.strip() for sent in doc2.sents]
+                self.data.append(Datapoint(text=sentences1, summary=sentences2))
         self.reset()
 
     def reset(self):

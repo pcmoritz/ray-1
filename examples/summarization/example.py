@@ -11,8 +11,10 @@ def import_summarization():
     summarization
 
 config = ppo.DEFAULT_CONFIG.copy()
-config["lambda"] = 0.95
+config["lambda"] = 0.98
 config["gamma"] = 0.99
+config["kl_coeff"] = 0.05
+config["kl_target"] = 0.02
 config["sgd_batchsize"] = 8192
 config["num_sgd_iter"] = 20
 config["sgd_stepsize"] = 1e-4
