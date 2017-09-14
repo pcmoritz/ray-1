@@ -1006,19 +1006,45 @@ def _initialize_serialization(worker=global_worker):
         ray.local_scheduler.ObjectID, 20 * b"\x00", pickle=False,
         custom_serializer=objectid_custom_serializer,
         custom_deserializer=objectid_custom_deserializer)
+    
+    ref = np.zeros(100)
 
     # Define a custom serializer and deserializer for handling numpy arrays
     # that contain objects.
     def array_custom_serializer(obj):
-        return obj.tolist(), obj.dtype.str
+        return ref, obj.dtype.str
 
     def array_custom_deserializer(serialized_obj):
-        return np.array(serialized_obj[0], dtype=np.dtype(serialized_obj[1]))
+        return np.array(serialized_obj[0])
 
     worker.serialization_context.register_type(
         np.ndarray, 20 * b"\x01", pickle=False,
         custom_serializer=array_custom_serializer,
         custom_deserializer=array_custom_deserializer)
+
+    # Define a custom serializer and deserializer for Torch tensors.
+    try:
+        import torch
+        
+        ref = None
+
+        def torch_custom_serializer(obj):
+            print("ZZZZZZZZZZZZ", type(obj))
+            # return obj.numpy()
+            global ref
+            ref = obj.numpy()
+            return ref
+
+        def torch_custom_deserializer(serialized_obj):
+            print("YYYYYYYYYYYYYYYYYY", serialized_obj[0])
+            return torch.from_numpy(serialized_obj)
+
+        worker.serialization_context.register_type(
+          torch.FloatTensor, b"\x66", pickle=False,
+          custom_serializer=torch_custom_serializer,
+          custom_deserializer=torch_custom_deserializer)
+    except ImportError:
+        pass
 
     if worker.mode in [SCRIPT_MODE, SILENT_MODE]:
         # These should only be called on the driver because _register_class
