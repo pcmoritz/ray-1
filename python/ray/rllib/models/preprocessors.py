@@ -63,8 +63,10 @@ class Word2VecPreprocessor(Preprocessor):
         return nlp(word).vector
     
     def transform_shape(self, obs_shape):
-        return (4 * 300,)
+        return (4,)
 
     def transform(self, observation):
         past, future = observation
-        return np.concatenate([self.transform_word(word) for word in past + future])[:]
+        curr_vector = self.transform_word(future[0])
+        past_vectors = [self.transform_word(sentence) for sentence in past]
+        return np.array([np.dot(curr_vector, past_vector) for past_vector in past_vectors])
