@@ -93,6 +93,7 @@ redisAsyncContext *get_redis_subscribe_context(DBHandle *db, UniqueID id) {
 }
 
 void get_redis_shards(redisContext *context,
+                      const std::string& redis_shard_variable,
                       std::vector<std::string> &db_shards_addresses,
                       std::vector<int> &db_shards_ports) {
   /* Get the total number of Redis shards in the system. */
@@ -124,10 +125,11 @@ void get_redis_shards(redisContext *context,
 
   /* Get the addresses of all of the Redis shards. */
   num_attempts = 0;
+  std::string command = "LRANGE " + redis_shard_variable + " 0 -1";
   while (num_attempts < REDIS_DB_CONNECT_RETRIES) {
     /* Try to read the Redis shard locations from the primary shard. If we find
      * that all of them are present, exit. */
-    reply = (redisReply *) redisCommand(context, "LRANGE RedisShards 0 -1");
+    reply = (redisReply *) redisCommand(context, command.c_str());
     if (reply->elements == num_redis_shards) {
       break;
     }
@@ -294,7 +296,7 @@ DBHandle *db_connect(const std::string &db_primary_address,
   /* Get the shard locations. */
   std::vector<std::string> db_shards_addresses;
   std::vector<int> db_shards_ports;
-  get_redis_shards(db->sync_context, db_shards_addresses, db_shards_ports);
+  get_redis_shards(db->sync_context, "RedisShards", db_shards_addresses, db_shards_ports);
   CHECKM(db_shards_addresses.size() > 0, "No Redis shards found");
   /* Connect to the shards. */
   for (int i = 0; i < db_shards_addresses.size(); ++i) {
@@ -303,6 +305,20 @@ DBHandle *db_connect(const std::string &db_primary_address,
                      &subscribe_context, &sync_context);
     db->contexts.push_back(context);
     db->subscribe_contexts.push_back(subscribe_context);
+    redisFree(sync_context);
+  }
+  /* Get the replica shard locations. */
+  std::vector<std::string> db_replica_shards_addresses;
+  std::vector<int> db_replica_shards_ports;
+  get_redis_shards(db->sync_context, "RedisReplicaShards", db_replica_shards_addresses, db_replica_shards_ports);
+  CHECKM(db_replica_shards_addresses.size() > 0, "No Redis replica shards found");
+  /* Connect to the replica shards. */
+  for (int i = 0; i < db_replica_shards_addresses.size(); ++i) {
+    db_connect_shard(db_replica_shards_addresses[i], db_replica_shards_ports[i], client,
+                     client_type, node_ip_address, num_args, args, db, &context,
+                     &subscribe_context, &sync_context);
+    db->contexts_replicas.push_back(context);
+    db->subscribe_contexts_replicas.push_back(subscribe_context);
     redisFree(sync_context);
   }
 

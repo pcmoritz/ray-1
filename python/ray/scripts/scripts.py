@@ -63,11 +63,13 @@ def cli():
               help="the amount of a user-defined custom resource on this node")
 @click.option("--head", is_flag=True, default=False,
               help="provide this argument for the head node")
+@click.option("--replica", is_flag=True, default=False,
+              help="provide this argument for the replica node")
 @click.option("--block", is_flag=True, default=False,
               help="provide this argument to block forever in this command")
 def start(node_ip_address, redis_address, redis_port, num_redis_shards,
           object_manager_port, num_workers, num_cpus, num_gpus,
-          num_custom_resource, head, block):
+          num_custom_resource, head, replica, block):
     # Note that we redirect stdout and stderr to /dev/null because otherwise
     # attempts to print may cause exceptions if a process is started inside of
     # an SSH connection and the SSH connection dies. TODO(rkn): This is a
@@ -155,6 +157,8 @@ def start(node_ip_address, redis_address, redis_port, num_redis_shards,
               "processes that have been started, run\n\n"
               "    ray stop")
 
+    if replica:
+        services.start_redis_replicas(redis_address, node_ip_address, True, False)
     if block:
         import time
         while True:

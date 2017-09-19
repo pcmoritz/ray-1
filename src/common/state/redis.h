@@ -39,10 +39,14 @@ struct DBHandle {
    *  to the object table, task table, and event table should be directed here.
    *  The correct shard can be retrieved using get_redis_context below. */
   std::vector<redisAsyncContext *> contexts;
+  /** Redis contexts for replicas of contexts. */
+  std::vector<redisAsyncContext *> contexts_replicas;
   /** Redis contexts for shards for "subscribe" communication. All requests
    *  to the object table, task table, and event table should be directed here.
    *  The correct shard can be retrieved using get_redis_context below. */
   std::vector<redisAsyncContext *> subscribe_contexts;
+  /** Redis contexts for replicas of subscribe_contexts. */
+  std::vector<redisAsyncContext *> subscribe_contexts_replicas;
   /** The event loop this global state store connection is part of. */
   event_loop *loop;
   /** Index of the database connection in the event loop */
@@ -86,6 +90,7 @@ redisAsyncContext *get_redis_subscribe_context(DBHandle *db, UniqueID id);
  *        db_shards_addresses.
  */
 void get_redis_shards(redisContext *context,
+                      const std::string& redis_shard_variable,
                       std::vector<std::string> &db_shards_addresses,
                       std::vector<int> &db_shards_ports);
 

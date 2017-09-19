@@ -55,7 +55,7 @@ static inline void flushall_redis(void) {
   redisContext *context = redisConnect("127.0.0.1", 6379);
   std::vector<std::string> db_shards_addresses;
   std::vector<int> db_shards_ports;
-  get_redis_shards(context, db_shards_addresses, db_shards_ports);
+  get_redis_shards(context, "RedisShards", db_shards_addresses, db_shards_ports);
   freeReplyObject(redisCommand(context, "FLUSHALL"));
   /* Readd the shard locations. */
   freeReplyObject(redisCommand(context, "SET NumRedisShards %d",
