@@ -208,6 +208,11 @@ void db_connect_shard(const std::string &db_address,
   CHECKM(reply != NULL, "db_connect failed on CONFIG SET");
   freeReplyObject(reply);
 
+  reply =
+      (redisReply *) redisCommand(sync_context, "CONFIG SET save \"\"");
+  CHECKM(reply != NULL, "db_connect failed on CONFIG SET");
+  freeReplyObject(reply);
+
   /* Construct the argument arrays for RAY.CONNECT. */
   int argc = num_args + 4;
   const char **argv = (const char **) malloc(sizeof(char *) * argc);
