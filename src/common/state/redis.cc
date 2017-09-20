@@ -469,7 +469,7 @@ void redis_object_table_add(TableCallbackData *callback_data) {
 
   status = redisAsyncCommand(
     context, redis_object_table_add_callback,
-    (void *) callback_data->timer_id, "RAY.OBJECT_TABLE_ADD %b %lld %b %b",
+    (void *) (-callback_data->timer_id), "RAY.OBJECT_TABLE_ADD %b %lld %b %b",
     obj_id.id, sizeof(obj_id.id), (long long) object_size, digest,
     (size_t) DIGEST_SIZE, db->client.id, sizeof(db->client.id));
 
