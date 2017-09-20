@@ -953,20 +953,24 @@ void redis_task_table_add_task_callback(redisAsyncContext *c,
   // caller should decide whether to retry the add. NOTE(swang): The caller
   // should check whether the receiving subscriber is still alive in the
   // db_client table before retrying the add.
-  if (reply->type == REDIS_REPLY_ERROR &&
-      strcmp(reply->str, "No subscribers received message.") == 0) {
-    LOG_WARN("No subscribers received the task_table_add message.");
-    if (callback_data->retry.fail_callback != NULL) {
-      callback_data->retry.fail_callback(
-          callback_data->id, callback_data->user_context, callback_data->data);
-    }
-  } else {
-    CHECKM(strcmp(reply->str, "OK") == 0, "reply->str is %s", reply->str);
-    /* Call the done callback if there is one. */
-    if (callback_data->done_callback != NULL) {
-      task_table_done_callback done_callback =
-          (task_table_done_callback) callback_data->done_callback;
-      done_callback(callback_data->id, callback_data->user_context);
+  int64_t timer_id = (int64_t) privdata;
+  // This means the request was sent on the primary
+  if (timer_id >= 0) {
+    if (reply->type == REDIS_REPLY_ERROR &&
+        strcmp(reply->str, "No subscribers received message.") == 0) {
+      LOG_WARN("No subscribers received the task_table_add message.");
+      if (callback_data->retry.fail_callback != NULL) {
+        callback_data->retry.fail_callback(
+            callback_data->id, callback_data->user_context, callback_data->data);
+      }
+    } else {
+      CHECKM(strcmp(reply->str, "OK") == 0, "reply->str is %s", reply->str);
+      /* Call the done callback if there is one. */
+      if (callback_data->done_callback != NULL) {
+        task_table_done_callback done_callback =
+            (task_table_done_callback) callback_data->done_callback;
+        done_callback(callback_data->id, callback_data->user_context);
+      }
     }
   }
 
@@ -995,7 +999,7 @@ void redis_task_table_add_task(TableCallbackData *callback_data) {
   context = get_redis_replica_context(db, task_id);
   status = redisAsyncCommand(
       context, redis_task_table_add_task_callback,
-      (void *) callback_data->timer_id, "RAY.TASK_TABLE_ADD %b %d %b %b",
+      (void *) (-callback_data->timer_id), "RAY.TASK_TABLE_ADD %b %d %b %b",
       task_id.id, sizeof(task_id.id), state, local_scheduler_id.id,
       sizeof(local_scheduler_id.id), spec, Task_task_spec_size(task));
   if ((status == REDIS_ERR) || context->err) {
@@ -1053,7 +1057,7 @@ void redis_task_table_update(TableCallbackData *callback_data) {
   if ((status == REDIS_ERR) || context->err) {
     LOG_REDIS_DEBUG(context, "error in redis_task_table_update (primary)");
   }
-  
+
   context = get_redis_replica_context(db, task_id);
   status = redisAsyncCommand(
       context, redis_task_table_update_callback,
