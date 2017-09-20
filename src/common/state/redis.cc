@@ -521,7 +521,18 @@ void redis_object_table_remove(TableCallbackData *callback_data) {
       obj_id.id, sizeof(obj_id.id), client_id->id, sizeof(client_id->id));
 
   if ((status == REDIS_ERR) || context->err) {
-    LOG_REDIS_DEBUG(context, "error in redis_object_table_remove");
+    LOG_REDIS_DEBUG(context, "error in redis_object_table_remove (primary)");
+  }
+
+  context = get_redis_replica_context(db, obj_id);
+
+  redisAsyncCommand(
+      context, redis_object_table_remove_callback,
+      (void *) callback_data->timer_id, "RAY.OBJECT_TABLE_REMOVE %b %b",
+      obj_id.id, sizeof(obj_id.id), client_id->id, sizeof(client_id->id));
+
+  if ((status == REDIS_ERR) || context->err) {
+    LOG_REDIS_DEBUG(context, "error in redis_object_table_remove (replica)");
   }
 }
 
@@ -575,7 +586,17 @@ void redis_result_table_add(TableCallbackData *callback_data) {
       (void *) callback_data->timer_id, "RAY.RESULT_TABLE_ADD %b %b %d", id.id,
       sizeof(id.id), info->task_id.id, sizeof(info->task_id.id), is_put);
   if ((status == REDIS_ERR) || context->err) {
-    LOG_REDIS_DEBUG(context, "Error in result table add");
+    LOG_REDIS_DEBUG(context, "Error in result table add (primary)");
+  }
+
+  context = get_redis_replica_context(db, id);
+
+  status = redisAsyncCommand(
+      context, redis_result_table_add_callback,
+      (void *) callback_data->timer_id, "RAY.RESULT_TABLE_ADD %b %b %d", id.id,
+      sizeof(id.id), info->task_id.id, sizeof(info->task_id.id), is_put);
+  if ((status == REDIS_ERR) || context->err) {
+    LOG_REDIS_DEBUG(context, "Error in result table add (replica)");
   }
 }
 
@@ -964,7 +985,16 @@ void redis_task_table_add_task(TableCallbackData *callback_data) {
       task_id.id, sizeof(task_id.id), state, local_scheduler_id.id,
       sizeof(local_scheduler_id.id), spec, Task_task_spec_size(task));
   if ((status == REDIS_ERR) || context->err) {
-    LOG_REDIS_DEBUG(context, "error in redis_task_table_add_task");
+    LOG_REDIS_DEBUG(context, "error in redis_task_table_add_task (primary)");
+  }
+  context = get_redis_replica_context(db, task_id);
+  status = redisAsyncCommand(
+      context, redis_task_table_add_task_callback,
+      (void *) callback_data->timer_id, "RAY.TASK_TABLE_ADD %b %d %b %b",
+      task_id.id, sizeof(task_id.id), state, local_scheduler_id.id,
+      sizeof(local_scheduler_id.id), spec, Task_task_spec_size(task));
+  if ((status == REDIS_ERR) || context->err) {
+    LOG_REDIS_DEBUG(context, "error in redis_task_table_add_task (replica)");
   }
 }
 
@@ -1016,7 +1046,17 @@ void redis_task_table_update(TableCallbackData *callback_data) {
       task_id.id, sizeof(task_id.id), state, local_scheduler_id.id,
       sizeof(local_scheduler_id.id));
   if ((status == REDIS_ERR) || context->err) {
-    LOG_REDIS_DEBUG(context, "error in redis_task_table_update");
+    LOG_REDIS_DEBUG(context, "error in redis_task_table_update (primary)");
+  }
+  
+  context = get_redis_replica_context(db, task_id);
+  status = redisAsyncCommand(
+      context, redis_task_table_update_callback,
+      (void *) callback_data->timer_id, "RAY.TASK_TABLE_UPDATE %b %d %b",
+      task_id.id, sizeof(task_id.id), state, local_scheduler_id.id,
+      sizeof(local_scheduler_id.id));
+  if ((status == REDIS_ERR) || context->err) {
+    LOG_REDIS_DEBUG(context, "error in redis_task_table_update (replica)");
   }
 }
 
@@ -1069,7 +1109,19 @@ void redis_task_table_test_and_update(TableCallbackData *callback_data) {
       update_data->update_state, update_data->local_scheduler_id.id,
       sizeof(update_data->local_scheduler_id.id));
   if ((status == REDIS_ERR) || context->err) {
-    LOG_REDIS_DEBUG(context, "error in redis_task_table_test_and_update");
+    LOG_REDIS_DEBUG(context, "error in redis_task_table_test_and_update (primary)");
+  }
+
+  context = get_redis_replica_context(db, task_id);
+  status = redisAsyncCommand(
+      context, redis_task_table_test_and_update_callback,
+      (void *) callback_data->timer_id,
+      "RAY.TASK_TABLE_TEST_AND_UPDATE %b %d %d %b", task_id.id,
+      sizeof(task_id.id), update_data->test_state_bitmask,
+      update_data->update_state, update_data->local_scheduler_id.id,
+      sizeof(update_data->local_scheduler_id.id));
+  if ((status == REDIS_ERR) || context->err) {
+    LOG_REDIS_DEBUG(context, "error in redis_task_table_test_and_update (replica)");
   }
 }
 
