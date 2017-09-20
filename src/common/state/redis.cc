@@ -400,7 +400,7 @@ void db_attach(DBHandle *db, event_loop *loop, bool reattach) {
     }
   }
   /* Attach the replica shards to the event loop. */
-  for (int i = 0; i > db->contexts_replicas.size(); ++i) {
+  for (int i = 0; i < db->contexts_replicas.size(); ++i) {
     int err = redisAeAttach(loop, db->contexts_replicas[i]);
     /* If the database is reattached in the tests, redis normally gives
      * an error which we can safely ignore. */
