@@ -79,6 +79,8 @@ redisAsyncContext *get_redis_context(DBHandle *db, UniqueID id);
  */
 redisAsyncContext *get_redis_subscribe_context(DBHandle *db, UniqueID id);
 
+redisAsyncContext *get_redis_replica_context(DBHandle *db, UniqueID id);
+
 /**
  * Get a list of Redis shard IP addresses from the primary shard.
  *

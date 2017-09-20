@@ -87,6 +87,11 @@ redisAsyncContext *get_redis_context(DBHandle *db, UniqueID id) {
   return db->contexts[index(id) % db->contexts.size()];
 }
 
+redisAsyncContext *get_redis_replica_context(DBHandle *db, UniqueID id) {
+  UniqueIDHasher index;
+  return db->contexts_replicas[index(id) % db->contexts_replicas.size()];
+}
+
 redisAsyncContext *get_redis_subscribe_context(DBHandle *db, UniqueID id) {
   UniqueIDHasher index;
   return db->subscribe_contexts[index(id) % db->subscribe_contexts.size()];
@@ -337,6 +342,12 @@ void DBHandle_free(DBHandle *db) {
     redisAsyncFree(db->contexts[i]);
     redisAsyncFree(db->subscribe_contexts[i]);
   }
+  /* Clean up the replica Redis shards. */
+  CHECK(db->contexts_replicas.size() == db->subscribe_contexts_replicas.size());
+  for (int i = 0; i < db->contexts_replicas.size(); ++i) {
+    redisAsyncFree(db->contexts_replicas[i]);
+    redisAsyncFree(db->subscribe_contexts_replicas[i]);
+  }
 
   /* Clean up memory. */
   for (auto it = db->db_client_cache.begin(); it != db->db_client_cache.end();
@@ -387,6 +398,17 @@ void db_attach(DBHandle *db, event_loop *loop, bool reattach) {
     if (!reattach) {
       CHECKM(err == REDIS_OK, "failed to attach the event loop");
     }
+  }
+  /* Attach the replica shards to the event loop. */
+  for (int i = 0; i > db->contexts_replicas.size(); ++i) {
+    int err = redisAeAttach(loop, db->contexts_replicas[i]);
+    /* If the database is reattached in the tests, redis normally gives
+     * an error which we can safely ignore. */
+    if (!reattach) {
+      CHECKM(err == REDIS_OK, "failed to attach the event loop");
+    }
+    /* We don't attach the replicas to the subscription context,
+     * since we don't want to receive publishes twice. */
   }
 }
 
@@ -440,7 +462,19 @@ void redis_object_table_add(TableCallbackData *callback_data) {
       (size_t) DIGEST_SIZE, db->client.id, sizeof(db->client.id));
 
   if ((status == REDIS_ERR) || context->err) {
-    LOG_REDIS_DEBUG(context, "error in redis_object_table_add");
+    LOG_REDIS_DEBUG(context, "error in redis_object_table_add (primary)");
+  }
+
+  context = get_redis_replica_context(db, obj_id);
+
+  status = redisAsyncCommand(
+    context, redis_object_table_add_callback,
+    (void *) callback_data->timer_id, "RAY.OBJECT_TABLE_ADD %b %lld %b %b",
+    obj_id.id, sizeof(obj_id.id), (long long) object_size, digest,
+    (size_t) DIGEST_SIZE, db->client.id, sizeof(db->client.id));
+
+  if ((status == REDIS_ERR) || context->err) {
+    LOG_REDIS_DEBUG(context, "error in redis_object_table_add (replica)");
   }
 }
 
