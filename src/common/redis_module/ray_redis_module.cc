@@ -915,9 +915,9 @@ int TaskTableWrite(RedisModuleCtx *ctx,
     RedisModule_HashGet(key, REDISMODULE_HASH_CFIELDS, "TaskSpec",
                         &existing_task_spec, NULL);
     if (existing_task_spec == NULL) {
-      RedisModule_CloseKey(key);
-      return RedisModule_ReplyWithError(
-          ctx, "Cannot update a task that doesn't exist yet");
+      // RedisModule_CloseKey(key);
+      // return RedisModule_ReplyWithError(
+      //     ctx, "Cannot update a task that doesn't exist yet");
     }
   } else {
     RedisModule_HashSet(key, REDISMODULE_HASH_CFIELDS, "state", state,

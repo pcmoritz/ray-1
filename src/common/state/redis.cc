@@ -1058,7 +1058,6 @@ void redis_task_table_update(TableCallbackData *callback_data) {
     LOG_REDIS_DEBUG(context, "error in redis_task_table_update (primary)");
   }
 
-  /*
   context = get_redis_replica_context(db, task_id);
   status = redisAsyncCommand(
       context, redis_task_table_update_callback,
@@ -1068,7 +1067,6 @@ void redis_task_table_update(TableCallbackData *callback_data) {
   if ((status == REDIS_ERR) || context->err) {
     LOG_REDIS_DEBUG(context, "error in redis_task_table_update (replica)");
   }
-  */
 }
 
 void redis_task_table_test_and_update_callback(redisAsyncContext *c,
