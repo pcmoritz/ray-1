@@ -187,7 +187,7 @@ TEST object_reconstruction_test(void) {
   std::vector<std::string> db_shards_addresses;
   std::vector<int> db_shards_ports;
   redisContext *context = redisConnect("127.0.0.1", 6379);
-  get_redis_shards(context, db_shards_addresses, db_shards_ports);
+  get_redis_shards(context, "RedisShards", db_shards_addresses, db_shards_ports);
   redisFree(context);
   /* There should only be one shard, so we can safely add the empty object
    * table entry to the first one.  */
@@ -287,7 +287,7 @@ TEST object_reconstruction_recursive_test(void) {
   std::vector<std::string> db_shards_addresses;
   std::vector<int> db_shards_ports;
   redisContext *context = redisConnect("127.0.0.1", 6379);
-  get_redis_shards(context, db_shards_addresses, db_shards_ports);
+  get_redis_shards(context, "RedisShards", db_shards_addresses, db_shards_ports);
   redisFree(context);
   /* There should only be one shard, so we can safely add the empty object
    * table entry to the first one.  */

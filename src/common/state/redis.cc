@@ -87,12 +87,18 @@ redisAsyncContext *get_redis_context(DBHandle *db, UniqueID id) {
   return db->contexts[index(id) % db->contexts.size()];
 }
 
+redisAsyncContext *get_redis_replica_context(DBHandle *db, UniqueID id) {
+  UniqueIDHasher index;
+  return db->contexts_replicas[index(id) % db->contexts_replicas.size()];
+}
+
 redisAsyncContext *get_redis_subscribe_context(DBHandle *db, UniqueID id) {
   UniqueIDHasher index;
   return db->subscribe_contexts[index(id) % db->subscribe_contexts.size()];
 }
 
 void get_redis_shards(redisContext *context,
+                      const std::string& redis_shard_variable,
                       std::vector<std::string> &db_shards_addresses,
                       std::vector<int> &db_shards_ports) {
   /* Get the total number of Redis shards in the system. */
@@ -124,10 +130,11 @@ void get_redis_shards(redisContext *context,
 
   /* Get the addresses of all of the Redis shards. */
   num_attempts = 0;
+  std::string command = "LRANGE " + redis_shard_variable + " 0 -1";
   while (num_attempts < REDIS_DB_CONNECT_RETRIES) {
     /* Try to read the Redis shard locations from the primary shard. If we find
      * that all of them are present, exit. */
-    reply = (redisReply *) redisCommand(context, "LRANGE RedisShards 0 -1");
+    reply = (redisReply *) redisCommand(context, command.c_str());
     if (reply->elements == num_redis_shards) {
       break;
     }
@@ -198,6 +205,11 @@ void db_connect_shard(const std::string &db_address,
    * hosts can connect to it. */
   reply =
       (redisReply *) redisCommand(sync_context, "CONFIG SET protected-mode no");
+  CHECKM(reply != NULL, "db_connect failed on CONFIG SET");
+  freeReplyObject(reply);
+
+  reply =
+      (redisReply *) redisCommand(sync_context, "CONFIG SET save \"\"");
   CHECKM(reply != NULL, "db_connect failed on CONFIG SET");
   freeReplyObject(reply);
 
@@ -294,7 +306,7 @@ DBHandle *db_connect(const std::string &db_primary_address,
   /* Get the shard locations. */
   std::vector<std::string> db_shards_addresses;
   std::vector<int> db_shards_ports;
-  get_redis_shards(db->sync_context, db_shards_addresses, db_shards_ports);
+  get_redis_shards(db->sync_context, "RedisShards", db_shards_addresses, db_shards_ports);
   CHECKM(db_shards_addresses.size() > 0, "No Redis shards found");
   /* Connect to the shards. */
   for (int i = 0; i < db_shards_addresses.size(); ++i) {
@@ -303,6 +315,20 @@ DBHandle *db_connect(const std::string &db_primary_address,
                      &subscribe_context, &sync_context);
     db->contexts.push_back(context);
     db->subscribe_contexts.push_back(subscribe_context);
+    redisFree(sync_context);
+  }
+  /* Get the replica shard locations. */
+  std::vector<std::string> db_replica_shards_addresses;
+  std::vector<int> db_replica_shards_ports;
+  get_redis_shards(db->sync_context, "RedisReplicaShards", db_replica_shards_addresses, db_replica_shards_ports);
+  CHECKM(db_replica_shards_addresses.size() > 0, "No Redis replica shards found");
+  /* Connect to the replica shards. */
+  for (int i = 0; i < db_replica_shards_addresses.size(); ++i) {
+    db_connect_shard(db_replica_shards_addresses[i], db_replica_shards_ports[i], client,
+                     client_type, node_ip_address, num_args, args, db, &context,
+                     &subscribe_context, &sync_context);
+    db->contexts_replicas.push_back(context);
+    db->subscribe_contexts_replicas.push_back(subscribe_context);
     redisFree(sync_context);
   }
 
@@ -320,6 +346,12 @@ void DBHandle_free(DBHandle *db) {
   for (int i = 0; i < db->contexts.size(); ++i) {
     redisAsyncFree(db->contexts[i]);
     redisAsyncFree(db->subscribe_contexts[i]);
+  }
+  /* Clean up the replica Redis shards. */
+  CHECK(db->contexts_replicas.size() == db->subscribe_contexts_replicas.size());
+  for (int i = 0; i < db->contexts_replicas.size(); ++i) {
+    redisAsyncFree(db->contexts_replicas[i]);
+    redisAsyncFree(db->subscribe_contexts_replicas[i]);
   }
 
   /* Clean up memory. */
@@ -371,6 +403,17 @@ void db_attach(DBHandle *db, event_loop *loop, bool reattach) {
     if (!reattach) {
       CHECKM(err == REDIS_OK, "failed to attach the event loop");
     }
+  }
+  /* Attach the replica shards to the event loop. */
+  for (int i = 0; i < db->contexts_replicas.size(); ++i) {
+    int err = redisAeAttach(loop, db->contexts_replicas[i]);
+    /* If the database is reattached in the tests, redis normally gives
+     * an error which we can safely ignore. */
+    if (!reattach) {
+      CHECKM(err == REDIS_OK, "failed to attach the event loop");
+    }
+    /* We don't attach the replicas to the subscription context,
+     * since we don't want to receive publishes twice. */
   }
 }
 
@@ -424,7 +467,19 @@ void redis_object_table_add(TableCallbackData *callback_data) {
       (size_t) DIGEST_SIZE, db->client.id, sizeof(db->client.id));
 
   if ((status == REDIS_ERR) || context->err) {
-    LOG_REDIS_DEBUG(context, "error in redis_object_table_add");
+    LOG_REDIS_DEBUG(context, "error in redis_object_table_add (primary)");
+  }
+
+  context = get_redis_replica_context(db, obj_id);
+
+  status = redisAsyncCommand(
+    context, redis_object_table_add_callback,
+    (void *) (-callback_data->timer_id), "RAY.OBJECT_TABLE_ADD %b %lld %b %b",
+    obj_id.id, sizeof(obj_id.id), (long long) object_size, digest,
+    (size_t) DIGEST_SIZE, db->client.id, sizeof(db->client.id));
+
+  if ((status == REDIS_ERR) || context->err) {
+    LOG_REDIS_DEBUG(context, "error in redis_object_table_add (replica)");
   }
 }
 
@@ -471,7 +526,18 @@ void redis_object_table_remove(TableCallbackData *callback_data) {
       obj_id.id, sizeof(obj_id.id), client_id->id, sizeof(client_id->id));
 
   if ((status == REDIS_ERR) || context->err) {
-    LOG_REDIS_DEBUG(context, "error in redis_object_table_remove");
+    LOG_REDIS_DEBUG(context, "error in redis_object_table_remove (primary)");
+  }
+
+  context = get_redis_replica_context(db, obj_id);
+
+  redisAsyncCommand(
+      context, redis_object_table_remove_callback,
+      (void *) callback_data->timer_id, "RAY.OBJECT_TABLE_REMOVE %b %b",
+      obj_id.id, sizeof(obj_id.id), client_id->id, sizeof(client_id->id));
+
+  if ((status == REDIS_ERR) || context->err) {
+    LOG_REDIS_DEBUG(context, "error in redis_object_table_remove (replica)");
   }
 }
 
@@ -525,7 +591,17 @@ void redis_result_table_add(TableCallbackData *callback_data) {
       (void *) callback_data->timer_id, "RAY.RESULT_TABLE_ADD %b %b %d", id.id,
       sizeof(id.id), info->task_id.id, sizeof(info->task_id.id), is_put);
   if ((status == REDIS_ERR) || context->err) {
-    LOG_REDIS_DEBUG(context, "Error in result table add");
+    LOG_REDIS_DEBUG(context, "Error in result table add (primary)");
+  }
+
+  context = get_redis_replica_context(db, id);
+
+  status = redisAsyncCommand(
+      context, redis_result_table_add_callback,
+      (void *) callback_data->timer_id, "RAY.RESULT_TABLE_ADD %b %b %d", id.id,
+      sizeof(id.id), info->task_id.id, sizeof(info->task_id.id), is_put);
+  if ((status == REDIS_ERR) || context->err) {
+    LOG_REDIS_DEBUG(context, "Error in result table add (replica)");
   }
 }
 
@@ -877,20 +953,24 @@ void redis_task_table_add_task_callback(redisAsyncContext *c,
   // caller should decide whether to retry the add. NOTE(swang): The caller
   // should check whether the receiving subscriber is still alive in the
   // db_client table before retrying the add.
-  if (reply->type == REDIS_REPLY_ERROR &&
-      strcmp(reply->str, "No subscribers received message.") == 0) {
-    LOG_WARN("No subscribers received the task_table_add message.");
-    if (callback_data->retry.fail_callback != NULL) {
-      callback_data->retry.fail_callback(
-          callback_data->id, callback_data->user_context, callback_data->data);
-    }
-  } else {
-    CHECKM(strcmp(reply->str, "OK") == 0, "reply->str is %s", reply->str);
-    /* Call the done callback if there is one. */
-    if (callback_data->done_callback != NULL) {
-      task_table_done_callback done_callback =
-          (task_table_done_callback) callback_data->done_callback;
-      done_callback(callback_data->id, callback_data->user_context);
+  int64_t timer_id = (int64_t) privdata;
+  // This means the request was sent on the primary
+  if (timer_id >= 0) {
+    if (reply->type == REDIS_REPLY_ERROR &&
+        strcmp(reply->str, "No subscribers received message.") == 0) {
+      LOG_WARN("No subscribers received the task_table_add message.");
+      if (callback_data->retry.fail_callback != NULL) {
+        callback_data->retry.fail_callback(
+            callback_data->id, callback_data->user_context, callback_data->data);
+      }
+    } else {
+      CHECKM(strcmp(reply->str, "OK") == 0, "reply->str is %s", reply->str);
+      /* Call the done callback if there is one. */
+      if (callback_data->done_callback != NULL) {
+        task_table_done_callback done_callback =
+            (task_table_done_callback) callback_data->done_callback;
+        done_callback(callback_data->id, callback_data->user_context);
+      }
     }
   }
 
@@ -914,7 +994,16 @@ void redis_task_table_add_task(TableCallbackData *callback_data) {
       task_id.id, sizeof(task_id.id), state, local_scheduler_id.id,
       sizeof(local_scheduler_id.id), spec, Task_task_spec_size(task));
   if ((status == REDIS_ERR) || context->err) {
-    LOG_REDIS_DEBUG(context, "error in redis_task_table_add_task");
+    LOG_REDIS_DEBUG(context, "error in redis_task_table_add_task (primary)");
+  }
+  context = get_redis_replica_context(db, task_id);
+  status = redisAsyncCommand(
+      context, redis_task_table_add_task_callback,
+      (void *) (-callback_data->timer_id), "RAY.TASK_TABLE_ADD %b %d %b %b",
+      task_id.id, sizeof(task_id.id), state, local_scheduler_id.id,
+      sizeof(local_scheduler_id.id), spec, Task_task_spec_size(task));
+  if ((status == REDIS_ERR) || context->err) {
+    LOG_REDIS_DEBUG(context, "error in redis_task_table_add_task (replica)");
   }
 }
 
@@ -931,11 +1020,11 @@ void redis_task_table_update_callback(redisAsyncContext *c,
   // alive in the db_client table.
   if (reply->type == REDIS_REPLY_ERROR &&
       strcmp(reply->str, "No subscribers received message.") == 0) {
-    LOG_WARN("No subscribers received the task_table_update message.");
-    if (callback_data->retry.fail_callback != NULL) {
-      callback_data->retry.fail_callback(
-          callback_data->id, callback_data->user_context, callback_data->data);
-    }
+    // LOG_WARN("No subscribers received the task_table_update message.");
+    // if (callback_data->retry.fail_callback != NULL) {
+    //   callback_data->retry.fail_callback(
+    //       callback_data->id, callback_data->user_context, callback_data->data);
+    // }
   } else {
     CHECKM(strcmp(reply->str, "OK") == 0, "reply->str is %s", reply->str);
 
@@ -966,7 +1055,17 @@ void redis_task_table_update(TableCallbackData *callback_data) {
       task_id.id, sizeof(task_id.id), state, local_scheduler_id.id,
       sizeof(local_scheduler_id.id));
   if ((status == REDIS_ERR) || context->err) {
-    LOG_REDIS_DEBUG(context, "error in redis_task_table_update");
+    LOG_REDIS_DEBUG(context, "error in redis_task_table_update (primary)");
+  }
+
+  context = get_redis_replica_context(db, task_id);
+  status = redisAsyncCommand(
+      context, redis_task_table_update_callback,
+      (void *) callback_data->timer_id, "RAY.TASK_TABLE_UPDATE %b %d %b",
+      task_id.id, sizeof(task_id.id), state, local_scheduler_id.id,
+      sizeof(local_scheduler_id.id));
+  if ((status == REDIS_ERR) || context->err) {
+    LOG_REDIS_DEBUG(context, "error in redis_task_table_update (replica)");
   }
 }
 
@@ -1019,7 +1118,19 @@ void redis_task_table_test_and_update(TableCallbackData *callback_data) {
       update_data->update_state, update_data->local_scheduler_id.id,
       sizeof(update_data->local_scheduler_id.id));
   if ((status == REDIS_ERR) || context->err) {
-    LOG_REDIS_DEBUG(context, "error in redis_task_table_test_and_update");
+    LOG_REDIS_DEBUG(context, "error in redis_task_table_test_and_update (primary)");
+  }
+
+  context = get_redis_replica_context(db, task_id);
+  status = redisAsyncCommand(
+      context, redis_task_table_test_and_update_callback,
+      (void *) callback_data->timer_id,
+      "RAY.TASK_TABLE_TEST_AND_UPDATE %b %d %d %b", task_id.id,
+      sizeof(task_id.id), update_data->test_state_bitmask,
+      update_data->update_state, update_data->local_scheduler_id.id,
+      sizeof(update_data->local_scheduler_id.id));
+  if ((status == REDIS_ERR) || context->err) {
+    LOG_REDIS_DEBUG(context, "error in redis_task_table_test_and_update (replica)");
   }
 }
 

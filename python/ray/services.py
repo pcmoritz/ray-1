@@ -312,6 +312,30 @@ def start_redis(node_ip_address,
     return redis_address, redis_shards
 
 
+def start_redis_replicas(redis_main_shard_address,
+                         node_ip_address,
+                         redirect_output=False,
+                         cleanup=True):
+    redis_main_shard_ip_address, redis_main_shard_port = redis_main_shard_address.split(":")
+    redis_client = redis.StrictRedis(redis_main_shard_ip_address, int(redis_main_shard_port))
+    num_redis_shards = int(redis_client.get("NumRedisShards"))
+    # Start other Redis shards listening on random ports. Each Redis shard logs
+    # to a separate file, prefixed by "redis-replica-<shard number>".
+    redis_replica_shards = []
+    for i in range(num_redis_shards):
+        redis_stdout_file, redis_stderr_file = new_log_files(
+            "redis-{}".format(i), redirect_output)
+        redis_shard_port, _ = start_redis_instance(
+            node_ip_address=node_ip_address, stdout_file=redis_stdout_file,
+            stderr_file=redis_stderr_file, cleanup=cleanup)
+        shard_address = address(node_ip_address, redis_shard_port)
+        redis_replica_shards.append(shard_address)
+        # Store redis shard information in the primary redis shard.
+        redis_client.rpush("RedisReplicaShards", shard_address)
+
+    return redis_replica_shards
+
+
 def start_redis_instance(node_ip_address="127.0.0.1",
                          port=None,
                          num_retries=20,
