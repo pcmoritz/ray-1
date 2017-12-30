@@ -859,8 +859,15 @@ std::list<TaskExecutionSpec>::iterator queue_task(
       /* Otherwise, this is the first time the task has been seen in the system
        * (unless it's a resubmission of a previous task), so add the entry. */
       task_table_add_task(state->db, task, NULL, NULL, NULL);
+      // TODO(pcm): put this into a separate method
       TaskSpec* spec = task_entry.Spec();
       auto data = std::make_shared<TaskTableDataT>();
+      data->scheduling_state = SchedulingState_QUEUED;
+      data->task_info = std::string(task_entry.Spec(), task_entry.SpecSize());
+      data->scheduler_id = get_db_client_id(state->db).binary();
+      for (const auto& elem : task_entry.ExecutionDependencies()) {
+        data->execution_dependencies.push_back(elem.binary());
+      }
       RAY_CHECK_OK(state->gcs_client.task_table().Add(ray::JobID::nil(), TaskSpec_task_id(spec), data,
                                                       [](gcs::AsyncGcsClient *client,
                                                          const TaskID &id,
