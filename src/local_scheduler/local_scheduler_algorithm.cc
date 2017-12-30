@@ -495,6 +495,8 @@ void queue_actor_task(LocalSchedulerState *state,
        * system (unless it's a resubmission of a previous task), so add the
        * entry. */
       task_table_add_task(state->db, task, NULL, NULL, NULL);
+      auto data = std::make_shared<TaskTableDataT>();
+      RAY_CHECK_OK(state->gcs_client.task_table().Add(ray::JobID::nil(), TaskSpec_task_id(spec), data, nullptr));
     }
   }
 
@@ -857,6 +859,12 @@ std::list<TaskExecutionSpec>::iterator queue_task(
       /* Otherwise, this is the first time the task has been seen in the system
        * (unless it's a resubmission of a previous task), so add the entry. */
       task_table_add_task(state->db, task, NULL, NULL, NULL);
+      TaskSpec* spec = task_entry.Spec();
+      auto data = std::make_shared<TaskTableDataT>();
+      RAY_CHECK_OK(state->gcs_client.task_table().Add(ray::JobID::nil(), TaskSpec_task_id(spec), data,
+                                                      [](gcs::AsyncGcsClient *client,
+                                                         const TaskID &id,
+                                                         std::shared_ptr<TaskTableDataT> data) {}));
     }
   }
 
