@@ -6,6 +6,8 @@
 #include "format/common_generated.h"
 #include "task.h"
 
+#include "../../ray/gcs/format/gcs_generated.h"
+
 #include "common_protocol.h"
 
 // Various tables are maintained in redis:
@@ -430,6 +432,46 @@ int TableLookup_RedisCommand(RedisModuleCtx *ctx,
 
   return REDISMODULE_OK;
 }
+
+// This is a temporary redis command that will be removed once
+// the GCS uses https://github.com/pcmoritz/credis.
+// Be careful, this only supports Task Table payloads.
+int TableTestAndUpdate_RedisCommand(RedisModuleCtx *ctx,
+                                    RedisModuleString **argv,
+                                    int argc) {
+
+  if (argc != 4) {
+    return RedisModule_WrongArity(ctx);
+  }
+  RedisModuleString *id = argv[1];
+  RedisModuleString *test_state = argv[2];
+  RedisModuleString *data = argv[3];
+
+  long long test_state_bitmask;
+  int status = RedisModule_StringToLongLong(test_state, &test_state_bitmask);
+  if (status != REDISMODULE_OK) {
+    return RedisModule_ReplyWithError(
+        ctx, "Invalid test value for scheduling state");
+  }
+
+  RedisModuleKey *key = OpenPrefixedKey(ctx, "T:", id, REDISMODULE_READ | REDISMODULE_WRITE);
+
+  size_t len = 0;
+  const char *buf = RedisModule_StringDMA(key, &len, REDISMODULE_READ);
+
+  auto message = flatbuffers::GetRoot<TaskTableData>(buf);
+
+  bool update = message->scheduling_state() & test_state_bitmask;
+
+  if (update) {
+    RedisModule_StringSet(key, data);
+  }
+
+  RedisModule_CloseKey(key);
+
+  return RedisModule_ReplyWithSimpleString(ctx, "OK");
+}
+
 
 /**
  * Add a new entry to the object table or update an existing one.
@@ -1215,6 +1257,12 @@ int RedisModule_OnLoad(RedisModuleCtx *ctx,
 
   if (RedisModule_CreateCommand(ctx, "ray.table_lookup",
                                 TableLookup_RedisCommand, "readonly", 0, 0,
+                                0) == REDISMODULE_ERR) {
+    return REDISMODULE_ERR;
+  }
+
+  if (RedisModule_CreateCommand(ctx, "ray.table_test_and_update",
+                                TableTestAndUpdate_RedisCommand, "write", 0, 0,
                                 0) == REDISMODULE_ERR) {
     return REDISMODULE_ERR;
   }
