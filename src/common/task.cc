@@ -388,26 +388,26 @@ TaskExecutionSpec::TaskExecutionSpec(TaskExecutionSpec *other) {
   spec_ = std::unique_ptr<TaskSpec[]>(spec_copy);
 }
 
-std::vector<ObjectID> TaskExecutionSpec::ExecutionDependencies() {
+std::vector<ObjectID> TaskExecutionSpec::ExecutionDependencies() const {
   return execution_dependencies_;
 }
 
-int64_t TaskExecutionSpec::SpecSize() {
+int64_t TaskExecutionSpec::SpecSize() const {
   return task_spec_size_;
 }
 
-TaskSpec *TaskExecutionSpec::Spec() {
+TaskSpec *TaskExecutionSpec::Spec() const {
   return spec_.get();
 }
 
-int64_t TaskExecutionSpec::NumDependencies() {
+int64_t TaskExecutionSpec::NumDependencies() const {
   TaskSpec *spec = Spec();
   int64_t num_dependencies = TaskSpec_num_args(spec);
   num_dependencies += execution_dependencies_.size();
   return num_dependencies;
 }
 
-int TaskExecutionSpec::DependencyIdCount(int64_t dependency_index) {
+int TaskExecutionSpec::DependencyIdCount(int64_t dependency_index) const {
   TaskSpec *spec = Spec();
   /* The first dependencies are the arguments of the task itself, followed by
    * the execution dependencies. Find the total number of task arguments so
@@ -426,7 +426,7 @@ int TaskExecutionSpec::DependencyIdCount(int64_t dependency_index) {
 }
 
 ObjectID TaskExecutionSpec::DependencyId(int64_t dependency_index,
-                                         int64_t id_index) {
+                                         int64_t id_index) const {
   TaskSpec *spec = Spec();
   /* The first dependencies are the arguments of the task itself, followed by
    * the execution dependencies. Find the total number of task arguments so
@@ -443,7 +443,7 @@ ObjectID TaskExecutionSpec::DependencyId(int64_t dependency_index,
   }
 }
 
-bool TaskExecutionSpec::DependsOn(ObjectID object_id) {
+bool TaskExecutionSpec::DependsOn(ObjectID object_id) const {
   // Iterate through the task arguments to see if it contains object_id.
   TaskSpec *spec = Spec();
   int64_t num_args = TaskSpec_num_args(spec);
@@ -467,7 +467,7 @@ bool TaskExecutionSpec::DependsOn(ObjectID object_id) {
   return false;
 }
 
-bool TaskExecutionSpec::IsStaticDependency(int64_t dependency_index) {
+bool TaskExecutionSpec::IsStaticDependency(int64_t dependency_index) const {
   TaskSpec *spec = Spec();
   /* The first dependencies are the arguments of the task itself, followed by
    * the execution dependencies. If the requested dependency index is a task
