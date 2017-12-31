@@ -145,6 +145,17 @@ void SchedulingAlgorithmState_free(SchedulingAlgorithmState *algorithm_state) {
   delete algorithm_state;
 }
 
+std::shared_ptr<TaskTableDataT> MakeTaskTableData(const TaskExecutionSpec &execution_spec, const DBClientID& local_scheduler_id, SchedulingState scheduling_state) {
+  auto data = std::make_shared<TaskTableDataT>();
+  data->scheduling_state = scheduling_state;
+  data->task_info = std::string(execution_spec.Spec(), execution_spec.SpecSize());
+  data->scheduler_id = local_scheduler_id.binary();
+  for (const auto& elem : execution_spec.ExecutionDependencies()) {
+    data->execution_dependencies.push_back(elem.binary());
+  }
+  return data;
+}
+
 /**
  * This is a helper method to check if a worker is in a vector of workers.
  *
@@ -378,6 +389,12 @@ void finish_killed_task(LocalSchedulerState *state,
     Task *task = Task_alloc(execution_spec, TASK_STATUS_DONE,
                             get_db_client_id(state->db));
     task_table_update(state->db, task, NULL, NULL, NULL);
+    TaskSpec* spec = execution_spec.Spec();
+    auto data = MakeTaskTableData(execution_spec, get_db_client_id(state->db), SchedulingState_DONE);
+    RAY_CHECK_OK(state->gcs_client.task_table().Add(ray::JobID::nil(), TaskSpec_task_id(spec), data,
+                                                    [](gcs::AsyncGcsClient *client,
+                                                       const TaskID &id,
+                                                       std::shared_ptr<TaskTableDataT> data) {}));
   }
 }
 
@@ -490,13 +507,17 @@ void queue_actor_task(LocalSchedulerState *state,
       /* If the task is from the global scheduler, it's already been added to
        * the task table, so just update the entry. */
       task_table_update(state->db, task, NULL, NULL, NULL);
+      // TODO(pcm): update actor task
     } else {
       /* Otherwise, this is the first time the task has been seen in the
        * system (unless it's a resubmission of a previous task), so add the
        * entry. */
       task_table_add_task(state->db, task, NULL, NULL, NULL);
-      auto data = std::make_shared<TaskTableDataT>();
-      RAY_CHECK_OK(state->gcs_client.task_table().Add(ray::JobID::nil(), TaskSpec_task_id(spec), data, nullptr));
+      auto data = MakeTaskTableData(execution_spec, get_db_client_id(state->db), SchedulingState_QUEUED);
+      RAY_CHECK_OK(state->gcs_client.task_table().Add(ray::JobID::nil(), TaskSpec_task_id(spec), data,
+                                                      [](gcs::AsyncGcsClient *client,
+                                                         const TaskID &id,
+                                                         std::shared_ptr<TaskTableDataT> data) {}));
     }
   }
 
@@ -826,16 +847,6 @@ void dispatch_all_tasks(LocalSchedulerState *state,
     dispatch_actor_task(state, algorithm_state, actor_id);
   }
 }
-std::shared_ptr<TaskTableDataT> MakeTaskTableData(const TaskExecutionSpec &execution_spec, const DBClientID& local_scheduler_id, SchedulingState scheduling_state) {
-  auto data = std::make_shared<TaskTableDataT>();
-  data->scheduling_state = scheduling_state;
-  data->task_info = std::string(execution_spec.Spec(), execution_spec.SpecSize());
-  data->scheduler_id = local_scheduler_id.binary();
-  for (const auto& elem : execution_spec.ExecutionDependencies()) {
-    data->execution_dependencies.push_back(elem.binary());
-  }
-  return data;
-}
 
 /**
  * A helper function to allocate a queue entry for a task specification and
@@ -869,13 +880,13 @@ std::list<TaskExecutionSpec>::iterator queue_task(
       /* Otherwise, this is the first time the task has been seen in the system
        * (unless it's a resubmission of a previous task), so add the entry. */
       task_table_add_task(state->db, task, NULL, NULL, NULL);
-      TaskSpec* spec = task_entry.Spec();
-      auto data = MakeTaskTableData(task_entry, get_db_client_id(state->db), SchedulingState_QUEUED);
-      RAY_CHECK_OK(state->gcs_client.task_table().Add(ray::JobID::nil(), TaskSpec_task_id(spec), data,
-                                                      [](gcs::AsyncGcsClient *client,
-                                                         const TaskID &id,
-                                                         std::shared_ptr<TaskTableDataT> data) {}));
     }
+    TaskSpec* spec = task_entry.Spec();
+    auto data = MakeTaskTableData(task_entry, get_db_client_id(state->db), SchedulingState_QUEUED);
+    RAY_CHECK_OK(state->gcs_client.task_table().Add(ray::JobID::nil(), TaskSpec_task_id(spec), data,
+                                                    [](gcs::AsyncGcsClient *client,
+                                                       const TaskID &id,
+                                                       std::shared_ptr<TaskTableDataT> data) {}));
   }
 
   /* Copy the spec and add it to the task queue. The allocated spec will be
@@ -1013,6 +1024,7 @@ void give_task_to_local_scheduler(LocalSchedulerState *state,
       .fail_callback = give_task_to_local_scheduler_retry,
   };
   task_table_add_task(state->db, task, &retryInfo, NULL, state);
+  // TODO(pcm): Add actor task to new GCS
 }
 
 void give_task_to_global_scheduler_retry(UniqueID id,

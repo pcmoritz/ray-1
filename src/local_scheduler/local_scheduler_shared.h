@@ -136,4 +136,6 @@ struct LocalSchedulerClient {
  */
 void LocalSchedulerState_free(LocalSchedulerState *state);
 
+std::shared_ptr<TaskTableDataT> MakeTaskTableData(const TaskExecutionSpec &execution_spec, const DBClientID& local_scheduler_id, SchedulingState scheduling_state);
+
 #endif /* LOCAL_SCHEDULER_SHARED_H */
