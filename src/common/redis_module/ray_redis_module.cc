@@ -408,6 +408,44 @@ int TableAdd_RedisCommand(RedisModuleCtx *ctx,
   RedisModule_StringSet(key, data);
   RedisModule_CloseKey(key);
 
+  size_t len = 0;
+  const char *buf = RedisModule_StringPtrLen(data, &len);
+
+  auto message = flatbuffers::GetRoot<TaskTableData>(buf);
+
+  if (message->scheduling_state() == SchedulingState_WAITING ||
+      message->scheduling_state() == SchedulingState_SCHEDULED) {
+        /* Build the PUBLISH topic and message for task table subscribers. The topic
+         * is a string in the format "TASK_PREFIX:<local scheduler ID>:<state>". The
+         * message is a serialized SubscribeToTasksReply flatbuffer object. */
+        std::string state = std::to_string(message->scheduling_state());
+        RedisModuleString *publish_topic = RedisString_Format(
+            ctx, "%s%b:%s", TASK_PREFIX, message->scheduler_id(), sizeof(DBClientID), state.c_str());
+
+        /* Construct the flatbuffers object for the payload. */
+        flatbuffers::FlatBufferBuilder fbb;
+        /* Create the flatbuffers message. */
+        auto msg =
+            CreateTaskReply(fbb, RedisStringToFlatbuf(fbb, id), message->scheduling_state(),
+                            fbb.CreateString(message->scheduler_id()),
+                            fbb.CreateString(""),
+                            fbb.CreateString(message->task_info()));
+        fbb.Finish(msg);
+
+        RedisModuleString *publish_message = RedisModule_CreateString(
+            ctx, (const char *) fbb.GetBufferPointer(), fbb.GetSize());
+
+        RedisModuleCallReply *reply =
+            RedisModule_Call(ctx, "PUBLISH", "ss", publish_topic, publish_message);
+
+        /* See how many clients received this publish. */
+        long long num_clients = RedisModule_CallReplyInteger(reply);
+        CHECKM(num_clients <= 1, "Published to %lld clients.", num_clients);
+
+        RedisModule_FreeString(ctx, publish_message);
+        RedisModule_FreeString(ctx, publish_topic);
+  }
+
   return RedisModule_ReplyWithSimpleString(ctx, "OK");
 }
 
