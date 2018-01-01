@@ -46,7 +46,7 @@ class Table {
              std::shared_ptr<DataT> data,
              const Callback &done) {
     auto d =
-        std::shared_ptr<CallbackData>(new CallbackData({id, data, done, this}));
+        std::shared_ptr<CallbackData>(new CallbackData({id, data, done, this, nullptr})); // TODO fix this!
     int64_t callback_index = RedisCallbackManager::instance().add([d](
         const std::string &data) { (d->callback)(d->client, d->id, d->data); });
     flatbuffers::FlatBufferBuilder fbb;
@@ -81,12 +81,13 @@ class Table {
   Status Subscribe(const JobID &job_id,
                    const ID &id,
                    const Callback &subscribe,
-                   const Callback &done);
+                   const Callback &done) {
+  }
 
   /// Remove and entry from the table
   Status Remove(const JobID &job_id, const ID &id, const Callback &done);
 
- private:
+ protected:
   std::unordered_map<ID, std::unique_ptr<CallbackData>, UniqueIDHasher>
       callback_data_;
   std::shared_ptr<RedisContext> context_;
@@ -151,11 +152,33 @@ class TaskTable : public Table<TaskID, TaskTableData> {
   ///        with, if the current state matches test_state_bitmask.
   /// @param callback Function to be called when database returns result.
   Status TestAndUpdate(const JobID &job_id,
-                       const TaskID &task_id,
+                       const TaskID &id,
+                       const DBClientID& test_local_scheduler_id,
                        int test_state_bitmask,
                        int updata_state,
-                       const TaskTableData &data,
-                       const TestAndUpdateCallback &callback);
+                       std::shared_ptr<TaskTableDataT> data,
+                       const Callback &callback) {
+    /*
+    // TODO (pcm): Implement this!
+    // using struct CallbackData = Table<TaskID, TaskTableData>::CallbackData;
+    auto d =
+        std::shared_ptr<CallbackData>(new CallbackData());
+    d->id = id;
+    d->data = data;
+    d->callback = callback;
+    d->table = this;
+    d->client = nullptr;
+    int64_t callback_index = RedisCallbackManager::instance().add([d](
+        const std::string &data) { (d->callback)(d->client, d->id, d->data); });
+    flatbuffers::FlatBufferBuilder fbb;
+    TaskTableTestAndUpdateBuilder builder(fbb);
+    fbb.Finish(TaskTableData::Pack(fbb, data.get()));
+    RAY_RETURN_NOT_OK(context_->RunAsync("RAY.TABLE_TEST_AND_UPDATE", id,
+                                        fbb.GetBufferPointer(), fbb.GetSize(),
+                                        callback_index));
+    */
+    return Status::OK();
+  }
 
   /// This has a separate signature from Subscribe in Table
   /// Register a callback for a task event. An event is any update of a task in

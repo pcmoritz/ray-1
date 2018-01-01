@@ -79,6 +79,7 @@ void assign_task_to_local_scheduler(GlobalSchedulerState *state,
   };
   task_table_update(state->db, Task_copy(task), &retryInfo, NULL, state);
 
+
   /* Update the object table info to reflect the fact that the results of this
    * task will be created on the machine that the task was assigned to. This can
    * be used to improve locality-aware scheduling. */
@@ -131,6 +132,8 @@ GlobalSchedulerState *GlobalSchedulerState_init(event_loop *loop,
                          "global_scheduler", node_ip_address,
                          std::vector<std::string>());
   db_attach(state->db, loop, false);
+  RAY_CHECK_OK(state->gcs_client.Connect(std::string(redis_primary_addr), redis_primary_port));
+  RAY_CHECK_OK(state->gcs_client.context()->AttachToEventLoop(loop));
   state->policy_state = GlobalSchedulerPolicyState_init();
   return state;
 }

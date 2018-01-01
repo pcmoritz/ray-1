@@ -680,6 +680,7 @@ void reconstruct_task_update_callback(Task *task,
                                    current_local_scheduler_id, Task_state(task),
                                    TASK_STATUS_RECONSTRUCTING, NULL,
                                    reconstruct_task_update_callback, state);
+        /* TODO(pcm): Implement this. */
       }
     }
     /* The test-and-set failed, so it is not safe to resubmit the task for
@@ -727,6 +728,7 @@ void reconstruct_put_task_update_callback(Task *task,
                                    current_local_scheduler_id, Task_state(task),
                                    TASK_STATUS_RECONSTRUCTING, NULL,
                                    reconstruct_put_task_update_callback, state);
+        /* TODO(pcm): Implement this. */
       } else if (Task_state(task) == TASK_STATUS_RUNNING) {
         /* (1) The task is still executing on a live node. The object created
          * by `ray.put` was not able to be reconstructed, and the workload will
@@ -779,6 +781,7 @@ void reconstruct_evicted_result_lookup_callback(ObjectID reconstruct_object_id,
                              (TASK_STATUS_DONE | TASK_STATUS_LOST),
                              TASK_STATUS_RECONSTRUCTING, NULL, done_callback,
                              state);
+  /* TODO(pcm): Implement this. */
 }
 
 void reconstruct_failed_result_lookup_callback(ObjectID reconstruct_object_id,
@@ -801,6 +804,7 @@ void reconstruct_failed_result_lookup_callback(ObjectID reconstruct_object_id,
   task_table_test_and_update(state->db, task_id, DBClientID::nil(),
                              TASK_STATUS_LOST, TASK_STATUS_RECONSTRUCTING, NULL,
                              reconstruct_task_update_callback, state);
+  /* TODO(pcm): Implement this. */
 }
 
 void reconstruct_object_lookup_callback(
