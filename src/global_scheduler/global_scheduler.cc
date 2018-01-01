@@ -13,6 +13,17 @@
 #include "state/table.h"
 #include "state/task_table.h"
 
+std::shared_ptr<TaskTableDataT> MakeTaskTableData(const TaskExecutionSpec &execution_spec, const DBClientID& local_scheduler_id, SchedulingState scheduling_state) {
+  auto data = std::make_shared<TaskTableDataT>();
+  data->scheduling_state = scheduling_state;
+  data->task_info = std::string(execution_spec.Spec(), execution_spec.SpecSize());
+  data->scheduler_id = local_scheduler_id.binary();
+  for (const auto& elem : execution_spec.ExecutionDependencies()) {
+    data->execution_dependencies.push_back(elem.binary());
+  }
+  return data;
+}
+
 /**
  * Retry the task assignment. If the local scheduler that the task is assigned
  * to is no longer active, do not retry the assignment.
@@ -50,6 +61,7 @@ void assign_task_to_local_scheduler_retry(UniqueID id,
       .fail_callback = assign_task_to_local_scheduler_retry,
   };
   task_table_update(state->db, Task_copy(task), &retryInfo, NULL, user_context);
+  /* TODO(pcm): add call here. */
 }
 
 /**
@@ -78,6 +90,12 @@ void assign_task_to_local_scheduler(GlobalSchedulerState *state,
       .fail_callback = assign_task_to_local_scheduler_retry,
   };
   task_table_update(state->db, Task_copy(task), &retryInfo, NULL, state);
+  TaskExecutionSpec& execution_spec = *Task_task_execution_spec(task);
+  auto data = MakeTaskTableData(execution_spec, local_scheduler_id, SchedulingState_SCHEDULED);
+  RAY_CHECK_OK(state->gcs_client.task_table().Add(ray::JobID::nil(), TaskSpec_task_id(spec), data,
+                                                  [](gcs::AsyncGcsClient *client,
+                                                     const TaskID &id,
+                                                     std::shared_ptr<TaskTableDataT> data) {}));
 
 
   /* Update the object table info to reflect the fact that the results of this
