@@ -13,16 +13,7 @@
 #include "state/table.h"
 #include "state/task_table.h"
 
-std::shared_ptr<TaskTableDataT> MakeTaskTableData(const TaskExecutionSpec &execution_spec, const DBClientID& local_scheduler_id, SchedulingState scheduling_state) {
-  auto data = std::make_shared<TaskTableDataT>();
-  data->scheduling_state = scheduling_state;
-  data->task_info = std::string(execution_spec.Spec(), execution_spec.SpecSize());
-  data->scheduler_id = local_scheduler_id.binary();
-  for (const auto& elem : execution_spec.ExecutionDependencies()) {
-    data->execution_dependencies.push_back(elem.binary());
-  }
-  return data;
-}
+std::shared_ptr<TaskTableDataT> MakeTaskTableData(const TaskExecutionSpec &execution_spec, const DBClientID& local_scheduler_id, SchedulingState scheduling_state);
 
 /**
  * Retry the task assignment. If the local scheduler that the task is assigned

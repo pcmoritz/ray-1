@@ -32,7 +32,7 @@ enum SchedulingState:int {
 table TaskTableData {
   scheduling_state: SchedulingState;
   scheduler_id: string;
-  execution_dependencies: [string];
+  execution_dependencies: string;
   task_info: string;
 }
 

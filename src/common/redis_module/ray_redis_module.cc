@@ -428,7 +428,7 @@ int TableAdd_RedisCommand(RedisModuleCtx *ctx,
         auto msg =
             CreateTaskReply(fbb, RedisStringToFlatbuf(fbb, id), message->scheduling_state(),
                             fbb.CreateString(message->scheduler_id()),
-                            fbb.CreateString(""),
+                            fbb.CreateString(message->execution_dependencies()),
                             fbb.CreateString(message->task_info()));
         fbb.Finish(msg);
 

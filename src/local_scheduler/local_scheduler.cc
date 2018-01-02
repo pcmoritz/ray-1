@@ -685,11 +685,13 @@ void reconstruct_task_update_callback(Task *task,
         /* (2) The current local scheduler for the task is dead. The task is
          * lost, but the task table hasn't received the update yet. Retry the
          * test-and-set. */
-        task_table_test_and_update(state->db, Task_task_id(task),
-                                   current_local_scheduler_id, Task_state(task),
-                                   TASK_STATUS_RECONSTRUCTING, NULL,
-                                   reconstruct_task_update_callback, state);
-        /* TODO(pcm): Implement this. */
+        #if !RAY_USE_NEW_GCS
+          task_table_test_and_update(state->db, Task_task_id(task),
+                                     current_local_scheduler_id, Task_state(task),
+                                     TASK_STATUS_RECONSTRUCTING, NULL,
+                                     reconstruct_task_update_callback, state);
+          /* TODO(pcm): Implement this. */
+        #endif
       }
     }
     /* The test-and-set failed, so it is not safe to resubmit the task for
@@ -733,10 +735,12 @@ void reconstruct_put_task_update_callback(Task *task,
         /* (2) The current local scheduler for the task is dead. The task is
          * lost, but the task table hasn't received the update yet. Retry the
          * test-and-set. */
-        task_table_test_and_update(state->db, Task_task_id(task),
-                                   current_local_scheduler_id, Task_state(task),
-                                   TASK_STATUS_RECONSTRUCTING, NULL,
-                                   reconstruct_put_task_update_callback, state);
+        #if !RAY_USE_NEW_GCS
+          task_table_test_and_update(state->db, Task_task_id(task),
+                                     current_local_scheduler_id, Task_state(task),
+                                     TASK_STATUS_RECONSTRUCTING, NULL,
+                                     reconstruct_put_task_update_callback, state);
+        #endif
         /* TODO(pcm): Implement this. */
       } else if (Task_state(task) == TASK_STATUS_RUNNING) {
         /* (1) The task is still executing on a live node. The object created
@@ -786,10 +790,14 @@ void reconstruct_evicted_result_lookup_callback(ObjectID reconstruct_object_id,
   }
   /* If there are no other instances of the task running, it's safe for us to
    * claim responsibility for reconstruction. */
-  task_table_test_and_update(state->db, task_id, DBClientID::nil(),
-                             (TASK_STATUS_DONE | TASK_STATUS_LOST),
-                             TASK_STATUS_RECONSTRUCTING, NULL, done_callback,
-                             state);
+  #if !RAY_USE_NEW_GCS
+    task_table_test_and_update(state->db, task_id, DBClientID::nil(),
+                               (TASK_STATUS_DONE | TASK_STATUS_LOST),
+                               TASK_STATUS_RECONSTRUCTING, NULL, done_callback,
+                               state);
+  #else
+    (void) state;
+  #endif
   /* TODO(pcm): Implement this. */
 }
 
@@ -810,9 +818,13 @@ void reconstruct_failed_result_lookup_callback(ObjectID reconstruct_object_id,
   LocalSchedulerState *state = (LocalSchedulerState *) user_context;
   /* If the task failed to finish, it's safe for us to claim responsibility for
    * reconstruction. */
-  task_table_test_and_update(state->db, task_id, DBClientID::nil(),
-                             TASK_STATUS_LOST, TASK_STATUS_RECONSTRUCTING, NULL,
-                             reconstruct_task_update_callback, state);
+  #if !RAY_USE_NEW_GCS
+    task_table_test_and_update(state->db, task_id, DBClientID::nil(),
+                               TASK_STATUS_LOST, TASK_STATUS_RECONSTRUCTING, NULL,
+                               reconstruct_task_update_callback, state);
+  #else
+    (void) state;
+  #endif
   /* TODO(pcm): Implement this. */
 }
 
