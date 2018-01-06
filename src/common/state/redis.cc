@@ -1157,6 +1157,7 @@ void redis_task_table_subscribe(TableCallbackData *callback_data) {
   // pcm: this is a hack...
   for (auto subscribe_context : {db->subscribe_context}) {
     int status;
+    std::cout << "pre: subscribe to scheduler id: " << data->local_scheduler_id.hex() << std::endl;
     if (data->local_scheduler_id.is_nil()) {
       /* TODO(swang): Implement the state_filter by translating the bitmask into
        * a Redis key-matching pattern. */
@@ -1166,6 +1167,7 @@ void redis_task_table_subscribe(TableCallbackData *callback_data) {
           TASK_CHANNEL_PREFIX, data->state_filter);
     } else {
       DBClientID local_scheduler_id = data->local_scheduler_id;
+      std::cout << "subscribe to scheduler id: " << data->local_scheduler_id.hex() << std::endl;
       status = redisAsyncCommand(
           subscribe_context, redis_task_table_subscribe_callback,
           (void *) callback_data->timer_id, "SUBSCRIBE %s%b:%d",
