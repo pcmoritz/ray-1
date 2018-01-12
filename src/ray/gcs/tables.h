@@ -159,7 +159,6 @@ class TaskTable : public Table<TaskID, TaskTableData> {
                        int updata_state,
                        std::shared_ptr<TaskTableDataT> data,
                        const Callback &callback) {
-    /*
     // TODO (pcm): Implement this!
     // using struct CallbackData = Table<TaskID, TaskTableData>::CallbackData;
     auto d =
@@ -177,7 +176,6 @@ class TaskTable : public Table<TaskID, TaskTableData> {
     RAY_RETURN_NOT_OK(context_->RunAsync("RAY.TABLE_TEST_AND_UPDATE", id,
                                         fbb.GetBufferPointer(), fbb.GetSize(),
                                         callback_index));
-    */
     return Status::OK();
   }
 

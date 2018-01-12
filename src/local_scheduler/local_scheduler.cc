@@ -797,6 +797,7 @@ void reconstruct_evicted_result_lookup_callback(ObjectID reconstruct_object_id,
                                state);
   #else
     (void) state;
+    (void) done_callback;
   #endif
   /* TODO(pcm): Implement this. */
 }
