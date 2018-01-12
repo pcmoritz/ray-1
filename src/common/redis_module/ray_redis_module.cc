@@ -423,7 +423,7 @@ int TableAdd_RedisCommand(RedisModuleCtx *ctx,
         std::cout << "XXX" << message->scheduler_id() << std::endl;
         // std::cout << "YYY" << idx.hex() << std::endl;
         RedisModuleString *publish_topic = RedisString_Format(
-            ctx, "%s%b:%s", TASK_PREFIX, message->scheduler_id(), sizeof(DBClientID), state.c_str());
+            ctx, "%s%b:%s", TASK_PREFIX, message->scheduler_id()->str().c_str(), sizeof(DBClientID), state.c_str());
 
         /* Construct the flatbuffers object for the payload. */
         flatbuffers::FlatBufferBuilder fbb;
