@@ -1392,8 +1392,7 @@ void start_server(
                          g_state, NULL, NULL, NULL);
     */
     // TODO(pcm): Investigate this:
-    std::cout << "XXX subscribing to task table" << std::endl;
-    task_table_subscribe(g_state->db, get_db_client_id(g_state->db), // DBClientID::nil(),
+    task_table_subscribe(g_state->db, get_db_client_id(g_state->db),
                          TASK_STATUS_SCHEDULED, handle_task_scheduled_callback,
                          g_state, NULL, NULL, NULL);
   }
