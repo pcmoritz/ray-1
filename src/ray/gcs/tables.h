@@ -82,6 +82,7 @@ class Table {
                    const ID &id,
                    const Callback &subscribe,
                    const Callback &done) {
+    return Status::OK();
   }
 
   /// Remove and entry from the table
