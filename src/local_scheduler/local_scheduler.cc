@@ -1387,12 +1387,6 @@ void start_server(
    * TODO(rkn): we also need to get any tasks that were assigned to this local
    * scheduler before the call to subscribe. */
   if (g_state->db != NULL) {
-    /*
-    task_table_subscribe(g_state->db, get_db_client_id(g_state->db),
-                         TASK_STATUS_SCHEDULED, handle_task_scheduled_callback,
-                         g_state, NULL, NULL, NULL);
-    */
-    // TODO(pcm): Investigate this:
     task_table_subscribe(g_state->db, get_db_client_id(g_state->db),
                          TASK_STATUS_SCHEDULED, handle_task_scheduled_callback,
                          g_state, NULL, NULL, NULL);

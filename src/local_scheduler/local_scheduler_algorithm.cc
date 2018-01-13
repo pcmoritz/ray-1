@@ -499,7 +499,18 @@ void queue_actor_task(LocalSchedulerState *state,
     if (from_global_scheduler) {
       /* If the task is from the global scheduler, it's already been added to
        * the task table, so just update the entry. */
-      task_table_update(state->db, task, NULL, NULL, NULL);
+      #if !RAY_USE_NEW_GCS
+        task_table_update(state->db, task, NULL, NULL, NULL);
+      #else
+        TaskExecutionSpec& execution_spec = *Task_task_execution_spec(task);
+        TaskSpec* spec = execution_spec.Spec();
+        auto data = MakeTaskTableData(execution_spec, Task_local_scheduler(task), SchedulingState_QUEUED);
+        RAY_CHECK_OK(state->gcs_client.task_table().Add(ray::JobID::nil(), TaskSpec_task_id(spec), data,
+                                                         [](gcs::AsyncGcsClient *client,
+                                                           const TaskID &id,
+                                                          std::shared_ptr<TaskTableDataT> data) {}));
+        Task_free(task);
+      #endif
       // TODO(pcm): update actor task
     } else {
       /* Otherwise, this is the first time the task has been seen in the
