@@ -420,7 +420,7 @@ int TableAdd_RedisCommand(RedisModuleCtx *ctx,
          * message is a serialized SubscribeToTasksReply flatbuffer object. */
         std::string state = std::to_string(message->scheduling_state());
         RedisModuleString *publish_topic = RedisString_Format(
-            ctx, "%s%b:%s", TASK_PREFIX, message->scheduler_id()->str().c_str(),
+            ctx, "%s%b:%s", TASK_PREFIX, message->scheduler_id()->str().data(),
             sizeof(DBClientID), state.c_str());
 
         /* Construct the flatbuffers object for the payload. */
