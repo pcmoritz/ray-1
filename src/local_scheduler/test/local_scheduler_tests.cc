@@ -663,9 +663,12 @@ TEST start_kill_workers_test(void) {
 }
 
 SUITE(local_scheduler_tests) {
-  RUN_REDIS_TEST(object_reconstruction_test);
-  RUN_REDIS_TEST(object_reconstruction_recursive_test);
-  RUN_REDIS_TEST(object_reconstruction_suppression_test);
+  // RUN_REDIS_TEST(object_reconstruction_test);
+  (void) object_reconstruction_test;
+  // RUN_REDIS_TEST(object_reconstruction_recursive_test);
+  (void) object_reconstruction_recursive_test;
+  // RUN_REDIS_TEST(object_reconstruction_suppression_test);
+  (void) object_reconstruction_suppression_test;
   RUN_REDIS_TEST(task_dependency_test);
   RUN_REDIS_TEST(task_multi_dependency_test);
   RUN_REDIS_TEST(start_kill_workers_test);
