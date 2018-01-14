@@ -38,7 +38,7 @@ class Table {
     AsyncGcsClient *client;
   };
 
-  Table(const std::shared_ptr<RedisContext> &context) : context_(context){};
+  Table(const std::shared_ptr<RedisContext> &context, AsyncGcsClient* client) : context_(context), client_(client) {};
 
   /// Add an entry to the table
   Status Add(const JobID &job_id,
@@ -46,7 +46,7 @@ class Table {
              std::shared_ptr<DataT> data,
              const Callback &done) {
     auto d =
-        std::shared_ptr<CallbackData>(new CallbackData({id, data, done, this, nullptr})); // TODO fix this!
+        std::shared_ptr<CallbackData>(new CallbackData({id, data, done, this, client_}));
     int64_t callback_index = RedisCallbackManager::instance().add([d](
         const std::string &data) { (d->callback)(d->client, d->id, d->data); });
     flatbuffers::FlatBufferBuilder fbb;
@@ -92,11 +92,12 @@ class Table {
   std::unordered_map<ID, std::unique_ptr<CallbackData>, UniqueIDHasher>
       callback_data_;
   std::shared_ptr<RedisContext> context_;
+  AsyncGcsClient* client_;
 };
 
 class ObjectTable : public Table<ObjectID, ObjectTableData> {
  public:
-  ObjectTable(const std::shared_ptr<RedisContext> &context) : Table(context){};
+  ObjectTable(const std::shared_ptr<RedisContext> &context, AsyncGcsClient* client) : Table(context, client){};
 
   /// Set up a client-specific channel for receiving notifications about
   /// available
@@ -132,10 +133,10 @@ using ActorTable = Table<ActorID, ActorTableData>;
 
 class TaskTable : public Table<TaskID, TaskTableData> {
  public:
-  TaskTable(const std::shared_ptr<RedisContext> &context) : Table(context){};
+  TaskTable(const std::shared_ptr<RedisContext> &context, AsyncGcsClient* client) : Table(context, client){};
 
   using TestAndUpdateCallback =
-      std::function<void(std::shared_ptr<TaskTableDataT> task)>;
+      std::function<void(AsyncGcsClient *client, const TaskID &id, std::shared_ptr<TaskTableDataT> task)>;
   using SubscribeToTaskCallback =
       std::function<void(std::shared_ptr<TaskTableDataT> task)>;
   /// Update a task's scheduling information in the task table, if the current
@@ -154,30 +155,25 @@ class TaskTable : public Table<TaskID, TaskTableData> {
   /// @param callback Function to be called when database returns result.
   Status TestAndUpdate(const JobID &job_id,
                        const TaskID &id,
-                       const DBClientID& test_local_scheduler_id,
-                       int test_state_bitmask,
-                       int updata_state,
-                       std::shared_ptr<TaskTableDataT> data,
+                       std::shared_ptr<TaskTableTestAndUpdateT> data,
                        const Callback &callback) {
-    /*
     // TODO (pcm): Implement this!
     // using struct CallbackData = Table<TaskID, TaskTableData>::CallbackData;
     auto d =
         std::shared_ptr<CallbackData>(new CallbackData());
     d->id = id;
-    d->data = data;
+    d->data = nullptr;
     d->callback = callback;
     d->table = this;
-    d->client = nullptr;
+    d->client = client_;
     int64_t callback_index = RedisCallbackManager::instance().add([d](
         const std::string &data) { (d->callback)(d->client, d->id, d->data); });
     flatbuffers::FlatBufferBuilder fbb;
     TaskTableTestAndUpdateBuilder builder(fbb);
-    fbb.Finish(TaskTableData::Pack(fbb, data.get()));
+    fbb.Finish(TaskTableTestAndUpdate::Pack(fbb, data.get()));
     RAY_RETURN_NOT_OK(context_->RunAsync("RAY.TABLE_TEST_AND_UPDATE", id,
                                         fbb.GetBufferPointer(), fbb.GetSize(),
                                         callback_index));
-    */
     return Status::OK();
   }
 

@@ -690,7 +690,17 @@ void reconstruct_task_update_callback(Task *task,
                                      current_local_scheduler_id, Task_state(task),
                                      TASK_STATUS_RECONSTRUCTING, NULL,
                                      reconstruct_task_update_callback, state);
-          /* TODO(pcm): Implement this. */
+        #else
+          /*
+          auto data = std::make_shared<TaskTableTestAndUpdateT>();
+          data->test_scheduler_id = current_local_scheduler_id.binary();
+          data->test_state_bitmask = Task_state(task);
+          data->update_state = SchedulingState_LOST;
+          RAY_CHECK_OK(state->gcs_client.task_table().TestAndUpdate(ray::JobID::nil(), Task_task_id(task), data,
+              [](gcs::AsyncGcsClient* client,
+                 const ray::TaskID& id,
+                 )));
+          */
         #endif
       }
     }

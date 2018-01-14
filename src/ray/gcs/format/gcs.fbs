@@ -37,10 +37,9 @@ table TaskTableData {
 }
 
 table TaskTableTestAndUpdate {
+  test_scheduler_id: string;
   test_state_bitmask: int;
-  test_local_scheduler_id: string;
-  // "data" is a serialized TaskTableData
-  data: [ubyte];
+  update_state: SchedulingState;
 }
 
 table ClassTableData {

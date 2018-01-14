@@ -479,31 +479,27 @@ int TableTestAndUpdate_RedisCommand(RedisModuleCtx *ctx,
                                     RedisModuleString **argv,
                                     int argc) {
 
-  if (argc != 4) {
+  if (argc != 3) {
     return RedisModule_WrongArity(ctx);
   }
   RedisModuleString *id = argv[1];
-  RedisModuleString *test_state = argv[2];
-  RedisModuleString *data = argv[3];
-
-  long long test_state_bitmask;
-  int status = RedisModule_StringToLongLong(test_state, &test_state_bitmask);
-  if (status != REDISMODULE_OK) {
-    return RedisModule_ReplyWithError(
-        ctx, "Invalid test value for scheduling state");
-  }
+  RedisModuleString *update_data = argv[2];
 
   RedisModuleKey *key = OpenPrefixedKey(ctx, "T:", id, REDISMODULE_READ | REDISMODULE_WRITE);
 
   size_t len = 0;
-  const char *buf = RedisModule_StringDMA(key, &len, REDISMODULE_READ);
+  char *value_buf = RedisModule_StringDMA(key, &len, REDISMODULE_READ);
 
-  auto message = flatbuffers::GetRoot<TaskTableData>(buf);
+  const char *update_buf = RedisModule_StringPtrLen(update_data, &len);
 
-  bool update = message->scheduling_state() & test_state_bitmask;
+  auto data = flatbuffers::GetMutableRoot<TaskTableData>(reinterpret_cast<void*>(value_buf));
 
-  if (update) {
-    RedisModule_StringSet(key, data);
+  auto update = flatbuffers::GetRoot<TaskTableTestAndUpdate>(update_buf);
+
+  bool do_update = data->scheduling_state() & update->test_state_bitmask();
+
+  if (do_update) {
+    data->mutate_scheduling_state(update->update_state());
   }
 
   RedisModule_CloseKey(key);
