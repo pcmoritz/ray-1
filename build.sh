@@ -29,11 +29,13 @@ pushd "$ROOT_DIR/src/common/thirdparty/"
   bash build-redis.sh
 popd
 
+pushd "$ROOT_DIR/src"
+  rm -rf credis
+  git clone --recursive https://github.com/ray-project/credis
+popd
+
 pushd "$ROOT_DIR/src/credis"
-  git clone https://github.com/ray-project/credis
-  git checkout ef4aa4dc17fc0f2ccce8dd0ed0f078ac72366524
-  git submodule init
-  git submodule update
+  git checkout 09120aa93791874428476ba780a27899753b484c
 
   pushd redis && make -j && popd
   pushd glog && cmake . && make -j install && popd
