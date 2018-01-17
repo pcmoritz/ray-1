@@ -29,6 +29,21 @@ pushd "$ROOT_DIR/src/common/thirdparty/"
   bash build-redis.sh
 popd
 
+pushd "$ROOT_DIR/src/credis"
+  git clone https://github.com/ray-project/credis
+  git checkout ef4aa4dc17fc0f2ccce8dd0ed0f078ac72366524
+  git submodule init
+  git submodule update
+
+  pushd redis && make -j && popd
+  pushd glog && cmake . && make -j install && popd
+  pushd leveldb && make -j && popd
+
+  mkdir build; cd build
+  cmake ..
+  make -j
+popd
+
 bash "$ROOT_DIR/src/thirdparty/download_thirdparty.sh"
 bash "$ROOT_DIR/src/thirdparty/build_thirdparty.sh" $PYTHON_EXECUTABLE
 
