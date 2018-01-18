@@ -41,9 +41,17 @@ pushd "$ROOT_DIR/src/credis"
   pushd glog && cmake . && make -j install && popd
   pushd leveldb && make -j && popd
 
-  mkdir build; cd build
-  cmake ..
-  make -j
+  mkdir build
+  pushd build
+    cmake ..
+    make -j
+  popd
+
+  mkdir -p $ROOT_DIR/python/ray/core/src/credis/redis/src/
+  cp redis/src/redis-server $ROOT_DIR/python/ray/core/src/credis/redis/src/redis-server
+  mkdir -p $ROOT_DIR/python/ray/core/src/credis/build/src/
+  cp build/src/libmaster.so $ROOT_DIR/python/ray/core/src/credis/build/src/libmaster.so
+  cp build/src/libmember.so $ROOT_DIR/python/ray/core/src/credis/build/src/libmember.so
 popd
 
 bash "$ROOT_DIR/src/thirdparty/download_thirdparty.sh"
