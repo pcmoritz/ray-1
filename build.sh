@@ -29,6 +29,31 @@ pushd "$ROOT_DIR/src/common/thirdparty/"
   bash build-redis.sh
 popd
 
+pushd "$ROOT_DIR/src"
+  rm -rf credis
+  git clone --recursive https://github.com/ray-project/credis
+popd
+
+pushd "$ROOT_DIR/src/credis"
+  git checkout 09120aa93791874428476ba780a27899753b484c
+
+  pushd redis && make -j && popd
+  pushd glog && cmake . && make -j install && popd
+  pushd leveldb && make -j && popd
+
+  mkdir build
+  pushd build
+    cmake ..
+    make -j
+  popd
+
+  mkdir -p $ROOT_DIR/python/ray/core/src/credis/redis/src/
+  cp redis/src/redis-server $ROOT_DIR/python/ray/core/src/credis/redis/src/redis-server
+  mkdir -p $ROOT_DIR/python/ray/core/src/credis/build/src/
+  cp build/src/libmaster.so $ROOT_DIR/python/ray/core/src/credis/build/src/libmaster.so
+  cp build/src/libmember.so $ROOT_DIR/python/ray/core/src/credis/build/src/libmember.so
+popd
+
 bash "$ROOT_DIR/src/thirdparty/download_thirdparty.sh"
 bash "$ROOT_DIR/src/thirdparty/build_thirdparty.sh" $PYTHON_EXECUTABLE
 
