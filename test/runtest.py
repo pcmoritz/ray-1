@@ -1987,7 +1987,7 @@ class GlobalStateAPI(unittest.TestCase):
 
         ray.worker.cleanup()
 
-    def testDumpTraceFile(self):
+    def notestDumpTraceFile(self):
         ray.init(redirect_output=True)
 
         @ray.remote
