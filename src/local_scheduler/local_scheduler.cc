@@ -698,7 +698,8 @@ void reconstruct_task_update_callback(Task *task,
           RAY_CHECK_OK(state->gcs_client.task_table().TestAndUpdate(ray::JobID::nil(), Task_task_id(task), data,
               [](gcs::AsyncGcsClient* client,
                  const ray::TaskID& id,
-                 std::shared_ptr<TaskTableDataT> task) {}));
+                 std::shared_ptr<TaskTableDataT> task,
+                 bool updated) {}));
         #endif
       }
     }
@@ -752,11 +753,14 @@ void reconstruct_put_task_update_callback(Task *task,
           auto data = std::make_shared<TaskTableTestAndUpdateT>();
           data->test_scheduler_id = current_local_scheduler_id.binary();
           data->test_state_bitmask = Task_state(task);
-          data->update_state = SchedulingState_LOST;
+          data->update_state = SchedulingState_RECONSTRUCTING;
           RAY_CHECK_OK(state->gcs_client.task_table().TestAndUpdate(ray::JobID::nil(), Task_task_id(task), data,
-              [](gcs::AsyncGcsClient* client,
+              [task, user_context](gcs::AsyncGcsClient* client,
                  const ray::TaskID& id,
-                 std::shared_ptr<TaskTableDataT> task) {}));
+                 std::shared_ptr<TaskTableDataT> t,
+                 bool updated) {
+                   reconstruct_put_task_update_callback(task, user_context, updated);
+                 }));
         #endif
       } else if (Task_state(task) == TASK_STATUS_RUNNING) {
         /* (1) The task is still executing on a live node. The object created

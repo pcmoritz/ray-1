@@ -504,7 +504,14 @@ int TableTestAndUpdate_RedisCommand(RedisModuleCtx *ctx,
 
   RedisModule_CloseKey(key);
 
-  return RedisModule_ReplyWithSimpleString(ctx, "OK");
+  // TODO(pcm): Free this!
+  RedisModuleString *reply;
+  if (do_update) {
+    reply = RedisModule_CreateString(ctx, "true", 4);
+  } else {
+    reply = RedisModule_CreateString(ctx, "false", 5);
+  }
+  return RedisModule_ReplyWithString(ctx, reply);
 }
 
 

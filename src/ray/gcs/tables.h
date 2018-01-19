@@ -136,7 +136,7 @@ class TaskTable : public Table<TaskID, TaskTableData> {
   TaskTable(const std::shared_ptr<RedisContext> &context, AsyncGcsClient* client) : Table(context, client){};
 
   using TestAndUpdateCallback =
-      std::function<void(AsyncGcsClient *client, const TaskID &id, std::shared_ptr<TaskTableDataT> task)>;
+      std::function<void(AsyncGcsClient *client, const TaskID &id, std::shared_ptr<TaskTableDataT> task, bool updated)>;
   using SubscribeToTaskCallback =
       std::function<void(std::shared_ptr<TaskTableDataT> task)>;
   /// Update a task's scheduling information in the task table, if the current
@@ -156,18 +156,11 @@ class TaskTable : public Table<TaskID, TaskTableData> {
   Status TestAndUpdate(const JobID &job_id,
                        const TaskID &id,
                        std::shared_ptr<TaskTableTestAndUpdateT> data,
-                       const Callback &callback) {
-    // TODO (pcm): Implement this!
-    // using struct CallbackData = Table<TaskID, TaskTableData>::CallbackData;
-    auto d =
-        std::shared_ptr<CallbackData>(new CallbackData());
-    d->id = id;
-    d->data = nullptr;
-    d->callback = callback;
-    d->table = this;
-    d->client = client_;
-    int64_t callback_index = RedisCallbackManager::instance().add([d](
-        const std::string &data) { (d->callback)(d->client, d->id, d->data); });
+                       const TestAndUpdateCallback &callback) {
+    int64_t callback_index = RedisCallbackManager::instance().add([this, callback, id](
+        const std::string &data) {
+          callback(client_, id, nullptr, data == "true");
+        });
     flatbuffers::FlatBufferBuilder fbb;
     TaskTableTestAndUpdateBuilder builder(fbb);
     fbb.Finish(TaskTableTestAndUpdate::Pack(fbb, data.get()));

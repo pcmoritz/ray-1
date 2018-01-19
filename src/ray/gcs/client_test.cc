@@ -75,7 +75,8 @@ void TaskLookupAfterUpdate(gcs::AsyncGcsClient *client,
 
 void TaskUpdateCallback(gcs::AsyncGcsClient *client,
                         const TaskID &task_id,
-                        std::shared_ptr<TaskTableDataT> task) {
+                        std::shared_ptr<TaskTableDataT> task,
+                        bool updated) {
   RAY_CHECK_OK(client->task_table().Lookup(DriverID::nil(), task_id, &TaskLookupAfterUpdate, &TaskLookupAfterUpdate));
 }
 
