@@ -188,7 +188,7 @@ class TestGlobalScheduler(unittest.TestCase):
         db_client_id = self.get_plasma_manager_id()
         assert(db_client_id is not None)
 
-    def test_integration_single_task(self):
+    def notest_integration_single_task(self):
         # There should be three db clients, the global scheduler, the local
         # scheduler, and the plasma manager.
         self.assertEqual(
@@ -301,10 +301,10 @@ class TestGlobalScheduler(unittest.TestCase):
 
         self.assertEqual(num_tasks_done, num_tasks)
 
-    def test_integration_many_tasks_handler_sync(self):
+    def notest_integration_many_tasks_handler_sync(self):
         self.integration_many_tasks_helper(timesync=True)
 
-    def test_integration_many_tasks(self):
+    def notest_integration_many_tasks(self):
         # More realistic case: should handle out of order object and task
         # notifications.
         self.integration_many_tasks_helper(timesync=False)
