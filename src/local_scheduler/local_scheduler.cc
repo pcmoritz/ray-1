@@ -852,9 +852,17 @@ void reconstruct_failed_result_lookup_callback(ObjectID reconstruct_object_id,
                                TASK_STATUS_LOST, TASK_STATUS_RECONSTRUCTING, NULL,
                                reconstruct_task_update_callback, state);
   #else
+    auto data = std::make_shared<TaskTableTestAndUpdateT>();
+    data->test_scheduler_id = DBClientID::nil().binary();
+    data->test_state_bitmask = SchedulingState_LOST;
+    data->update_state = SchedulingState_RECONSTRUCTING;
+    RAY_CHECK_OK(state->gcs_client.task_table().TestAndUpdate(ray::JobID::nil(), task_id, data,
+      [](gcs::AsyncGcsClient* client,
+        const ray::TaskID& id,
+        std::shared_ptr<TaskTableDataT> task,
+        bool updated) { /* TODO XXX */}));
     (void) state;
   #endif
-  /* TODO(pcm): Implement this. */
 }
 
 void reconstruct_object_lookup_callback(
