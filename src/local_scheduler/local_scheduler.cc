@@ -700,8 +700,6 @@ void reconstruct_task_update_callback(Task *task,
                  const ray::TaskID& id,
                  std::shared_ptr<TaskTableDataT> task,
                  bool updated) {}));
-          (void) state;
-          (void) done_callback;
         #endif
       }
     }
@@ -827,6 +825,8 @@ void reconstruct_evicted_result_lookup_callback(ObjectID reconstruct_object_id,
           const ray::TaskID& id,
           std::shared_ptr<TaskTableDataT> task,
           bool updated) { /* TODO XXX */}));
+    (void) state;
+    (void) done_callback;
   #endif
 }
 
