@@ -487,10 +487,11 @@ int TableTestAndUpdate_RedisCommand(RedisModuleCtx *ctx,
 
   RedisModuleKey *key = OpenPrefixedKey(ctx, "T:", id, REDISMODULE_READ | REDISMODULE_WRITE);
 
-  size_t len = 0;
-  char *value_buf = RedisModule_StringDMA(key, &len, REDISMODULE_READ);
+  size_t value_len = 0;
+  char *value_buf = RedisModule_StringDMA(key, &value_len, REDISMODULE_READ);
 
-  const char *update_buf = RedisModule_StringPtrLen(update_data, &len);
+  size_t update_len = 0;
+  const char *update_buf = RedisModule_StringPtrLen(update_data, &update_len);
 
   auto data = flatbuffers::GetMutableRoot<TaskTableData>(reinterpret_cast<void*>(value_buf));
 
@@ -500,18 +501,19 @@ int TableTestAndUpdate_RedisCommand(RedisModuleCtx *ctx,
 
   if (do_update) {
     data->mutate_scheduling_state(update->update_state());
+    // TODO(pcm): This is a little bit of a hack, really the task should be
+    // copied and the copy modified...
+    data->mutate_updated(do_update);
   }
+
+  // TODO(pcm): Free this!
+  RedisModuleString *reply = RedisModule_CreateString(ctx, value_buf, value_len);
+
+  RedisModule_ReplyWithString(ctx, reply);
 
   RedisModule_CloseKey(key);
 
-  // TODO(pcm): Free this!
-  RedisModuleString *reply;
-  if (do_update) {
-    reply = RedisModule_CreateString(ctx, "true", 4);
-  } else {
-    reply = RedisModule_CreateString(ctx, "false", 5);
-  }
-  return RedisModule_ReplyWithString(ctx, reply);
+  return REDISMODULE_OK;
 }
 
 

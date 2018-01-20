@@ -34,6 +34,8 @@ table TaskTableData {
   scheduler_id: string;
   execution_dependencies: string;
   task_info: string;
+  // TODO(pcm): This is at the moment duplicated in task_info, remove that one
+  updated: bool;
 }
 
 table TaskTableTestAndUpdate {

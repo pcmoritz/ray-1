@@ -373,7 +373,7 @@ void TaskSpec_free(TaskSpec *spec) {
 
 TaskExecutionSpec::TaskExecutionSpec(
     const std::vector<ObjectID> &execution_dependencies,
-    TaskSpec *spec,
+    const TaskSpec *spec,
     int64_t task_spec_size) {
   execution_dependencies_ = execution_dependencies;
   task_spec_size_ = task_spec_size;
@@ -480,7 +480,7 @@ bool TaskExecutionSpec::IsStaticDependency(int64_t dependency_index) const {
 
 /* TASK INSTANCES */
 
-Task *Task_alloc(TaskSpec *spec,
+Task *Task_alloc(const TaskSpec *spec,
                  int64_t task_spec_size,
                  int state,
                  DBClientID local_scheduler_id,

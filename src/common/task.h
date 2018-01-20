@@ -18,7 +18,7 @@ typedef char TaskSpec;
 class TaskExecutionSpec {
  public:
   TaskExecutionSpec(const std::vector<ObjectID> &execution_dependencies,
-                    TaskSpec *spec,
+                    const TaskSpec *spec,
                     int64_t task_spec_size);
   TaskExecutionSpec(TaskExecutionSpec *execution_spec);
 
@@ -493,7 +493,7 @@ struct Task {
  * @param local_scheduler_id The ID of the local scheduler that the task is
  *        scheduled on, if any.
  */
-Task *Task_alloc(TaskSpec *spec,
+Task *Task_alloc(const TaskSpec *spec,
                  int64_t task_spec_size,
                  int state,
                  DBClientID local_scheduler_id,

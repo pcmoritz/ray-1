@@ -1027,15 +1027,24 @@ void give_task_to_local_scheduler(LocalSchedulerState *state,
   CHECK(state->db != NULL);
   /* Assign the task to the relevant local scheduler. */
   DCHECK(state->config.global_scheduler_exists);
-  Task *task =
-      Task_alloc(execution_spec, TASK_STATUS_SCHEDULED, local_scheduler_id);
-  auto retryInfo = RetryInfo{
-      .num_retries = 0,  // This value is unused.
-      .timeout = 0,      // This value is unused.
-      .fail_callback = give_task_to_local_scheduler_retry,
-  };
-  task_table_add_task(state->db, task, &retryInfo, NULL, state);
-  // TODO(pcm): Add actor task to new GCS
+  #if !RAY_USE_NEW_GCS
+    Task *task =
+        Task_alloc(execution_spec, TASK_STATUS_SCHEDULED, local_scheduler_id);
+    auto retryInfo = RetryInfo{
+        .num_retries = 0,  // This value is unused.
+        .timeout = 0,      // This value is unused.
+        .fail_callback = give_task_to_local_scheduler_retry,
+    };
+
+    task_table_add_task(state->db, task, &retryInfo, NULL, state);
+  #else
+    TaskSpec* spec = execution_spec.Spec();
+    auto data = MakeTaskTableData(execution_spec, DBClientID::nil(), SchedulingState_SCHEDULED);
+    RAY_CHECK_OK(state->gcs_client.task_table().Add(ray::JobID::nil(), TaskSpec_task_id(spec), data,
+                                                    [](gcs::AsyncGcsClient *client,
+                                                       const TaskID &id,
+                                                       std::shared_ptr<TaskTableDataT> data) {}));
+  #endif
 }
 
 void give_task_to_global_scheduler_retry(UniqueID id,

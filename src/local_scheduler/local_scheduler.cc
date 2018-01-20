@@ -694,12 +694,14 @@ void reconstruct_task_update_callback(Task *task,
           auto data = std::make_shared<TaskTableTestAndUpdateT>();
           data->test_scheduler_id = current_local_scheduler_id.binary();
           data->test_state_bitmask = Task_state(task);
-          data->update_state = SchedulingState_LOST;
+          data->update_state = SchedulingState_RECONSTRUCTING;
           RAY_CHECK_OK(state->gcs_client.task_table().TestAndUpdate(ray::JobID::nil(), Task_task_id(task), data,
-              [](gcs::AsyncGcsClient* client,
+              [task, user_context](gcs::AsyncGcsClient* client,
                  const ray::TaskID& id,
-                 std::shared_ptr<TaskTableDataT> task,
-                 bool updated) {}));
+                 const TaskTableDataT& t,
+                 bool updated) {
+                   reconstruct_task_update_callback(task, user_context, updated);
+                 }));
         #endif
       }
     }
@@ -757,7 +759,7 @@ void reconstruct_put_task_update_callback(Task *task,
           RAY_CHECK_OK(state->gcs_client.task_table().TestAndUpdate(ray::JobID::nil(), Task_task_id(task), data,
               [task, user_context](gcs::AsyncGcsClient* client,
                  const ray::TaskID& id,
-                 std::shared_ptr<TaskTableDataT> t,
+                 const TaskTableDataT& t,
                  bool updated) {
                    reconstruct_put_task_update_callback(task, user_context, updated);
                  }));
@@ -821,12 +823,14 @@ void reconstruct_evicted_result_lookup_callback(ObjectID reconstruct_object_id,
     data->test_state_bitmask = SchedulingState_DONE | SchedulingState_LOST;
     data->update_state = SchedulingState_RECONSTRUCTING;
     RAY_CHECK_OK(state->gcs_client.task_table().TestAndUpdate(ray::JobID::nil(), task_id, data,
-        [](gcs::AsyncGcsClient* client,
+        [done_callback, state](gcs::AsyncGcsClient* client,
           const ray::TaskID& id,
-          std::shared_ptr<TaskTableDataT> task,
-          bool updated) { /* TODO XXX */}));
-    (void) state;
-    (void) done_callback;
+          const TaskTableDataT& t,
+          bool updated) {
+            Task* task = Task_alloc(t.task_info.data(), t.task_info.size(), t.scheduling_state, DBClientID::from_binary(t.scheduler_id), std::vector<ObjectID>());
+            done_callback(task, state, updated);
+            Task_free(task);
+          }));
   #endif
 }
 
@@ -857,11 +861,14 @@ void reconstruct_failed_result_lookup_callback(ObjectID reconstruct_object_id,
     data->test_state_bitmask = SchedulingState_LOST;
     data->update_state = SchedulingState_RECONSTRUCTING;
     RAY_CHECK_OK(state->gcs_client.task_table().TestAndUpdate(ray::JobID::nil(), task_id, data,
-      [](gcs::AsyncGcsClient* client,
+      [state](gcs::AsyncGcsClient* client,
         const ray::TaskID& id,
-        std::shared_ptr<TaskTableDataT> task,
-        bool updated) { /* TODO XXX */}));
-    (void) state;
+        const TaskTableDataT& t,
+        bool updated) {
+          Task* task = Task_alloc(t.task_info.data(), t.task_info.size(), t.scheduling_state, DBClientID::from_binary(t.scheduler_id), std::vector<ObjectID>());
+          reconstruct_task_update_callback(task, state, updated);
+          Task_free(task);
+        }));
   #endif
 }
 

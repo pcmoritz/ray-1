@@ -136,7 +136,7 @@ class TaskTable : public Table<TaskID, TaskTableData> {
   TaskTable(const std::shared_ptr<RedisContext> &context, AsyncGcsClient* client) : Table(context, client){};
 
   using TestAndUpdateCallback =
-      std::function<void(AsyncGcsClient *client, const TaskID &id, std::shared_ptr<TaskTableDataT> task, bool updated)>;
+      std::function<void(AsyncGcsClient *client, const TaskID &id, const TaskTableDataT& task, bool updated)>;
   using SubscribeToTaskCallback =
       std::function<void(std::shared_ptr<TaskTableDataT> task)>;
   /// Update a task's scheduling information in the task table, if the current
@@ -159,7 +159,8 @@ class TaskTable : public Table<TaskID, TaskTableData> {
                        const TestAndUpdateCallback &callback) {
     int64_t callback_index = RedisCallbackManager::instance().add([this, callback, id](
         const std::string &data) {
-          callback(client_, id, nullptr, data == "true");
+          auto task_table_data = flatbuffers::GetRoot<TaskTableData>(data.data());
+          callback(client_, id, *task_table_data->UnPack(), task_table_data->updated());
         });
     flatbuffers::FlatBufferBuilder fbb;
     TaskTableTestAndUpdateBuilder builder(fbb);
