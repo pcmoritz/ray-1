@@ -35,7 +35,7 @@ table TaskTableData {
   execution_dependencies: string;
   task_info: string;
   // TODO(pcm): This is at the moment duplicated in task_info, remove that one
-  updated: bool;
+  updated: bool = true;
 }
 
 table TaskTableTestAndUpdate {
