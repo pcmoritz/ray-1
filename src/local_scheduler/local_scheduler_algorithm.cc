@@ -519,7 +519,7 @@ void queue_actor_task(LocalSchedulerState *state,
       #if !RAY_USE_NEW_GCS
         task_table_add_task(state->db, task, NULL, NULL, NULL);
       #else
-        auto data = MakeTaskTableData(execution_spec, get_db_client_id(state->db), SchedulingState_QUEUED);
+        auto data = MakeTaskTableData(execution_spec, Task_local_scheduler(task), SchedulingState_QUEUED);
         RAY_CHECK_OK(state->gcs_client.task_table().Add(ray::JobID::nil(), TaskSpec_task_id(spec), data,
                                                         [](gcs::AsyncGcsClient *client,
                                                            const TaskID &id,
@@ -1039,7 +1039,7 @@ void give_task_to_local_scheduler(LocalSchedulerState *state,
     task_table_add_task(state->db, task, &retryInfo, NULL, state);
   #else
     TaskSpec* spec = execution_spec.Spec();
-    auto data = MakeTaskTableData(execution_spec, DBClientID::nil(), SchedulingState_SCHEDULED);
+    auto data = MakeTaskTableData(execution_spec, local_scheduler_id, SchedulingState_SCHEDULED);
     RAY_CHECK_OK(state->gcs_client.task_table().Add(ray::JobID::nil(), TaskSpec_task_id(spec), data,
                                                     [](gcs::AsyncGcsClient *client,
                                                        const TaskID &id,
