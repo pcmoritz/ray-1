@@ -50,6 +50,7 @@ class Table {
     int64_t callback_index = RedisCallbackManager::instance().add([d](
         const std::string &data) { (d->callback)(d->client, d->id, d->data); });
     flatbuffers::FlatBufferBuilder fbb;
+    fbb.ForceDefaults(true);
     fbb.Finish(Data::Pack(fbb, data.get()));
     RAY_RETURN_NOT_OK(context_->RunAsync("RAY.TABLE_ADD", id,
                                          fbb.GetBufferPointer(), fbb.GetSize(),
@@ -163,7 +164,6 @@ class TaskTable : public Table<TaskID, TaskTableData> {
           callback(client_, id, *task_table_data->UnPack(), task_table_data->updated());
         });
     flatbuffers::FlatBufferBuilder fbb;
-    fbb.ForceDefaults(true);
     TaskTableTestAndUpdateBuilder builder(fbb);
     fbb.Finish(TaskTableTestAndUpdate::Pack(fbb, data.get()));
     RAY_RETURN_NOT_OK(context_->RunAsync("RAY.TABLE_TEST_AND_UPDATE", id,
