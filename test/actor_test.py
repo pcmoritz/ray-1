@@ -697,9 +697,7 @@ class ActorsOnMultipleNodes(unittest.TestCase):
         with self.assertRaises(Exception):
             Foo.remote()
 
-    # This gave
-    # [WARN] (/Users/pcmoritz/ray/src/common/state/redis.cc:905) No subscribers received the task_table_add message.
-    def notestActorLoadBalancing(self):
+    def testActorLoadBalancing(self):
         num_local_schedulers = 3
         ray.worker._init(start_ray_local=True, num_workers=0,
                          num_local_schedulers=num_local_schedulers)
@@ -745,8 +743,7 @@ class ActorsWithGPUs(unittest.TestCase):
     def tearDown(self):
         ray.worker.cleanup()
 
-    # [WARN] (/Users/pcmoritz/ray/src/common/state/redis.cc:905) No subscribers received the task_table_add message.
-    def notestActorGPUs(self):
+    def testActorGPUs(self):
         num_local_schedulers = 3
         num_gpus_per_scheduler = 4
         ray.worker._init(
@@ -785,8 +782,7 @@ class ActorsWithGPUs(unittest.TestCase):
         with self.assertRaises(Exception):
             Actor1.remote()
 
-    # [WARN] (/Users/pcmoritz/ray/src/common/state/redis.cc:905) No subscribers received the task_table_add message.
-    def notestActorMultipleGPUs(self):
+    def testActorMultipleGPUs(self):
         num_local_schedulers = 3
         num_gpus_per_scheduler = 5
         ray.worker._init(
@@ -854,8 +850,7 @@ class ActorsWithGPUs(unittest.TestCase):
         with self.assertRaises(Exception):
             Actor2.remote()
 
-    # [WARN] (/Users/pcmoritz/ray/src/common/state/redis.cc:905) No subscribers received the task_table_add message.
-    def notestActorDifferentNumbersOfGPUs(self):
+    def testActorDifferentNumbersOfGPUs(self):
         # Test that we can create actors on two nodes that have different
         # numbers of GPUs.
         ray.worker._init(start_ray_local=True, num_workers=0,
