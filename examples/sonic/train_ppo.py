@@ -53,4 +53,5 @@ ray.init()
 alg = ppo.PPOAgent(env=env_name, registry=get_registry())
 
 for i in range(10):
-    alg.train()
+    result = alg.train()
+    print("result = {}".format(result))
