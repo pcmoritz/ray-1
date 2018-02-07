@@ -50,7 +50,23 @@ env_name = "sonic_env"
 register_env(env_name, lambda config: make(game='SonicTheHedgehog-Genesis', state='LabyrinthZone.Act1'))
 
 ray.init()
-alg = ppo.PPOAgent(env=env_name, registry=get_registry())
+
+config = ppo.DEFAULT_CONFIG.copy()
+
+config.update({
+  "timesteps_per_batch": 10000,
+  "min_steps_per_task": 100,
+  "lambda": 0.95,
+  "clip_param": 0.2,
+  "num_sgd_iter": 20,
+  "sgd_batchsize": 4096,
+  "devices": ["/gpu:0"],
+  "tf_session_args": {
+    "gpu_options": {"allow_growth": True}
+  }
+})
+
+alg = ppo.PPOAgent(config=config, env=env_name, registry=get_registry())
 
 for i in range(10):
     result = alg.train()
