@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 import gym
 
-ATARI_OBS_SHAPE = (210, 160, 3)
+ATARI_OBS_SHAPE = (224, 320, 3)
 ATARI_RAM_OBS_SHAPE = (128,)
 
 

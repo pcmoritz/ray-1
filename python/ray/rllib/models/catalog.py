@@ -67,7 +67,7 @@ class ModelCatalog(object):
         if isinstance(action_space, list):
             action_space = gym.spaces.Tuple(action_space)
 
-        if isinstance(action_space, gym.spaces.Box):
+        if isinstance(action_space, gym.spaces.Box) or isinstance(action_space, gym.spaces.MultiBinary):
             if dist_type is None:
                 return DiagGaussian, action_space.shape[0] * 2
             elif dist_type == 'deterministic':
@@ -118,6 +118,8 @@ class ModelCatalog(object):
                     size += np.product(action_space.spaces[i].shape)
             return tf.placeholder(
                 tf.int64 if all_discrete else tf.float32, shape=(None, size))
+        elif isinstance(action_space, gym.spaces.MultiBinary):
+            return tf.placeholder(tf.float32, shape=(None,) + action_space.shape)
         else:
             raise NotImplementedError("action space {}"
                                       " not supported".format(action_space))
