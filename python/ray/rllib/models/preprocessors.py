@@ -5,7 +5,8 @@ import cv2
 import numpy as np
 import gym
 
-ATARI_OBS_SHAPE = (224, 320, 3)
+ATARI_OBS_SHAPE = (210, 160, 3)
+GENESIS_OBS_SHAPE = (224, 320, 3)
 ATARI_RAM_OBS_SHAPE = (128,)
 
 
@@ -65,6 +66,16 @@ class AtariPixelPreprocessor(Preprocessor):
             scaled *= 1.0 / 255.0
         if self._channel_major:
             scaled = np.reshape(scaled, self.shape)
+        return scaled
+
+
+class GenesisPixelPreprocessor(Preprocessor):
+    def _init(self):
+        self.shape = (112, 160, 3)
+
+    def transform(self, observation):
+        scaled = cv2.resize(observation, (160, 112))
+        scaled = (scaled.astype("float32") - 128.0) / 128.0
         return scaled
 
 
@@ -133,6 +144,9 @@ def get_preprocessor(space):
     elif obs_shape == ATARI_OBS_SHAPE:
         print("Assuming Atari pixel env, using AtariPixelPreprocessor.")
         preprocessor = AtariPixelPreprocessor
+    elif obs_shape == GENESIS_OBS_SHAPE:
+        print("Assuming Genesis env, using GenesisPixelPreprocessor.")
+        preprocessor = GenesisPixelPreprocessor
     elif obs_shape == ATARI_RAM_OBS_SHAPE:
         print("Assuming Atari ram env, using AtariRamPreprocessor.")
         preprocessor = AtariRamPreprocessor

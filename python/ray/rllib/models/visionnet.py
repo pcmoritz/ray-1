@@ -14,8 +14,8 @@ class VisionNetwork(Model):
     def _init(self, inputs, num_outputs, options):
         filters = options.get("conv_filters", [
             [16, [8, 8], 4],
-            [32, [4, 4], 2],
-            [512, [10, 10], 1],
+            [32, [6, 6], 3],
+            [512, [10, 14], 1],
         ])
         with tf.name_scope("vision_net"):
             for i, (out_size, kernel, stride) in enumerate(filters[:-1], 1):
