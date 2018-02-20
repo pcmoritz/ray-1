@@ -47,7 +47,7 @@ def make(game, state, discrete_actions=False):
     return env
 
 env_name = "sonic_env"
-register_env(env_name, lambda config: make(game='SonicTheHedgehog-Genesis', state='LabyrinthZone.Act1'))
+register_env(env_name, lambda config: make(game='SonicTheHedgehog-Genesis', state='GreenHillZone.Act1'))
 
 ray.init()
 
@@ -73,3 +73,6 @@ alg = ppo.PPOAgent(config=config, env=env_name, registry=get_registry())
 for i in range(100):
     result = alg.train()
     print("result = {}".format(result))
+
+    checkpoint = alg.save()
+    print("checkpoint saved at", checkpoint)
