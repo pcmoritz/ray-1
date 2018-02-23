@@ -1,9 +1,10 @@
 import ray
 from ray.tune.registry import get_registry, register_env
-from ray.rllib import ppo
+from ray.rllib import es
 import gym
 import retro
 import numpy as np
+import os
 
 
 class StochasticFrameSkip(gym.Wrapper):
@@ -45,35 +46,30 @@ def make(game, state, discrete_actions=False):
     use_restricted_actions = retro.ACTIONS_FILTERED
     if discrete_actions:
         use_restricted_actions = retro.ACTIONS_DISCRETE
-    env = retro.make(game, state, scenario='contest', use_restricted_actions=use_restricted_actions)
+    env = retro.make(game, state, scenario='contest',
+                     use_restricted_actions=use_restricted_actions)
     env = StochasticFrameSkip(env, n=4, stickprob=0.25)
     env = gym.wrappers.TimeLimit(env, max_episode_steps=4500)
     return env
 
 
 env_name = "sonic_env"
-register_env(env_name, lambda config: make(game='SonicTheHedgehog-Genesis', state='GreenHillZone.Act1'))
+register_env(env_name, lambda config: make(game='SonicTheHedgehog-Genesis',
+                                           state='GreenHillZone.Act1'))
 
-ray.init()
+ray.init(redis_address=os.environ["RCALL_NODE_NAME"] + ":6379")
+# ray.init()
 
-config = ppo.DEFAULT_CONFIG.copy()
+config = es.DEFAULT_CONFIG.copy()
 
 config.update({
+  "episodes_per_batch": 1000,
   "timesteps_per_batch": 10000,
-  "min_steps_per_task": 100,
   "num_workers": 16,
-  "lambda": 0.95,
-  "clip_param": 0.2,
-  "num_sgd_iter": 20,
-  "sgd_batchsize": 4096,
-  "use_gae": False,
-  "devices": ["/gpu:0"],
-  "tf_session_args": {
-    "gpu_options": {"allow_growth": True}
-  }
+  "noise_size": 2500000,
 })
 
-alg = ppo.PPOAgent(config=config, env=env_name, registry=get_registry())
+alg = es.ESAgent(config=config, env=env_name, registry=get_registry())
 
 for i in range(100):
     result = alg.train()
