@@ -220,7 +220,6 @@ def _env_runner(env, policy, num_local_steps, horizon, obs_filter):
             if policy.is_recurrent:
                 features = pi_info["features"]
                 del pi_info["features"]
-            action = 1*(action > 0.0).astype("int8")
             observation, reward, terminal, info = env.step(action)
             observation = obs_filter(observation)
 
