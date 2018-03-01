@@ -54,25 +54,28 @@ ray.init()
 config = ppo.DEFAULT_CONFIG.copy()
 
 config.update({
-  "timesteps_per_batch": 10000,
+  "timesteps_per_batch": 40000,
   "min_steps_per_task": 100,
-  "num_workers": 16,
+  "num_workers": 32,
   "lambda": 0.95,
-  "clip_param": 0.2,
-  "num_sgd_iter": 20,
+  "clip_param": 0.1,
+  "num_sgd_iter": 30,
   "sgd_batchsize": 4096,
+  "sgd_stepsize": 1e-5,
   "use_gae": False,
-  "devices": ["/gpu:0"],
+  "devices": ["/gpu:0", "/gpu:1", "/gpu:2", "/gpu:3", "/gpu:4", "/gpu:5", "/gpu:6", "gpu:7"],
   "tf_session_args": {
     "gpu_options": {"allow_growth": True}
   }
+  # "tf_debug_inf_or_nan": True
 })
 
 alg = ppo.PPOAgent(config=config, env=env_name, registry=get_registry())
 
-for i in range(100):
+for i in range(1000):
     result = alg.train()
     print("result = {}".format(result))
 
-    checkpoint = alg.save()
-    print("checkpoint saved at", checkpoint)
+    if i % 10 == 0:
+        checkpoint = alg.save()
+        print("checkpoint saved at", checkpoint)
