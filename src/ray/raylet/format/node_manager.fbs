@@ -54,6 +54,8 @@ enum MessageType:int {
   SetActorFrontier,
   // A node manager request to process a task forwarded from another node manager.
   ForwardTaskRequest
+  // Fetch objects from remote Plasma stores.
+  PlasmaFetchRequest
 }
 
 table TaskExecutionSpecification {
@@ -120,4 +122,9 @@ table ForwardTaskRequest {
 table ReconstructObject {
   // Object ID of the object that needs to be reconstructed.
   object_id: string;
+}
+
+table PlasmaFetchRequest {
+  // IDs of objects to be gotten.
+  object_ids: [string];
 }

@@ -222,7 +222,13 @@ void NodeManager::ProcessClientMessage(std::shared_ptr<LocalClientConnection> cl
     RAY_LOG(DEBUG) << "reconstructing object " << object_id.hex();
     RAY_CHECK_OK(object_manager_.Pull(object_id));
   } break;
-
+  case protocol::MessageType_PlasmaFetchRequest: {
+    auto message = flatbuffers::GetRoot<protocol::PlasmaFetchRequest>(message_data);
+    // TODO(pcm): Batch these messages
+    for (auto &object_id : from_flatbuf(*message->object_ids())) {
+      RAY_CHECK_OK(object_manager_.Pull(object_id));
+    }
+  } break;
   default:
     RAY_LOG(FATAL) << "Received unexpected message type " << message_type;
   }
