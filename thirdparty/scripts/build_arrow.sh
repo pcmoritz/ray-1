@@ -69,7 +69,7 @@ build_arrow() {
   pushd $TP_DIR/build/arrow
   git fetch origin master
 
-  git checkout $TARGET_COMMIT_ID
+  git checkout plasma-memory-usage
 
   cd cpp
   if [ ! -d "build" ]; then
