@@ -40,10 +40,10 @@ else
   exit 1
 fi
 
-# The PR for this commit is https://github.com/apache/arrow/pull/2953. We
+# The PR for this commit is https://github.com/apache/arrow/pull/XXXX. We
 # include the link here to make it easier to find the right commit because
 # Arrow often rewrites git history and invalidates certain commits.
-TARGET_COMMIT_ID=d48dce2cfebdbd044a8260d0a77f5fe3d89a4a2d
+TARGET_COMMIT_ID=c34de836094aab865b37132e9516483b642fe20c
 build_arrow() {
   echo "building arrow"
 
@@ -53,7 +53,7 @@ build_arrow() {
   fi
 
   if [[ ! -d $TP_DIR/build/arrow ]]; then
-    git clone https://github.com/apache/arrow.git "$TP_DIR/build/arrow"
+    git clone https://github.com/pcmoritz/arrow.git "$TP_DIR/build/arrow"
   fi
 
   if ! [ -x "$(command -v bison)" ]; then
