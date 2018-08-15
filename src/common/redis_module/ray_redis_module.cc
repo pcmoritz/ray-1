@@ -1168,6 +1168,16 @@ int ObjectTableRemove_RedisCommand(RedisModuleCtx *ctx,
 
   RedisModule_ZsetRem(table_key, manager, NULL);
 
+  // If the object has been evicted everywhere, remove the relevant keys from
+  // Redis.
+  if (RedisModule_ValueLength(table_key) == 0) {
+    RedisModule_DeleteKey(table_key);  // This may be unnecessary.
+    RedisModuleKey *object_info_key =
+        OpenPrefixedKey(ctx, OBJECT_INFO_PREFIX, object_id,
+                        REDISMODULE_READ | REDISMODULE_WRITE);
+    RedisModule_DeleteKey(object_info_key);
+  }
+
   RedisModule_ReplyWithSimpleString(ctx, "OK");
   return REDISMODULE_OK;
 }
