@@ -1639,7 +1639,7 @@ void NodeManager::HandleTaskForwarded(const ray::Status &status, const Task &tas
           RayConfig::instance().node_manager_forward_task_retry_timeout_milliseconds());
       retry_timer->expires_from_now(retry_duration);
       retry_timer->async_wait(
-          [this, task, task_id, retry_timer](const boost::system::error_code &error) {
+          [this, task, retry_timer](const boost::system::error_code &error) {
             // Timer killing will receive the boost::asio::error::operation_aborted,
             // we only handle the timeout event.
             RAY_CHECK(!error);

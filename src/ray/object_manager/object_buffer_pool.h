@@ -188,6 +188,7 @@ class ObjectBufferPool {
   /// The state of a buffer that's currently being used.
   std::unordered_map<ray::ObjectID, CreateBufferState> create_buffer_state_;
 
+  std::mutex store_mutex_;
   /// Plasma client pool.
   plasma::PlasmaClient store_client_;
   /// Socket name of plasma store.

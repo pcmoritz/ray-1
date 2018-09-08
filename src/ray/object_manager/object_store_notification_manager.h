@@ -3,6 +3,7 @@
 
 #include <list>
 #include <memory>
+#include <mutex>
 #include <vector>
 
 #include <boost/asio.hpp>
