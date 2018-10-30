@@ -964,6 +964,11 @@ def start_raylet(redis_address,
             ["valgrind", "--tool=callgrind"] + command,
             stdout=stdout_file,
             stderr=stderr_file)
+    elif "RAY_GPROF_PATH" in os.environ:
+        modified_env = os.environ.copy()
+        modified_env["LD_PRELOAD"] = os.environ["RAY_GPROF_PATH"]
+        modified_env["CPUPROFILE"] = "/tmp/pprof.out"
+        pid = subprocess.Popen(command, stdout=stdout_file, stderr=stderr_file, env=modified_env)
     else:
         pid = subprocess.Popen(command, stdout=stdout_file, stderr=stderr_file)
 
@@ -1457,6 +1462,7 @@ def start_ray_processes(address_info=None,
                 node_manager_port=node_manager_ports[i],
                 resources=resources[i],
                 num_workers=workers_per_local_scheduler[i],
+                use_profiler=RUN_RAYLET_PROFILER,
                 stdout_file=raylet_stdout_file,
                 stderr_file=raylet_stderr_file,
                 cleanup=cleanup,
