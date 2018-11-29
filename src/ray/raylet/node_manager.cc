@@ -1608,7 +1608,27 @@ void NodeManager::HandleObjectLocal(const ObjectID &object_id) {
     // Make sure that the remaining tasks are all WAITING.
     auto ready_task_id_set_copy = ready_task_id_set;
     local_queues_.FilterState(ready_task_id_set_copy, TaskState::WAITING);
-    RAY_CHECK(ready_task_id_set_copy.empty());
+    if(!ready_task_id_set_copy.empty()) {
+      RAY_LOG(ERROR) << "XXX before " << ready_task_id_set_copy.size();
+      local_queues_.FilterState(ready_task_id_set_copy, TaskState::INIT);
+      RAY_LOG(ERROR) << "XXX 1 " << ready_task_id_set_copy.size();
+      local_queues_.FilterState(ready_task_id_set_copy, TaskState::PLACEABLE);
+      RAY_LOG(ERROR) << "XXX 2 " << ready_task_id_set_copy.size();
+      local_queues_.FilterState(ready_task_id_set_copy, TaskState::WAITING);
+      RAY_LOG(ERROR) << "XXX 3 " << ready_task_id_set_copy.size();
+      local_queues_.FilterState(ready_task_id_set_copy, TaskState::READY);
+      RAY_LOG(ERROR) << "XXX 4 " << ready_task_id_set_copy.size();
+      local_queues_.FilterState(ready_task_id_set_copy, TaskState::RUNNING);
+      RAY_LOG(ERROR) << "XXX 5 " << ready_task_id_set_copy.size();
+      local_queues_.FilterState(ready_task_id_set_copy, TaskState::BLOCKED);
+      RAY_LOG(ERROR) << "XXX 6 " << ready_task_id_set_copy.size();
+      local_queues_.FilterState(ready_task_id_set_copy, TaskState::DRIVER);
+      RAY_LOG(ERROR) << "XXX 7 " << ready_task_id_set_copy.size();
+      local_queues_.FilterState(ready_task_id_set_copy, TaskState::INFEASIBLE);
+      RAY_LOG(ERROR) << "XXX 8 " << ready_task_id_set_copy.size();
+      local_queues_.FilterState(ready_task_id_set_copy, TaskState::WAITING_FOR_ACTOR);
+      RAY_LOG(ERROR) << "XXX 9 " << ready_task_id_set_copy.size();
+    }
 
     // Queue and dispatch the tasks that are ready to run (i.e., WAITING).
     auto ready_tasks = local_queues_.RemoveTasks(ready_task_id_set);
