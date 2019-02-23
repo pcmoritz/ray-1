@@ -28,6 +28,9 @@ from ray.includes.libraylet cimport (
     GCSProfileTableDataT,
     ResourceMappingType,
     WaitResultPair,
+    ray_get_ps_display,
+    ray_set_ps_display,
+    ray_spt_setup
 )
 from ray.includes.unique_ids cimport (
     CActorCheckpointID,
@@ -376,3 +379,17 @@ cdef class RayletClient:
     @property
     def is_worker(self):
         return self.client.get().IsWorker()
+
+
+def set_process_title(title):
+    ray_set_ps_display(title, True)
+
+def get_process_title():
+    cdef:
+      size_t len
+      const char *title
+    title = ray_get_ps_display(&len)
+    return c_string(title, len)
+
+def initialize_process_title():
+    return ray_spt_setup()

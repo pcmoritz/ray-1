@@ -54,6 +54,7 @@ cc_library(
         ":object_manager",
         ":ray_common",
         ":ray_util",
+        ":setproctitle",
         "@boost//:asio",
         "@com_google_googletest//:gtest",
         "@plasma//:plasma_client",
@@ -270,6 +271,24 @@ cc_library(
         "src/ray/thirdparty/ae",
         "src/ray/thirdparty/hiredis",
     ],
+)
+
+cc_library(
+    name = "setproctitle",
+    srcs = glob([
+        "src/ray/thirdparty/setproctitle/c.h",
+        "src/ray/thirdparty/setproctitle/spt.h",
+        "src/ray/thirdparty/setproctitle/spt_python.h",
+        "src/ray/thirdparty/setproctitle/spt_config.h",
+        "src/ray/thirdparty/setproctitle/spt_debug.cc",
+        "src/ray/thirdparty/setproctitle/spt_setup.cc",
+        "src/ray/thirdparty/setproctitle/spt_setup.h",
+        "src/ray/thirdparty/setproctitle/spt_status.h",
+        "src/ray/thirdparty/setproctitle/spt_status.cc",
+        "src/ray/thirdparty/setproctitle/spt_strlcpy.cc",
+    ]),
+    deps = ["@local_config_python//:python_headers"],
+    copts = ["-D__darwin__"] # XXX make it work on linux
 )
 
 cc_library(

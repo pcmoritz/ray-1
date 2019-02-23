@@ -77,3 +77,12 @@ cdef extern from "ray/raylet/raylet_client.h" nogil:
         CDriverID GetDriverID() const
         c_bool IsWorker() const
         const ResourceMappingType &GetResourceIDs() const
+
+cdef extern from "ray/thirdparty/setproctitle/spt_status.h" nogil:
+
+    void ray_set_ps_display(const char *activity, c_bool force)
+    const char *ray_get_ps_display(size_t *displen)
+
+cdef extern from "ray/thirdparty/setproctitle/spt_setup.h" nogil:
+
+    int ray_spt_setup()
