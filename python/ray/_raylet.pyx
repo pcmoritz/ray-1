@@ -380,16 +380,23 @@ cdef class RayletClient:
     def is_worker(self):
         return self.client.get().IsWorker()
 
+_process_title_initialized = False
 
-def initialize_process_title():
+def _ensure_process_title_initialized():
+    global _process_title_initialized
+    if _process_title_initialized:
+        return
     ret = ray_spt_setup()
     if ret < 0:
         raise RuntimeError("setproctitle initialization error %d" % ret)
+    _process_title_initialized = True
 
 def set_process_title(title):
+    _ensure_process_title_initialized()
     ray_set_ps_display(title, True)
 
 def get_process_title():
+    _ensure_process_title_initialized()
     cdef:
       size_t len
       const char *title
