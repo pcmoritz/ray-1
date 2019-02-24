@@ -67,7 +67,7 @@ extras = {
     "rllib": [
         "pyyaml", "gym[atari]", "opencv-python-headless", "lz4", "scipy"
     ],
-    "debug": ["psutil", "setproctitle", "py-spy"],
+    "debug": ["psutil", "py-spy"],
     "dashboard": ["psutil", "aiohttp"],
 }
 

@@ -89,11 +89,6 @@ DEFAULT_ACTOR_CREATION_CPUS_SPECIFIED_CASE = 1
 # entry/init points.
 logger = logging.getLogger(__name__)
 
-try:
-    import setproctitle
-except ImportError:
-    setproctitle = None
-
 
 class ActorCheckpointInfo(object):
     """Information used to maintain actor checkpoints."""
@@ -1370,12 +1365,6 @@ def init(redis_address=None,
     else:
         driver_mode = SCRIPT_MODE
 
-    if setproctitle is None:
-        logger.warning(
-            "WARNING: Not updating worker name since `setproctitle` is not "
-            "installed. Install this with `pip install setproctitle` "
-            "(or ray[debug]) to enable monitoring of worker processes.")
-
     if global_worker.connected:
         if ignore_reinit_error:
             logger.error("Calling ray.init() again after it has already been "
@@ -1786,8 +1775,7 @@ def connect(info,
     # Initialize some fields.
     if mode is WORKER_MODE:
         worker.worker_id = _random_string()
-        if setproctitle:
-            setproctitle.setproctitle("ray_worker")
+        ray._raylet.set_process_title("ray_worker")
     else:
         # This is the code path of driver mode.
         if driver_id is None:
@@ -2075,11 +2063,9 @@ def disconnect():
 
 @contextmanager
 def _changeproctitle(title, next_title):
-    if setproctitle:
-        setproctitle.setproctitle(title)
+    ray._raylet.set_process_title(title)
     yield
-    if setproctitle:
-        setproctitle.setproctitle(next_title)
+    ray._raylet.set_process_title(next_title)
 
 
 def _try_to_compute_deterministic_class_id(cls, depth=5):

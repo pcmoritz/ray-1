@@ -287,7 +287,8 @@ cc_library(
         "src/ray/thirdparty/setproctitle/spt_status.cc",
         "src/ray/thirdparty/setproctitle/spt_strlcpy.cc",
     ]),
-    deps = ["@local_config_python//:python_headers"]
+    deps = ["@local_config_python//:python_headers"],
+    linkstatic=1
 )
 
 cc_library(

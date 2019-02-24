@@ -2,11 +2,7 @@ import os
 
 import colorama
 
-try:
-    import setproctitle
-except ImportError:
-    setproctitle = None
-
+import ray
 
 class RayError(Exception):
     """Super class of all ray exception types."""
@@ -30,10 +26,7 @@ class RayTaskError(RayError):
 
     def __init__(self, function_name, traceback_str):
         """Initialize a RayTaskError."""
-        if setproctitle:
-            self.proctitle = setproctitle.getproctitle()
-        else:
-            self.proctitle = "ray_worker"
+        self.proctitle = ray._raylet.get_process_title()
         self.pid = os.getpid()
         self.host = os.uname()[1]
         self.function_name = function_name
