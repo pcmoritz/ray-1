@@ -381,6 +381,11 @@ cdef class RayletClient:
         return self.client.get().IsWorker()
 
 
+def initialize_process_title():
+    ret = ray_spt_setup()
+    if ret < 0:
+        raise RuntimeError("setproctitle initialization error %d" % ret)
+
 def set_process_title(title):
     ray_set_ps_display(title, True)
 
@@ -390,6 +395,3 @@ def get_process_title():
       const char *title
     title = ray_get_ps_display(&len)
     return c_string(title, len)
-
-def initialize_process_title():
-    return ray_spt_setup()

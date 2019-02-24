@@ -287,8 +287,7 @@ cc_library(
         "src/ray/thirdparty/setproctitle/spt_status.cc",
         "src/ray/thirdparty/setproctitle/spt_strlcpy.cc",
     ]),
-    deps = ["@local_config_python//:python_headers"],
-    copts = ["-D__darwin__"] # XXX make it work on linux
+    deps = ["@local_config_python//:python_headers"]
 )
 
 cc_library(
