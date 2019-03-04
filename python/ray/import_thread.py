@@ -5,6 +5,8 @@ from __future__ import print_function
 import threading
 import traceback
 
+import redis
+
 import ray
 from ray import ray_constants
 from ray import cloudpickle as pickle
@@ -15,35 +17,29 @@ from ray import utils
 class ImportThread(object):
     """A thread used to import exports from the driver or other workers.
 
-    Note: The driver also has an import thread, which is used only to import
-    custom class definitions from calls to register_custom_serializer that
-    happen under the hood on workers.
+    Note:
+    The driver also has an import thread, which is used only to
+    import custom class definitions from calls to register_custom_serializer
+    that happen under the hood on workers.
 
     Attributes:
         worker: the worker object in this process.
         mode: worker mode
         redis_client: the redis client used to query exports.
-        threads_stopped (threading.Event): A threading event used to signal to
-            the thread that it should exit.
     """
 
-    def __init__(self, worker, mode, threads_stopped):
+    def __init__(self, worker, mode):
         self.worker = worker
         self.mode = mode
         self.redis_client = worker.redis_client
-        self.threads_stopped = threads_stopped
 
     def start(self):
         """Start the import thread."""
-        self.t = threading.Thread(target=self._run, name="ray_import_thread")
+        t = threading.Thread(target=self._run, name="ray_import_thread")
         # Making the thread a daemon causes it to exit
         # when the main thread exits.
-        self.t.daemon = True
-        self.t.start()
-
-    def join_import_thread(self):
-        """Wait for the thread to exit."""
-        self.t.join()
+        t.daemon = True
+        t.start()
 
     def _run(self):
         import_pubsub_client = self.redis_client.pubsub()
@@ -54,24 +50,14 @@ class ImportThread(object):
         # Keep track of the number of imports that we've imported.
         num_imported = 0
 
+        # Get the exports that occurred before the call to subscribe.
+        with self.worker.lock:
+            export_keys = self.redis_client.lrange("Exports", 0, -1)
+            for key in export_keys:
+                num_imported += 1
+                self._process_key(key)
         try:
-            # Get the exports that occurred before the call to subscribe.
-            with self.worker.lock:
-                export_keys = self.redis_client.lrange("Exports", 0, -1)
-                for key in export_keys:
-                    num_imported += 1
-                    self._process_key(key)
-
-            while True:
-                # Exit if we received a signal that we should stop.
-                if self.threads_stopped.is_set():
-                    return
-
-                msg = import_pubsub_client.get_message()
-                if msg is None:
-                    self.threads_stopped.wait(timeout=0.01)
-                    continue
-
+            for msg in import_pubsub_client.listen():
                 with self.worker.lock:
                     if msg["type"] == "subscribe":
                         continue
@@ -82,9 +68,10 @@ class ImportThread(object):
                         num_imported += 1
                         key = self.redis_client.lindex("Exports", i)
                         self._process_key(key)
-        finally:
-            # Close the pubsub client to avoid leaking file descriptors.
-            import_pubsub_client.close()
+        except redis.ConnectionError:
+            # When Redis terminates the listen call will throw a
+            # ConnectionError, which we catch here.
+            pass
 
     def _process_key(self, key):
         """Process the given export key from redis."""

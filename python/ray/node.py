@@ -279,7 +279,7 @@ class Node(object):
         stdout_file, stderr_file = self.new_log_files("log_monitor")
         process_info = ray.services.start_log_monitor(
             self.redis_address,
-            self._logs_dir,
+            self._node_ip_address,
             stdout_file=stdout_file,
             stderr_file=stderr_file,
             redis_password=self._ray_params.redis_password)
@@ -349,7 +349,8 @@ class Node(object):
             object_store_memory=self._ray_params.object_store_memory,
             plasma_directory=self._ray_params.plasma_directory,
             huge_pages=self._ray_params.huge_pages,
-            plasma_store_socket_name=self._plasma_store_socket_name)
+            plasma_store_socket_name=self._plasma_store_socket_name,
+            redis_password=self._ray_params.redis_password)
         assert (
             ray_constants.PROCESS_TYPE_PLASMA_STORE not in self.all_processes)
         self.all_processes[ray_constants.PROCESS_TYPE_PLASMA_STORE] = [
@@ -367,9 +368,11 @@ class Node(object):
         """
         assert self._raylet_socket_name is None
         # If the user specified a socket name, use it.
-        self._raylet_socket_name = self._prepare_socket_file(
-            self._ray_params.raylet_socket_name, default_prefix="raylet")
-        stdout_file, stderr_file = self.new_log_files("raylet")
+        self._raylet_socket_name = (self._ray_params.raylet_socket_name
+                                    or get_raylet_socket_name())
+        self.prepare_socket_file(self._raylet_socket_name)
+        stdout_file, stderr_file = new_raylet_log_file(
+            redirect_output=self._ray_params.redirect_worker_output)
         process_info = ray.services.start_raylet(
             self._redis_address,
             self._node_ip_address,

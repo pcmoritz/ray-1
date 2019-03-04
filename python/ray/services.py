@@ -181,6 +181,34 @@ def get_node_ip_address(address="8.8.8.8:53"):
     return node_ip_address
 
 
+def record_log_files_in_redis(redis_address,
+                              node_ip_address,
+                              log_files,
+                              password=None):
+    """Record in Redis that a new log file has been created.
+
+    This is used so that each log monitor can check Redis and figure out which
+    log files it is reponsible for monitoring.
+
+    Args:
+        redis_address: The address of the redis server.
+        node_ip_address: The IP address of the node that the log file exists
+            on.
+        log_files: A list of file handles for the log files. If one of the file
+            handles is None, we ignore it.
+        password (str): The password of the redis server.
+    """
+    for log_file in log_files:
+        if log_file is not None:
+            redis_ip_address, redis_port = redis_address.split(":")
+            redis_client = redis.StrictRedis(
+                host=redis_ip_address, port=redis_port, password=password)
+            # The name of the key storing the list of log filenames for this IP
+            # address.
+            log_file_list_key = "LOG_FILENAMES:{}".format(node_ip_address)
+            redis_client.rpush(log_file_list_key, log_file.name)
+
+
 def create_redis_client(redis_address, password=None):
     """Create a Redis client.
 
@@ -555,6 +583,12 @@ def start_redis(node_ip_address,
     processes.append(p)
     redis_address = address(node_ip_address, port)
 
+    # Record the log files in Redis.
+    record_log_files_in_redis(
+        redis_address,
+        node_ip_address, [redis_stdout_file, redis_stderr_file],
+        password=password)
+
     # Register the number of Redis shards in the primary shard, so that clients
     # know how many redis shards to expect under RedisShards.
     primary_redis_client = redis.StrictRedis(
@@ -617,6 +651,11 @@ def start_redis(node_ip_address,
         redis_shards.append(shard_address)
         # Store redis shard information in the primary redis shard.
         primary_redis_client.rpush("RedisShards", shard_address)
+
+        record_log_files_in_redis(
+            redis_address,
+            node_ip_address, [redis_stdout_file, redis_stderr_file],
+            password=password)
 
     if use_credis:
         # Configure the chain state. The way it is intended to work is
@@ -797,7 +836,7 @@ def _start_redis_instance(executable,
 
 
 def start_log_monitor(redis_address,
-                      logs_dir,
+                      node_ip_address,
                       stdout_file=None,
                       stderr_file=None,
                       redis_password=None):
@@ -805,7 +844,8 @@ def start_log_monitor(redis_address,
 
     Args:
         redis_address (str): The address of the Redis instance.
-        logs_dir (str): The directory of logging files.
+        node_ip_address (str): The IP address of the node that this log monitor
+            is running on.
         stdout_file: A file handle opened for writing to redirect stdout to. If
             no redirection should happen, then this should be None.
         stderr_file: A file handle opened for writing to redirect stderr to. If
@@ -818,9 +858,8 @@ def start_log_monitor(redis_address,
     log_monitor_filepath = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "log_monitor.py")
     command = [
-        sys.executable, "-u", log_monitor_filepath,
-        "--redis-address={}".format(redis_address),
-        "--logs-dir={}".format(logs_dir)
+        sys.executable, "-u", log_monitor_filepath, "--redis-address",
+        redis_address, "--node-ip-address", node_ip_address
     ]
     if redis_password:
         command += ["--redis-password", redis_password]
@@ -829,6 +868,10 @@ def start_log_monitor(redis_address,
         ray_constants.PROCESS_TYPE_LOG_MONITOR,
         stdout_file=stdout_file,
         stderr_file=stderr_file)
+    record_log_files_in_redis(
+        redis_address,
+        node_ip_address, [stdout_file, stderr_file],
+        password=redis_password)
     return process_info
 
 
@@ -1215,6 +1258,10 @@ def start_raylet(redis_address,
         use_perftools_profiler=("RAYLET_PERFTOOLS_PATH" in os.environ),
         stdout_file=stdout_file,
         stderr_file=stderr_file)
+    record_log_files_in_redis(
+        redis_address,
+        node_ip_address, [stdout_file, stderr_file],
+        password=redis_password)
 
     return process_info
 
@@ -1415,7 +1462,8 @@ def start_plasma_store(stdout_file=None,
                        object_store_memory=None,
                        plasma_directory=None,
                        huge_pages=False,
-                       plasma_store_socket_name=None):
+                       plasma_store_socket_name=None,
+                       redis_password=None):
     """This method starts an object store process.
 
     Args:
@@ -1429,6 +1477,7 @@ def start_plasma_store(stdout_file=None,
             be created.
         huge_pages: Boolean flag indicating whether to start the Object
             Store with hugetlbfs support. Requires plasma_directory.
+        redis_password (str): The password of the redis server.
 
     Returns:
         ProcessInfo for the process that was started.
@@ -1456,6 +1505,11 @@ def start_plasma_store(stdout_file=None,
         plasma_directory=plasma_directory,
         huge_pages=huge_pages,
         socket_name=plasma_store_socket_name)
+
+    record_log_files_in_redis(
+        redis_address,
+        node_ip_address, [stdout_file, stderr_file],
+        password=redis_password)
 
     return process_info
 
@@ -1499,6 +1553,8 @@ def start_worker(node_ip_address,
         ray_constants.PROCESS_TYPE_WORKER,
         stdout_file=stdout_file,
         stderr_file=stderr_file)
+    record_log_files_in_redis(redis_address, node_ip_address,
+                              [stdout_file, stderr_file])
     return process_info
 
 
@@ -1536,6 +1592,10 @@ def start_monitor(redis_address,
         ray_constants.PROCESS_TYPE_MONITOR,
         stdout_file=stdout_file,
         stderr_file=stderr_file)
+    record_log_files_in_redis(
+        redis_address,
+        node_ip_address, [stdout_file, stderr_file],
+        password=redis_password)
     return process_info
 
 

@@ -158,12 +158,6 @@ class Worker(object):
         # It is a DriverID.
         self.task_driver_id = DriverID.nil()
         self._task_context = threading.local()
-        # This event is checked regularly by all of the threads so that they
-        # know when to exit.
-        self.threads_stopped = threading.Event()
-        # Index of the current session. This number will
-        # increment every time when `ray.shutdown` is called.
-        self._session_index = 0
 
     @property
     def task_context(self):
@@ -1259,12 +1253,12 @@ def init(redis_address=None,
          resources=None,
          object_store_memory=None,
          redis_max_memory=None,
-         log_to_driver=True,
          node_ip_address=None,
          object_id_seed=None,
          local_mode=False,
-         redirect_worker_output=None,
-         redirect_output=None,
+         driver_mode=None,
+         redirect_worker_output=False,
+         redirect_output=True,
          ignore_reinit_error=False,
          num_redis_shards=None,
          redis_max_clients=None,
@@ -1320,8 +1314,6 @@ def init(redis_address=None,
             LRU eviction of entries. This only applies to the sharded redis
             tables (task, object, and profile tables). By default, this is
             capped at 10GB but can be set higher.
-        log_to_driver (bool): If true, then output from all of the worker
-            processes on all nodes will be directed to the driver.
         node_ip_address (str): The IP address of the node that we are on.
         object_id_seed (int): Used to seed the deterministic generation of
             object IDs. The same value can be used across multiple runs of the
@@ -1526,7 +1518,6 @@ def init(redis_address=None,
         redis_password=redis_password,
         object_id_seed=object_id_seed,
         mode=driver_mode,
-        log_to_driver=log_to_driver,
         worker=global_worker,
         driver_id=driver_id,
         load_code_from_local=load_code_from_local)
@@ -1554,7 +1545,15 @@ def shutdown():
     need to redefine them. If they were defined in an imported module, then you
     will need to reload the module.
     """
+<<<<<<< HEAD
     disconnect()
+=======
+    disconnect(worker)
+    if hasattr(worker, "raylet_client"):
+        del worker.raylet_client
+    if hasattr(worker, "plasma_client"):
+        worker.plasma_client.disconnect()
+>>>>>>> parent of ef527f84... Stream logs to driver by default. (#3892)
 
     # Shut down the Ray processes.
     global _global_node
@@ -1592,84 +1591,18 @@ last_task_error_raise_time = 0
 UNCAUGHT_ERROR_GRACE_PERIOD = 5
 
 
-def print_logs(redis_client, threads_stopped):
-    """Prints log messages from workers on all of the nodes.
-
-    Args:
-        redis_client: A client to the primary Redis shard.
-        threads_stopped (threading.Event): A threading event used to signal to
-            the thread that it should exit.
-    """
-    pubsub_client = redis_client.pubsub(ignore_subscribe_messages=True)
-    pubsub_client.subscribe(ray.gcs_utils.LOG_FILE_CHANNEL)
-    localhost = services.get_node_ip_address()
-    try:
-        # Keep track of the number of consecutive log messages that have been
-        # received with no break in between. If this number grows continually,
-        # then the worker is probably not able to process the log messages as
-        # rapidly as they are coming in.
-        num_consecutive_messages_received = 0
-        while True:
-            # Exit if we received a signal that we should stop.
-            if threads_stopped.is_set():
-                return
-
-            msg = pubsub_client.get_message()
-            if msg is None:
-                num_consecutive_messages_received = 0
-                threads_stopped.wait(timeout=0.01)
-                continue
-            num_consecutive_messages_received += 1
-
-            data = json.loads(ray.utils.decode(msg["data"]))
-            if data["ip"] == localhost:
-                for line in data["lines"]:
-                    print("{}{}(pid={}){} {}".format(
-                        colorama.Style.DIM, colorama.Fore.CYAN, data["pid"],
-                        colorama.Style.RESET_ALL, line))
-            else:
-                for line in data["lines"]:
-                    print("{}{}(pid={}, ip={}){} {}".format(
-                        colorama.Style.DIM, colorama.Fore.CYAN, data["pid"],
-                        data["ip"], colorama.Style.RESET_ALL, line))
-
-            if (num_consecutive_messages_received % 100 == 0
-                    and num_consecutive_messages_received > 0):
-                logger.warning(
-                    "The driver may not be able to keep up with the "
-                    "stdout/stderr of the workers. To avoid forwarding logs "
-                    "to the driver, use 'ray.init(log_to_driver=False)'.")
-    finally:
-        # Close the pubsub client to avoid leaking file descriptors.
-        pubsub_client.close()
-
-
-def print_error_messages_raylet(task_error_queue, threads_stopped):
+def print_error_messages_raylet(task_error_queue):
     """Prints message received in the given output queue.
 
     This checks periodically if any un-raised errors occured in the background.
-
-    Args:
-        task_error_queue (queue.Queue): A queue used to receive errors from the
-            thread that listens to Redis.
-        threads_stopped (threading.Event): A threading event used to signal to
-            the thread that it should exit.
     """
 
     while True:
-        # Exit if we received a signal that we should stop.
-        if threads_stopped.is_set():
-            return
-
-        try:
-            error, t = task_error_queue.get(block=False)
-        except queue.Empty:
-            threads_stopped.wait(timeout=0.01)
-            continue
+        error, t = task_error_queue.get()
         # Delay errors a little bit of time to attempt to suppress redundant
         # messages originating from the worker.
         while t + UNCAUGHT_ERROR_GRACE_PERIOD > time.time():
-            threads_stopped.wait(timeout=1)
+            time.sleep(1)
         if t < last_task_error_raise_time + UNCAUGHT_ERROR_GRACE_PERIOD:
             logger.debug("Suppressing error from worker: {}".format(error))
         else:
@@ -1677,18 +1610,11 @@ def print_error_messages_raylet(task_error_queue, threads_stopped):
                 "Possible unhandled error from worker: {}".format(error))
 
 
-def listen_error_messages_raylet(worker, task_error_queue, threads_stopped):
+def listen_error_messages_raylet(worker, task_error_queue):
     """Listen to error messages in the background on the driver.
 
     This runs in a separate thread on the driver and pushes (error, time)
     tuples to the output queue.
-
-    Args:
-        worker: The worker class that this thread belongs to.
-        task_error_queue (queue.Queue): A queue used to communicate with the
-            thread that prints the errors found by this thread.
-        threads_stopped (threading.Event): A threading event used to signal to
-            the thread that it should exit.
     """
     worker.error_message_pubsub_client = worker.redis_client.pubsub(
         ignore_subscribe_messages=True)
@@ -1703,22 +1629,15 @@ def listen_error_messages_raylet(worker, task_error_queue, threads_stopped):
     worker.error_message_pubsub_client.subscribe(error_pubsub_channel)
     # worker.error_message_pubsub_client.psubscribe("*")
 
+    # Get the exports that occurred before the call to subscribe.
+    with worker.lock:
+        error_messages = global_state.error_messages(worker.task_driver_id)
+        for error_message in error_messages:
+            logger.error(error_message)
+
     try:
-        # Get the exports that occurred before the call to subscribe.
-        with worker.lock:
-            error_messages = global_state.error_messages(worker.task_driver_id)
-            for error_message in error_messages:
-                logger.error(error_message)
+        for msg in worker.error_message_pubsub_client.listen():
 
-        while True:
-            # Exit if we received a signal that we should stop.
-            if threads_stopped.is_set():
-                return
-
-            msg = worker.error_message_pubsub_client.get_message()
-            if msg is None:
-                threads_stopped.wait(timeout=0.01)
-                continue
             gcs_entry = ray.gcs_utils.GcsTableEntry.GetRootAsGcsTableEntry(
                 msg["data"], 0)
             assert gcs_entry.EntriesLength() == 1
@@ -1738,9 +1657,11 @@ def listen_error_messages_raylet(worker, task_error_queue, threads_stopped):
                 task_error_queue.put((error_message, time.time()))
             else:
                 logger.error(error_message)
-    finally:
-        # Close the pubsub client to avoid leaking file descriptors.
-        worker.error_message_pubsub_client.close()
+
+    except redis.ConnectionError:
+        # When Redis terminates the listen call will throw a ConnectionError,
+        # which we catch here.
+        pass
 
 
 def is_initialized():
@@ -1756,7 +1677,6 @@ def connect(info,
             redis_password=None,
             object_id_seed=None,
             mode=WORKER_MODE,
-            log_to_driver=False,
             worker=global_worker,
             driver_id=None,
             load_code_from_local=False):
@@ -1773,8 +1693,6 @@ def connect(info,
             manner. However, the same ID should not be used for different jobs.
         mode: The mode of the worker. One of SCRIPT_MODE, WORKER_MODE, and
             LOCAL_MODE.
-        log_to_driver (bool): If true, then output from all of the worker
-            processes on all nodes will be directed to the driver.
         worker: The ray.Worker instance.
         driver_id: The ID of driver. If it's None, then we will generate one.
     """
@@ -1787,7 +1705,7 @@ def connect(info,
     if not faulthandler.is_enabled():
         faulthandler.enable(all_threads=False)
 
-    worker.profiler = profiling.Profiler(worker, worker.threads_stopped)
+    worker.profiler = profiling.Profiler(worker)
 
     # Initialize some fields.
     if mode is WORKER_MODE:
@@ -1828,11 +1746,11 @@ def connect(info,
 
     # Create a Redis client.
     redis_ip_address, redis_port = info["redis_address"].split(":")
-    # The Redis client can safely be shared between threads. However, that is
-    # not true of Redis pubsub clients. See the documentation at
-    # https://github.com/andymccurdy/redis-py#thread-safety.
-    worker.redis_client = redis.StrictRedis(
-        host=redis_ip_address, port=int(redis_port), password=redis_password)
+    worker.redis_client = thread_safe_client(
+        redis.StrictRedis(
+            host=redis_ip_address,
+            port=int(redis_port),
+            password=redis_password))
 
     # For driver's check that the version information matches the version
     # information that the Ray cluster was started with.
@@ -1883,26 +1801,21 @@ def connect(info,
         if (redirect_worker_output_val is not None
                 and int(redirect_worker_output_val) == 1):
             log_stdout_file, log_stderr_file = (
-                _global_node.new_worker_redirected_log_file(worker.worker_id))
-            # Redirect stdout/stderr at the file descriptor level. If we simply
-            # set sys.stdout and sys.stderr, then logging from C++ can fail to
-            # be redirected.
-            os.dup2(log_stdout_file.fileno(), sys.stdout.fileno())
-            os.dup2(log_stderr_file.fileno(), sys.stderr.fileno())
-            # We also manually set sys.stdout and sys.stderr because that seems
-            # to have an affect on the output buffering. Without doing this,
-            # stdout and stderr are heavily buffered resulting in seemingly
-            # lost logging statements.
+                tempfile_services.new_worker_redirected_log_file(
+                    worker.worker_id))
             sys.stdout = log_stdout_file
             sys.stderr = log_stderr_file
-            # This should always be the first message to appear in the worker's
-            # stdout and stderr log files. The string "Ray worker pid:" is
-            # parsed in the log monitor process.
-            print("Ray worker pid: {}".format(os.getpid()))
-            print("Ray worker pid: {}".format(os.getpid()), file=sys.stderr)
-            sys.stdout.flush()
-            sys.stderr.flush()
-
+            try_update_handler(sys.stderr)
+            services.record_log_files_in_redis(
+                info["redis_address"],
+                info["node_ip_address"], [log_stdout_file, log_stderr_file],
+                password=redis_password)
+        # Register the worker with Redis.
+        worker_dict = {
+            "node_ip_address": worker.node_ip_address,
+            "plasma_store_socket": info["store_socket_name"],
+        }
+        if redirect_worker_output:
             worker_dict["stdout_file"] = os.path.abspath(log_stdout_file.name)
             worker_dict["stderr_file"] = os.path.abspath(log_stderr_file.name)
         worker.redis_client.hmset(b"Workers:" + worker.worker_id, worker_dict)
@@ -1911,7 +1824,7 @@ def connect(info,
 
     # Create an object store client.
     worker.plasma_client = thread_safe_client(
-        plasma.connect(info["store_socket_name"], None, 0, 300))
+        plasma.connect(info["store_socket_name"]))
 
     # If this is a driver, set the current task ID, the task driver ID, and set
     # the task index to 0.
@@ -1976,9 +1889,7 @@ def connect(info,
     )
 
     # Start the import thread
-    worker.import_thread = import_thread.ImportThread(worker, mode,
-                                                      worker.threads_stopped)
-    worker.import_thread.start()
+    import_thread.ImportThread(worker, mode).start()
 
     # If this is a driver running in SCRIPT_MODE, start a thread to print error
     # messages asynchronously in the background. Ideally the scheduler would
@@ -1988,25 +1899,18 @@ def connect(info,
     # scheduler for new error messages.
     if mode == SCRIPT_MODE:
         q = queue.Queue()
-        worker.listener_thread = threading.Thread(
+        listener = threading.Thread(
             target=listen_error_messages_raylet,
             name="ray_listen_error_messages",
-            args=(worker, q, worker.threads_stopped))
-        worker.printer_thread = threading.Thread(
+            args=(worker, q))
+        printer = threading.Thread(
             target=print_error_messages_raylet,
             name="ray_print_error_messages",
-            args=(q, worker.threads_stopped))
-        worker.listener_thread.daemon = True
-        worker.listener_thread.start()
-        worker.printer_thread.daemon = True
-        worker.printer_thread.start()
-        if log_to_driver:
-            worker.logger_thread = threading.Thread(
-                target=print_logs,
-                name="ray_print_logs",
-                args=(worker.redis_client, worker.threads_stopped))
-            worker.logger_thread.daemon = True
-            worker.logger_thread.start()
+            args=(q, ))
+        listener.daemon = True
+        listener.start()
+        printer.daemon = True
+        printer.start()
 
     # If we are using the raylet code path and we are not in local mode, start
     # a background thread to periodically flush profiling data to the GCS.
@@ -2047,34 +1951,10 @@ def disconnect():
     # remote functions or actors are defined and then connect is called again,
     # the remote functions will be exported. This is mostly relevant for the
     # tests.
-    worker = global_worker
-    if worker.connected:
-        # Shutdown all of the threads that we've started. TODO(rkn): This
-        # should be handled cleanly in the worker object's destructor and not
-        # in this disconnect method.
-        worker.threads_stopped.set()
-        if hasattr(worker, "import_thread"):
-            worker.import_thread.join_import_thread()
-        if hasattr(worker, "profiler") and hasattr(worker.profiler, "t"):
-            worker.profiler.join_flush_thread()
-        if hasattr(worker, "listener_thread"):
-            worker.listener_thread.join()
-        if hasattr(worker, "printer_thread"):
-            worker.printer_thread.join()
-        if hasattr(worker, "logger_thread"):
-            worker.logger_thread.join()
-        worker.threads_stopped.clear()
-        worker._session_index += 1
-
     worker.connected = False
     worker.cached_functions_to_run = []
     worker.function_actor_manager.reset_cache()
     worker.serialization_context_map.clear()
-
-    if hasattr(worker, "raylet_client"):
-        del worker.raylet_client
-    if hasattr(worker, "plasma_client"):
-        worker.plasma_client.disconnect()
 
 
 @contextmanager
