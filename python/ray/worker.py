@@ -158,6 +158,12 @@ class Worker(object):
         # It is a DriverID.
         self.task_driver_id = DriverID.nil()
         self._task_context = threading.local()
+        # This event is checked regularly by all of the threads so that they
+        # know when to exit.
+        self.threads_stopped = threading.Event()
+        # Index of the current session. This number will
+        # increment every time when `ray.shutdown` is called.
+        self._session_index = 0
 
     @property
     def task_context(self):
@@ -1545,15 +1551,7 @@ def shutdown():
     need to redefine them. If they were defined in an imported module, then you
     will need to reload the module.
     """
-<<<<<<< HEAD
     disconnect()
-=======
-    disconnect(worker)
-    if hasattr(worker, "raylet_client"):
-        del worker.raylet_client
-    if hasattr(worker, "plasma_client"):
-        worker.plasma_client.disconnect()
->>>>>>> parent of ef527f84... Stream logs to driver by default. (#3892)
 
     # Shut down the Ray processes.
     global _global_node
@@ -1951,6 +1949,26 @@ def disconnect():
     # remote functions or actors are defined and then connect is called again,
     # the remote functions will be exported. This is mostly relevant for the
     # tests.
+    worker = global_worker
+
+    if worker.connected:
+        # Shutdown all of the threads that we've started. TODO(rkn): This
+        # should be handled cleanly in the worker object's destructor and not
+        # in this disconnect method.
+        worker.threads_stopped.set()
+        if hasattr(worker, "import_thread"):
+            worker.import_thread.join_import_thread()
+        if hasattr(worker, "profiler") and hasattr(worker.profiler, "t"):
+            worker.profiler.join_flush_thread()
+        if hasattr(worker, "listener_thread"):
+            worker.listener_thread.join()
+        if hasattr(worker, "printer_thread"):
+            worker.printer_thread.join()
+        if hasattr(worker, "logger_thread"):
+            worker.logger_thread.join()
+        worker.threads_stopped.clear()
+        worker._session_index += 1
+
     worker.connected = False
     worker.cached_functions_to_run = []
     worker.function_actor_manager.reset_cache()

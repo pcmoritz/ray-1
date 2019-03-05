@@ -1457,7 +1457,9 @@ def _start_plasma_store(plasma_store_memory,
     return process_info
 
 
-def start_plasma_store(stdout_file=None,
+def start_plasma_store(node_ip_address,
+                       redis_address,
+                       stdout_file=None,
                        stderr_file=None,
                        object_store_memory=None,
                        plasma_directory=None,
@@ -1559,6 +1561,7 @@ def start_worker(node_ip_address,
 
 
 def start_monitor(redis_address,
+                  node_ip_address,
                   stdout_file=None,
                   stderr_file=None,
                   autoscaling_config=None,

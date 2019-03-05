@@ -344,6 +344,8 @@ class Node(object):
             default_prefix="plasma_store")
         stdout_file, stderr_file = self.new_log_files("plasma_store")
         process_info = ray.services.start_plasma_store(
+            redis_address=self._redis_address,
+            node_ip_address=self._node_ip_address,
             stdout_file=stdout_file,
             stderr_file=stderr_file,
             object_store_memory=self._ray_params.object_store_memory,
@@ -368,11 +370,9 @@ class Node(object):
         """
         assert self._raylet_socket_name is None
         # If the user specified a socket name, use it.
-        self._raylet_socket_name = (self._ray_params.raylet_socket_name
-                                    or get_raylet_socket_name())
-        self.prepare_socket_file(self._raylet_socket_name)
-        stdout_file, stderr_file = new_raylet_log_file(
-            redirect_output=self._ray_params.redirect_worker_output)
+        self._raylet_socket_name = self._prepare_socket_file(
+            self._ray_params.raylet_socket_name, default_prefix="raylet")
+        stdout_file, stderr_file = self.new_log_files("raylet")
         process_info = ray.services.start_raylet(
             self._redis_address,
             self._node_ip_address,
@@ -413,6 +413,7 @@ class Node(object):
         stdout_file, stderr_file = self.new_log_files("monitor")
         process_info = ray.services.start_monitor(
             self._redis_address,
+            self._node_ip_address,
             stdout_file=stdout_file,
             stderr_file=stderr_file,
             autoscaling_config=self._ray_params.autoscaling_config,

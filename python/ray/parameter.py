@@ -186,13 +186,3 @@ class RayParams(object):
             assert "GPU" not in self.resources, (
                 "'GPU' should not be included in the resource dictionary. Use "
                 "num_gpus instead.")
-
-        if self.redirect_worker_output is not None:
-            raise DeprecationWarning(
-                "The redirect_worker_output argument is deprecated. To "
-                "control logging to the driver, use the 'log_to_driver' "
-                "argument to 'ray.init()'")
-
-        if self.redirect_output is not None:
-            raise DeprecationWarning(
-                "The redirect_output argument is deprecated.")
