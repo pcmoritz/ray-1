@@ -1462,6 +1462,8 @@ def start_plasma_store(stdout_file=None,
         huge_pages=huge_pages,
         socket_name=plasma_store_socket_name)
 
+    # Print a warning if the store does not have enough memory.
+
     return process_info
 
 
