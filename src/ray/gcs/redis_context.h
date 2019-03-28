@@ -5,6 +5,9 @@
 #include <memory>
 #include <unordered_map>
 
+#include "absl/strings/str_cat.h"
+#include "absl/strings/str_join.h"
+
 #include "ray/id.h"
 #include "ray/status.h"
 #include "ray/util/logging.h"
@@ -52,8 +55,8 @@ class RedisCommandBuilder {
                     const uint8_t *data, int64_t length,
                     const TablePrefix prefix, const TablePubsub pubsub_channel,
                     int log_length) {
-    std::string prefix_str = std::to_string(static_cast<int>(prefix));
-    std::string pubsub_str = std::to_string(static_cast<int>(pubsub_channel));
+    std::string prefix_str = absl::StrCat(static_cast<int>(prefix));
+    std::string pubsub_str = absl::StrCat(static_cast<int>(pubsub_channel));
     command_.clear();
     command_.reserve(1000);
     if (length <= 0) {
@@ -67,31 +70,18 @@ class RedisCommandBuilder {
         command_ += "*6\r\n$";
       }
     }
-    command_ += std::to_string(command.length());
-    command_ += "\r\n";
-    command_ += command;
-    command_ += "\r\n$";
-    command_ += std::to_string(prefix_str.length());
-    command_ += "\r\n";
-    command_ += prefix_str;
-    command_ += "\r\n$";
-    command_ += std::to_string(pubsub_str.length());
-    command_ += "\r\n";
-    command_ += pubsub_str;
-    command_ += "\r\n$20\r\n";
+    absl::StrAppend(&command_, command.length(), "\r\n", command);
+    absl::StrAppend(&command_, "\r\n$", prefix_str.length(), "\r\n", prefix_str);
+    absl::StrAppend(&command_, "\r\n$", pubsub_str.length(), "\r\n", pubsub_str);
+    absl::StrAppend(&command_, "\r\n$20\r\n");
     command_.append(reinterpret_cast<const char *>(id.data()), id.size());
     if (length > 0) {
-      command_ += "\r\n$";
-      command_ += std::to_string(length);
-      command_ += "\r\n";
+      absl::StrAppend(&command_, "\r\n$", length, "\r\n");
       command_.append(reinterpret_cast<const char *>(data), length);
     }
     if (log_length >= 0) {
-      std::string s = std::to_string(log_length);
-      command_ += "\r\n$";
-      command_ += std::to_string(s.size());
-      command_ += "\r\n";
-      command_ += s;
+      std::string s = absl::StrCat(log_length);
+      absl::StrAppend(&command_, "\r\n$", s.size(), "\r\n", s);
     }
     command_ += "\r\n";
   }
