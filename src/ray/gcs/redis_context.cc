@@ -34,6 +34,34 @@ namespace ray {
 
 namespace gcs {
 
+class RedisCommandBuilder {
+  void BuildCommand(const UniqueID &id, const TablePrefix prefix, const TablePubsub pubsub_channel, ) {
+    command_.clear();
+command_.reserve(1000);
+command_ += "*5\r\n$";
+command_ += std::to_string(command.length());
+command_ += "\r\n";
+command_ += command;
+command_ += "\r\n$";
+command_ += lengths[static_cast<int>(prefix)];
+command_ += "\r\n";
+command_ += prefix_str;
+command_ += "\r\n$";
+command_ += lengths[static_cast<int>(pubsub_channel)];
+command_ += "\r\n";
+command_ += pubsub_str;
+command_ += "\r\n$20\r\n";
+command_.append(reinterpret_cast<const char *>(id.data()), id.size());
+command_ += "\r\n$";
+command_ += std::to_string(length);
+command_ += "\r\n";
+command_.append(reinterpret_cast<const char *>(data), length);
+command_ += "\r\n";
+  }
+ private:
+  std::string command_;
+};
+
 // This is a global redis callback which will be registered for every
 // asynchronous redis call. It dispatches the appropriate callback
 // that was registered with the RedisCallbackManager.
