@@ -1,6 +1,8 @@
 #ifndef RAY_RAYLET_TASK_DEPENDENCY_MANAGER_H
 #define RAY_RAYLET_TASK_DEPENDENCY_MANAGER_H
 
+#include "absl/container/flat_hash_map.h"
+
 // clang-format off
 #include "ray/id.h"
 #include "ray/raylet/task.h"
@@ -198,7 +200,7 @@ class TaskDependencyManager {
   std::unordered_set<ray::ObjectID> local_objects_;
   /// The set of tasks that are pending execution. Any objects created by these
   /// tasks that are not already local are pending creation.
-  std::unordered_map<ray::TaskID, PendingTask> pending_tasks_;
+  absl::flat_hash_map<ray::TaskID, PendingTask> pending_tasks_;
 };
 
 }  // namespace raylet
