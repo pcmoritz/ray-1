@@ -34,34 +34,6 @@ namespace ray {
 
 namespace gcs {
 
-class RedisCommandBuilder {
-  void BuildCommand(const UniqueID &id, const TablePrefix prefix, const TablePubsub pubsub_channel, ) {
-    command_.clear();
-command_.reserve(1000);
-command_ += "*5\r\n$";
-command_ += std::to_string(command.length());
-command_ += "\r\n";
-command_ += command;
-command_ += "\r\n$";
-command_ += lengths[static_cast<int>(prefix)];
-command_ += "\r\n";
-command_ += prefix_str;
-command_ += "\r\n$";
-command_ += lengths[static_cast<int>(pubsub_channel)];
-command_ += "\r\n";
-command_ += pubsub_str;
-command_ += "\r\n$20\r\n";
-command_.append(reinterpret_cast<const char *>(id.data()), id.size());
-command_ += "\r\n$";
-command_ += std::to_string(length);
-command_ += "\r\n";
-command_.append(reinterpret_cast<const char *>(data), length);
-command_ += "\r\n";
-  }
- private:
-  std::string command_;
-};
-
 // This is a global redis callback which will be registered for every
 // asynchronous redis call. It dispatches the appropriate callback
 // that was registered with the RedisCallbackManager.
@@ -247,36 +219,13 @@ Status RedisContext::RunAsync(const std::string &command, const UniqueID &id,
                               RedisCallback redisCallback, int log_length) {
   int64_t callback_index =
       redisCallback != nullptr ? RedisCallbackManager::instance().add(redisCallback) : -1;
-  if (length > 0) {
-    if (log_length >= 0) {
-      std::string redis_command = command + " %d %d %b %b %d";
-      int status = redisAsyncCommand(
-          async_context_, reinterpret_cast<redisCallbackFn *>(&GlobalRedisCallback),
-          reinterpret_cast<void *>(callback_index), redis_command.c_str(), prefix,
-          pubsub_channel, id.data(), id.size(), data, length, log_length);
-      if (status == REDIS_ERR) {
-        return Status::RedisError(std::string(async_context_->errstr));
-      }
-    } else {
-      std::string redis_command = command + " %d %d %b %b";
-      int status = redisAsyncCommand(
-          async_context_, reinterpret_cast<redisCallbackFn *>(&GlobalRedisCallback),
-          reinterpret_cast<void *>(callback_index), redis_command.c_str(), prefix,
-          pubsub_channel, id.data(), id.size(), data, length);
-      if (status == REDIS_ERR) {
-        return Status::RedisError(std::string(async_context_->errstr));
-      }
-    }
-  } else {
-    RAY_CHECK(log_length == -1);
-    std::string redis_command = command + " %d %d %b";
-    int status = redisAsyncCommand(
-        async_context_, reinterpret_cast<redisCallbackFn *>(&GlobalRedisCallback),
-        reinterpret_cast<void *>(callback_index), redis_command.c_str(), prefix,
-        pubsub_channel, id.data(), id.size());
-    if (status == REDIS_ERR) {
-      return Status::RedisError(std::string(async_context_->errstr));
-    }
+  command_builder_.BuildCommand(command, id, data, length, prefix, pubsub_channel, log_length);
+  int status = redisAsyncFormattedCommand(
+      async_context_, reinterpret_cast<redisCallbackFn *>(&GlobalRedisCallback),
+      reinterpret_cast<void *>(callback_index), command_builder_.command().c_str(),
+      command_builder_.command().length());
+  if (status == REDIS_ERR) {
+    return Status::RedisError(std::string(async_context_->errstr));
   }
   return Status::OK();
 }

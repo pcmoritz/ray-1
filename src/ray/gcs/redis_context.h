@@ -46,6 +46,62 @@ class RedisCallbackManager {
   std::unordered_map<int64_t, RedisCallback> callbacks_;
 };
 
+class RedisCommandBuilder {
+ public:
+  void BuildCommand(const std::string &command, const UniqueID &id,
+                    const uint8_t *data, int64_t length,
+                    const TablePrefix prefix, const TablePubsub pubsub_channel,
+                    int log_length) {
+    std::string prefix_str = std::to_string(static_cast<int>(prefix));
+    std::string pubsub_str = std::to_string(static_cast<int>(pubsub_channel));
+    command_.clear();
+    command_.reserve(1000);
+    if (length <= 0) {
+      RAY_CHECK(log_length == -1);
+      command_ += "*4\r\n$";
+    } else {
+      if (log_length < 0) {
+        RAY_CHECK(log_length == -1);
+        command_ += "*5\r\n$";
+      } else {
+        command_ += "*6\r\n$";
+      }
+    }
+    command_ += std::to_string(command.length());
+    command_ += "\r\n";
+    command_ += command;
+    command_ += "\r\n$";
+    command_ += std::to_string(prefix_str.length());
+    command_ += "\r\n";
+    command_ += prefix_str;
+    command_ += "\r\n$";
+    command_ += std::to_string(pubsub_str.length());
+    command_ += "\r\n";
+    command_ += pubsub_str;
+    command_ += "\r\n$20\r\n";
+    command_.append(reinterpret_cast<const char *>(id.data()), id.size());
+    if (length > 0) {
+      command_ += "\r\n$";
+      command_ += std::to_string(length);
+      command_ += "\r\n";
+      command_.append(reinterpret_cast<const char *>(data), length);
+    }
+    if (log_length >= 0) {
+      std::string s = std::to_string(log_length);
+      command_ += "\r\n$";
+      command_ += std::to_string(s.size());
+      command_ += "\r\n";
+      command_ += s;
+    }
+    command_ += "\r\n";
+  }
+  const std::string& command() {
+    return command_;
+  }
+ private:
+  std::string command_;
+};
+
 class RedisContext {
  public:
   RedisContext()
@@ -97,6 +153,7 @@ class RedisContext {
   redisContext *context_;
   redisAsyncContext *async_context_;
   redisAsyncContext *subscribe_context_;
+  RedisCommandBuilder command_builder_;
 };
 
 }  // namespace gcs
