@@ -7,6 +7,8 @@
 #include <unordered_set>
 #include <vector>
 
+#include "absl/container/flat_hash_map.h"
+
 #include "ray/raylet/task.h"
 #include "ray/util/logging.h"
 #include "ray/util/ordered_set.h"
@@ -95,7 +97,7 @@ class TaskQueue {
   /// A list of tasks.
   std::list<Task> task_list_;
   /// A hash to speed up looking up a task.
-  std::unordered_map<TaskID, std::list<Task>::iterator> task_map_;
+  absl::flat_hash_map<TaskID, std::list<Task>::iterator> task_map_;
   /// Aggregate resources of all the tasks in this queue.
   ResourceSet current_resource_load_;
 };
