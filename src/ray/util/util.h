@@ -4,6 +4,8 @@
 #include <boost/system/error_code.hpp>
 #include <chrono>
 
+#include "absl/time/clock.h"
+
 #include "ray/status.h"
 
 /// Return the number of milliseconds since the steady clock epoch. NOTE: The
@@ -16,24 +18,15 @@
 ///
 /// \return The number of milliseconds since the steady clock epoch.
 inline int64_t current_time_ms() {
-  std::chrono::milliseconds ms_since_epoch =
-      std::chrono::duration_cast<std::chrono::milliseconds>(
-          std::chrono::steady_clock::now().time_since_epoch());
-  return ms_since_epoch.count();
+  return absl::GetCurrentTimeNanos() / 1000000;
 }
 
 inline int64_t current_sys_time_ms() {
-  std::chrono::milliseconds ms_since_epoch =
-      std::chrono::duration_cast<std::chrono::milliseconds>(
-          std::chrono::system_clock::now().time_since_epoch());
-  return ms_since_epoch.count();
+  return absl::GetCurrentTimeNanos() / 1000000;
 }
 
 inline int64_t current_sys_time_us() {
-  std::chrono::microseconds mu_since_epoch =
-      std::chrono::duration_cast<std::chrono::microseconds>(
-          std::chrono::system_clock::now().time_since_epoch());
-  return mu_since_epoch.count();
+  return absl::GetCurrentTimeNanos() / 1000;
 }
 
 inline double current_sys_time_seconds() {

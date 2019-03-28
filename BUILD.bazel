@@ -214,6 +214,7 @@ cc_library(
         ":sha256",
         "@com_github_google_glog//:glog",
         "@plasma//:plasma_client",
+        "@com_google_absl//absl/time",
     ],
 )
 

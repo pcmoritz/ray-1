@@ -61,13 +61,13 @@ class RedisCommandBuilder {
     command_.reserve(1000);
     if (length <= 0) {
       RAY_CHECK(log_length == -1);
-      command_ += "*4\r\n$";
+      absl::StrAppend(&command_, "*4\r\n$");
     } else {
       if (log_length < 0) {
         RAY_CHECK(log_length == -1);
-        command_ += "*5\r\n$";
+        absl::StrAppend(&command_, "*5\r\n$");
       } else {
-        command_ += "*6\r\n$";
+        absl::StrAppend(&command_, "*6\r\n$");
       }
     }
     absl::StrAppend(&command_, command.length(), "\r\n", command);
@@ -83,7 +83,7 @@ class RedisCommandBuilder {
       std::string s = absl::StrCat(log_length);
       absl::StrAppend(&command_, "\r\n$", s.size(), "\r\n", s);
     }
-    command_ += "\r\n";
+    absl::StrAppend(&command_, "\r\n");
   }
   const std::string& command() {
     return command_;
