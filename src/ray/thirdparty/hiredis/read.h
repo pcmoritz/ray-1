@@ -54,7 +54,7 @@
 #define REDIS_REPLY_STATUS 5
 #define REDIS_REPLY_ERROR 6
 
-#define REDIS_READER_MAX_BUF (1024*16)  /* Default max unused reader buffer. */
+#define REDIS_READER_MAX_BUF (1024*64)  /* Default max unused reader buffer. */
 
 #ifdef __cplusplus
 extern "C" {
