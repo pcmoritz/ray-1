@@ -106,15 +106,23 @@ string_vec_to_flatbuf(flatbuffers::FlatBufferBuilder &fbb,
 template <typename ID>
 flatbuffers::Offset<flatbuffers::String> to_flatbuf(flatbuffers::FlatBufferBuilder &fbb,
                                                     ID id) {
-  return fbb.CreateString(reinterpret_cast<const char *>(id.data()), sizeof(ID));
+  if (id.is_nil()) {
+    return fbb.CreateString("");
+  } else {
+    return fbb.CreateString(reinterpret_cast<const char *>(id.data()), sizeof(ID));
+  }
 }
 
 template <typename ID>
 ID from_flatbuf(const flatbuffers::String &string) {
-  ID id;
-  RAY_CHECK(string.size() == sizeof(ID));
-  memcpy(id.mutable_data(), string.data(), sizeof(ID));
-  return id;
+  if (string.size() == 0) {
+    return ID();
+  } else {
+    ID id;
+    RAY_CHECK(string.size() == sizeof(ID));
+    memcpy(id.mutable_data(), string.data(), sizeof(ID));
+    return id;
+  }
 }
 
 template <typename ID>
