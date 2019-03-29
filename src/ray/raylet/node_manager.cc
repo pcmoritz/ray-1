@@ -935,7 +935,7 @@ void NodeManager::ProcessSubmitTaskMessage(const uint8_t *message_data) {
   auto message = flatbuffers::GetRoot<protocol::SubmitTaskRequest>(message_data);
   TaskExecutionSpecification task_execution_spec(
       from_flatbuf<ObjectID>(*message->execution_dependencies()));
-  TaskSpecification task_spec(*message->task_spec());
+  auto task_spec = std::make_shared<TaskSpecification>(*message->task_spec());
   Task task(task_execution_spec, task_spec);
   // Submit the task to the local scheduler. Since the task was submitted
   // locally, there is no uncommitted lineage.

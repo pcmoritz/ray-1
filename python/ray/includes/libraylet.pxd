@@ -1,6 +1,6 @@
 from libc.stdint cimport int64_t
 from libcpp cimport bool as c_bool
-from libcpp.memory cimport unique_ptr
+from libcpp.memory cimport shared_ptr, unique_ptr
 from libcpp.string cimport string as c_string
 from libcpp.utility cimport pair
 from libcpp.unordered_map cimport unordered_map
@@ -52,7 +52,7 @@ cdef extern from "ray/raylet/raylet_client.h" nogil:
         CRayStatus SubmitTask(
             const c_vector[CObjectID] &execution_dependencies,
             const CTaskSpecification &task_spec)
-        CRayStatus GetTask(unique_ptr[CTaskSpecification] *task_spec)
+        CRayStatus GetTask(shared_ptr[CTaskSpecification] *task_spec)
         CRayStatus TaskDone()
         CRayStatus FetchOrReconstruct(c_vector[CObjectID] &object_ids,
                                       c_bool fetch_only,

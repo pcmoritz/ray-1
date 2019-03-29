@@ -114,4 +114,4 @@ cdef extern from "ray/raylet/task.h" namespace "ray::raylet" nogil:
 
     cdef c_string SerializeTaskAsString(
         const c_vector[CObjectID] *dependencies,
-        const CTaskSpecification *task_spec)
+        const shared_ptr[CTaskSpecification] &task_spec)

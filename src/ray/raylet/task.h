@@ -27,7 +27,7 @@ class Task {
   /// \param task_spec The immutable specification for the task. These fields
   /// are determined at task submission time.
   Task(const TaskExecutionSpecification &execution_spec,
-       const TaskSpecification &task_spec)
+       const std::shared_ptr<TaskSpecification> &task_spec)
       : task_execution_spec_(execution_spec), task_spec_(task_spec) {
     ComputeDependencies();
   }
@@ -37,13 +37,14 @@ class Task {
   /// \param task_flatbuffer The serialized task.
   Task(const protocol::Task &task_flatbuffer)
       : Task(*task_flatbuffer.task_execution_spec(),
-             *task_flatbuffer.task_specification()) {}
+             std::make_shared<TaskSpecification>(*task_flatbuffer.task_specification())) {}
 
   /// Create a task from a flatbuffer object.
   ///
   /// \param task_data The task flatbuffer object.
   Task(const protocol::TaskT &task_data)
-      : Task(*task_data.task_execution_spec, task_data.task_specification) {}
+      : Task(*task_data.task_execution_spec,
+             std::make_shared<TaskSpecification>(task_data.task_specification)) {}
 
   /// Destroy the task.
   virtual ~Task() {}
@@ -93,7 +94,7 @@ class Task {
   /// Task specification object, consisting of immutable information about this
   /// task determined at submission time. Includes resource demand, object
   /// dependencies, etc.
-  TaskSpecification task_spec_;
+  std::shared_ptr<TaskSpecification> task_spec_;
   /// A cached copy of the task's object dependencies, including arguments from
   /// the TaskSpecification and execution dependencies from the
   /// TaskExecutionSpecification.
@@ -101,7 +102,7 @@ class Task {
 };
 
 std::string SerializeTaskAsString(const std::vector<ObjectID> *dependencies,
-                                  const TaskSpecification *task_spec);
+                                  const std::shared_ptr<TaskSpecification> &task_spec);
 
 }  // namespace raylet
 

@@ -238,7 +238,7 @@ cdef class RayletClient:
 
     def get_task(self):
         cdef:
-            unique_ptr[CTaskSpecification] task_spec
+            shared_ptr[CTaskSpecification] task_spec
 
         with nogil:
             check_status(self.client.get().GetTask(&task_spec))

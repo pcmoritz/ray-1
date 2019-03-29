@@ -15,7 +15,7 @@ from ray.includes.task cimport (
 
 cdef class Task:
     cdef:
-        unique_ptr[CTaskSpecification] task_spec
+        shared_ptr[CTaskSpecification] task_spec
         unique_ptr[c_vector[CObjectID]] execution_dependencies
 
     def __init__(self, DriverID driver_id, function_descriptor, arguments,
@@ -88,9 +88,9 @@ cdef class Task:
                     (<ObjectID?>execution_arg).native())
 
     @staticmethod
-    cdef make(unique_ptr[CTaskSpecification]& task_spec):
+    cdef make(shared_ptr[CTaskSpecification]& task_spec):
         cdef Task self = Task.__new__(Task)
-        self.task_spec.reset(task_spec.release())
+        self.task_spec = task_spec
         # The created task does not include any execution dependencies.
         self.execution_dependencies.reset(new c_vector[CObjectID]())
         return self
@@ -122,7 +122,7 @@ cdef class Task:
 
     def _serialized_raylet_task(self):
         return SerializeTaskAsString(
-            self.execution_dependencies.get(), self.task_spec.get())
+            self.execution_dependencies.get(), self.task_spec)
 
     def driver_id(self):
         """Return the driver ID for this task."""
