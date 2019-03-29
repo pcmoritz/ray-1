@@ -220,6 +220,11 @@ RayletClient::RayletClient(const std::string &raylet_socket, const ClientID &cli
   // NOTE(swang): If raylet exits and we are registered as a worker, we will get killed.
   auto status = conn_->WriteMessage(MessageType::RegisterClientRequest, &fbb);
   RAY_CHECK_OK_PREPEND(status, "[RayletClient] Unable to register worker with raylet.");
+
+  options.create_if_missing = true;
+  rocksdb::Status status =
+    rocksdb::DB::Open(options, "/tmp/testdb", &db_);
+  RAY_CHECK(status.ok());
 }
 
 ray::Status RayletClient::SubmitTask(const std::vector<ObjectID> &execution_dependencies,
@@ -234,6 +239,14 @@ ray::Status RayletClient::SubmitTask(const std::vector<ObjectID> &execution_depe
 
 ray::Status RayletClient::SubmitTaskFast(const std::vector<ObjectID> &execution_dependencies,
                                      const ray::raylet::TaskSpecification &task_spec) {
+  flatbuffers::FlatBufferBuilder fbb;
+  auto execution_dependencies_message = to_flatbuf(fbb, execution_dependencies);
+  auto message = ray::protocol::CreateSubmitTaskRequest(
+      fbb, execution_dependencies_message, task_spec.ToFlatbuffer(fbb));
+  fbb.Finish(message);
+  auto payload = std::string(fbb.GetBufferPointer(), fbb.GetBufferLength());
+  auto s = db_->Put(rocksdb::WriteOptions(), task_spec.TaskId().binary(), payload);
+  RAY_CHEK(s.ok());
   ray::Status::OK();
 }
 

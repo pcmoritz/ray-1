@@ -6,6 +6,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "rocksdb/db.h"
+
 #include "ray/raylet/task_spec.h"
 #include "ray/status.h"
 
@@ -188,6 +190,8 @@ class RayletClient {
   ResourceMappingType resource_ids_;
   /// The connection to the raylet server.
   std::unique_ptr<RayletConnection> conn_;
+
+  rocksdb::DB* db_;
 };
 
 #endif
