@@ -248,7 +248,7 @@ cc_library(
         "-DOS_LINUX",
         # "-DSNAPPY",
         "-DHAVE_SSE42",
-        "-DZLIB",
+        # "-DZLIB",
         "-fno-omit-frame-pointer",
         "-momit-leaf-frame-pointer",
         "-msse4.2",
