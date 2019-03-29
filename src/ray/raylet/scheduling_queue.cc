@@ -223,19 +223,16 @@ void SchedulingQueue::RemoveTasksFromQueue(
   }
 }
 
-std::vector<Task> SchedulingQueue::RemoveTasks(std::unordered_set<TaskID> &task_ids) {
-  // List of removed tasks to be returned.
-  std::vector<Task> removed_tasks;
+void SchedulingQueue::RemoveTasks(std::unordered_set<TaskID> &task_ids, std::vector<Task>* out) {
   // Try to find the tasks to remove from the queues.
   for (const auto &task_state : {
            TaskState::PLACEABLE, TaskState::WAITING, TaskState::READY, TaskState::RUNNING,
            TaskState::INFEASIBLE, TaskState::WAITING_FOR_ACTOR_CREATION,
        }) {
-    RemoveTasksFromQueue(task_state, task_ids, &removed_tasks);
+    RemoveTasksFromQueue(task_state, task_ids, out);
   }
 
   RAY_CHECK(task_ids.size() == 0);
-  return removed_tasks;
 }
 
 Task SchedulingQueue::RemoveTask(const TaskID &task_id, TaskState *removed_task_state) {

@@ -561,7 +561,8 @@ void NodeManager::HandleActorStateTransition(const ActorID &actor_id,
     }
     // Resubmit the methods that were submitted before the actor's location was
     // known.
-    auto created_actor_methods = local_queues_.RemoveTasks(created_actor_method_ids);
+    std::vector<Task> created_actor_methods;
+    local_queues_.RemoveTasks(created_actor_method_ids, &created_actor_methods);
     for (const auto &method : created_actor_methods) {
       if (!lineage_cache_.RemoveWaitingTask(method.GetTaskSpecification().TaskId())) {
         RAY_LOG(WARNING) << "Task " << method.GetTaskSpecification().TaskId()
@@ -584,7 +585,8 @@ void NodeManager::HandleActorStateTransition(const ActorID &actor_id,
     // When an actor dies, loop over all of the queued tasks for that actor
     // and treat them as failed.
     auto tasks_to_remove = local_queues_.GetTaskIdsForActor(actor_id);
-    auto removed_tasks = local_queues_.RemoveTasks(tasks_to_remove);
+    std::vector<Task> removed_tasks;
+    local_queues_.RemoveTasks(tasks_to_remove, &removed_tasks);
     for (auto const &task : removed_tasks) {
       TreatTaskAsFailed(task, ErrorType::ACTOR_DIED);
     }
@@ -595,7 +597,8 @@ void NodeManager::HandleActorStateTransition(const ActorID &actor_id,
     // tasks for that actor. This will mark the tasks as waiting for actor
     // creation.
     auto tasks_to_remove = local_queues_.GetTaskIdsForActor(actor_id);
-    auto removed_tasks = local_queues_.RemoveTasks(tasks_to_remove);
+    std::vector<Task> removed_tasks;
+    local_queues_.RemoveTasks(tasks_to_remove, &removed_tasks);
     for (auto const &task : removed_tasks) {
       SubmitTask(task, Lineage());
     }
@@ -607,7 +610,7 @@ void NodeManager::CleanUpTasksForDeadDriver(const DriverID &driver_id) {
   task_dependency_manager_.RemoveTasksAndRelatedObjects(tasks_to_remove);
   // NOTE(swang): SchedulingQueue::RemoveTasks modifies its argument so we must
   // call it last.
-  local_queues_.RemoveTasks(tasks_to_remove);
+  local_queues_.RemoveTasks(tasks_to_remove, nullptr);
 }
 
 void NodeManager::ProcessNewClient(LocalClientConnection &client) {
@@ -644,7 +647,7 @@ void NodeManager::DispatchTasks(
       }
     }
   }
-  local_queues_.RemoveTasks(removed_task_ids);
+  local_queues_.RemoveTasks(removed_task_ids, nullptr);
 }
 
 void NodeManager::ProcessClientMessage(
@@ -1173,7 +1176,8 @@ void NodeManager::ScheduleTasks(
 
   // Transition locally placed tasks to waiting or ready for dispatch.
   if (local_task_ids.size() > 0) {
-    std::vector<Task> tasks = local_queues_.RemoveTasks(local_task_ids);
+    std::vector<Task> tasks;
+    local_queues_.RemoveTasks(local_task_ids, &tasks);
     for (const auto &t : tasks) {
       EnqueuePlaceableTask(t);
     }
@@ -1982,7 +1986,8 @@ void NodeManager::HandleObjectLocal(const ObjectID &object_id) {
     RAY_CHECK(ready_task_id_set_copy.empty());
 
     // Queue and dispatch the tasks that are ready to run (i.e., WAITING).
-    auto ready_tasks = local_queues_.RemoveTasks(ready_task_id_set);
+    std::vector<Task> ready_tasks;
+    local_queues_.RemoveTasks(ready_task_id_set, &ready_tasks);
     local_queues_.QueueTasks(ready_tasks, TaskState::READY);
     DispatchTasks(MakeTasksWithResources(ready_tasks));
   }

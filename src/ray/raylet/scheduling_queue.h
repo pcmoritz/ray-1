@@ -212,7 +212,7 @@ class SchedulingQueue {
   /// corresponding tasks must be contained in the queue. The IDs of removed
   /// tasks will be erased from the set.
   /// \return A vector of the tasks that were removed.
-  std::vector<Task> RemoveTasks(std::unordered_set<TaskID> &task_ids);
+  void RemoveTasks(std::unordered_set<TaskID> &task_ids, std::vector<Task>* out);
 
   /// Remove a task from the task queue.
   ///
