@@ -225,7 +225,7 @@ RayletClient::RayletClient(const std::string &raylet_socket, const ClientID &cli
   options.create_if_missing = true;
   rocksdb::Status s =
     rocksdb::DB::Open(options, "/tmp/testdb", &db_);
-  RAY_CHECK(s.ok());
+  RAY_CHECK(s.ok()) << s.ToString();
 }
 
 ray::Status RayletClient::SubmitTask(const std::vector<ObjectID> &execution_dependencies,
