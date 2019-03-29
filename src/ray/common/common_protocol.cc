@@ -6,9 +6,9 @@ std::string string_from_flatbuf(const flatbuffers::String &string) {
   return std::string(string.data(), string.size());
 }
 
-const std::unordered_map<std::string, double> map_from_flatbuf(
+const absl::flat_hash_map<std::string, double> map_from_flatbuf(
     const flatbuffers::Vector<flatbuffers::Offset<ResourcePair>> &resource_vector) {
-  std::unordered_map<std::string, double> required_resources;
+  absl::flat_hash_map<std::string, double> required_resources;
   for (int64_t i = 0; i < resource_vector.size(); i++) {
     const ResourcePair *resource_pair = resource_vector.Get(i);
     required_resources[string_from_flatbuf(*resource_pair->key())] =

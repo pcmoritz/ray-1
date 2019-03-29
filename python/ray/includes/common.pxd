@@ -127,5 +127,5 @@ cdef extern from "ray/raylet/scheduling_resources.h" \
         c_bool GetResource(const c_string &resource_name, double *value) const
         double GetNumCpus() const
         c_bool IsEmpty() const
-        const unordered_map[c_string, double] &GetResourceMap() const
+        unordered_map[c_string, double] GetResources() const
         const c_string ToString() const

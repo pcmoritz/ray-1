@@ -11,7 +11,7 @@ namespace raylet {
 
 ResourceSet::ResourceSet() {}
 
-ResourceSet::ResourceSet(const std::unordered_map<std::string, double> &resource_map)
+ResourceSet::ResourceSet(const absl::flat_hash_map<std::string, double> &resource_map)
     : resource_capacity_(resource_map) {}
 
 ResourceSet::ResourceSet(const std::vector<std::string> &resource_labels,
@@ -156,8 +156,16 @@ const std::string ResourceSet::ToString() const {
   return return_string;
 }
 
-const std::unordered_map<std::string, double> &ResourceSet::GetResourceMap() const {
+const absl::flat_hash_map<std::string, double> &ResourceSet::GetResourceMap() const {
   return resource_capacity_;
+};
+
+std::unordered_map<std::string, double> ResourceSet::GetResources() const {
+  std::unordered_map<std::string, double> result;
+  for (auto& it : resource_capacity_) {
+    result[it.first] = it.second;
+  }
+  return result;
 };
 
 /// ResourceIds class implementation
@@ -405,7 +413,7 @@ ResourceIdSet ResourceIdSet::GetCpuResources() const {
 }
 
 ResourceSet ResourceIdSet::ToResourceSet() const {
-  std::unordered_map<std::string, double> resource_set;
+  absl::flat_hash_map<std::string, double> resource_set;
   for (auto const &resource_pair : available_resources_) {
     resource_set[resource_pair.first] = resource_pair.second.TotalQuantity();
   }

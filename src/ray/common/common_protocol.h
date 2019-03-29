@@ -5,6 +5,8 @@
 
 #include <unordered_map>
 
+#include "absl/container/flat_hash_map.h"
+
 #include "ray/id.h"
 #include "ray/util/logging.h"
 
@@ -91,7 +93,7 @@ map_to_flatbuf(flatbuffers::FlatBufferBuilder &fbb,
 /// @param fbb Reference to the flatbuffer builder.
 /// @param resource_vector The flatbuffer object.
 /// @return A map from resource name to resource quantity.
-const std::unordered_map<std::string, double> map_from_flatbuf(
+const absl::flat_hash_map<std::string, double> map_from_flatbuf(
     const flatbuffers::Vector<flatbuffers::Offset<ResourcePair>> &resource_vector);
 
 std::vector<std::string> string_vec_from_flatbuf(

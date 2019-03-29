@@ -6,6 +6,8 @@
 #include <unordered_set>
 #include <vector>
 
+#include "absl/container/flat_hash_map.h"
+
 #include "ray/raylet/format/node_manager_generated.h"
 
 namespace ray {
@@ -31,7 +33,7 @@ class ResourceSet {
   ResourceSet();
 
   /// \brief Constructs ResourceSet from the specified resource map.
-  ResourceSet(const std::unordered_map<std::string, double> &resource_map);
+  ResourceSet(const absl::flat_hash_map<std::string, double> &resource_map);
 
   /// \brief Constructs ResourceSet from two equal-length vectors with label and capacity
   /// specification.
@@ -121,13 +123,15 @@ class ResourceSet {
   bool IsEmpty() const;
 
   // TODO(atumanov): implement const_iterator class for the ResourceSet container.
-  const std::unordered_map<std::string, double> &GetResourceMap() const;
+  const absl::flat_hash_map<std::string, double> &GetResourceMap() const;
+
+  std::unordered_map<std::string, double> GetResources() const;
 
   const std::string ToString() const;
 
  private:
   /// Resource capacity map.
-  std::unordered_map<std::string, double> resource_capacity_;
+  absl::flat_hash_map<std::string, double> resource_capacity_;
 };
 
 /// \class ResourceIds

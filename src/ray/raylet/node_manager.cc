@@ -1458,7 +1458,7 @@ void NodeManager::HandleTaskBlocked(const std::shared_ptr<LocalClientConnection>
       // Get the CPU resources required by the running task.
       const auto required_resources = task.GetTaskSpecification().GetRequiredResources();
       double required_cpus = required_resources.GetNumCpus();
-      const std::unordered_map<std::string, double> cpu_resources = {
+      const absl::flat_hash_map<std::string, double> cpu_resources = {
           {kCPU_ResourceLabel, required_cpus}};
 
       // Release the CPU resources.
@@ -1511,7 +1511,7 @@ void NodeManager::HandleTaskUnblocked(
       const auto required_resources = task.GetTaskSpecification().GetRequiredResources();
       double required_cpus = required_resources.GetNumCpus();
       const ResourceSet cpu_resources(
-          std::unordered_map<std::string, double>({{kCPU_ResourceLabel, required_cpus}}));
+          absl::flat_hash_map<std::string, double>({{kCPU_ResourceLabel, required_cpus}}));
 
       // Check if we can reacquire the CPU resources.
       bool oversubscribed = !local_available_resources_.Contains(cpu_resources);

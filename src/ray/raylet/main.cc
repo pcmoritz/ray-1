@@ -1,5 +1,7 @@
 #include <iostream>
 
+#include "absl/container/flat_hash_map.h"
+
 #include "ray/ray_config.h"
 #include "ray/raylet/raylet.h"
 #include "ray/status.h"
@@ -40,7 +42,7 @@ int main(int argc, char *argv[]) {
 
   // Configuration for the node manager.
   ray::raylet::NodeManagerConfig node_manager_config;
-  std::unordered_map<std::string, double> static_resource_conf;
+  absl::flat_hash_map<std::string, double> static_resource_conf;
   std::unordered_map<std::string, int> raylet_config;
 
   // Parse the configuration list.
