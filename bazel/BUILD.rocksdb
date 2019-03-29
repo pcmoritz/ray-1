@@ -11,7 +11,7 @@ genrule(
     cmd = "GIT_DIR=external/rocksdb_git/.git; " +
         "GIT_SHA=master; " +
         "sed -e s/@@GIT_SHA@@/$$GIT_SHA/ -e s/@@GIT_DATE_TIME@@/$$(date +%F)/ " +
-        "$(file util/build_version.cc.in) >> $(@)",
+        "$(location util/build_version.cc.in) >> $(@)",
 )
 
 cc_library(
