@@ -217,6 +217,7 @@ Status RedisContext::RunAsync(const std::string &command, const UniqueID &id,
                               const uint8_t *data, int64_t length,
                               const TablePrefix prefix, const TablePubsub pubsub_channel,
                               RedisCallback redisCallback, int log_length) {
+  /*
   int64_t callback_index =
       redisCallback != nullptr ? RedisCallbackManager::instance().add(redisCallback) : -1;
   command_builder_.BuildCommand(command, id, data, length, prefix, pubsub_channel, log_length);
@@ -227,10 +228,12 @@ Status RedisContext::RunAsync(const std::string &command, const UniqueID &id,
   if (status == REDIS_ERR) {
     return Status::RedisError(std::string(async_context_->errstr));
   }
+  */
   return Status::OK();
 }
 
 Status RedisContext::RunArgvAsync(const std::vector<std::string> &args) {
+  /*
   // Build the arguments.
   std::vector<const char *> argv;
   std::vector<size_t> argc;
@@ -244,16 +247,19 @@ Status RedisContext::RunArgvAsync(const std::vector<std::string> &args) {
   if (status == REDIS_ERR) {
     return Status::RedisError(std::string(async_context_->errstr));
   }
+  */
   return Status::OK();
 }
 
 Status RedisContext::RunBuilderAsync() {
+  /*
   int status = redisAsyncFormattedCommand(
       async_context_, nullptr, nullptr, command_builder_.command().c_str(),
       command_builder_.command().length());
   if (status == REDIS_ERR) {
     return Status::RedisError(std::string(async_context_->errstr));
   }
+  */
   return Status::OK();
 }
 
