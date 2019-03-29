@@ -239,9 +239,18 @@ Status RedisContext::RunArgvAsync(const std::vector<std::string> &args) {
     argc.push_back(args[i].size());
   }
   // Run the Redis command.
-  int status;
-  status = redisAsyncCommandArgv(async_context_, nullptr, nullptr, args.size(),
-                                 argv.data(), argc.data());
+  int status = redisAsyncCommandArgv(async_context_, nullptr, nullptr, args.size(),
+                                     argv.data(), argc.data());
+  if (status == REDIS_ERR) {
+    return Status::RedisError(std::string(async_context_->errstr));
+  }
+  return Status::OK();
+}
+
+Status RedisContext::RunBuilderAsync() {
+  int status = redisAsyncFormattedCommand(
+      async_context_, nullptr, nullptr, command_builder_.command().c_str(),
+      command_builder_.command().length());
   if (status == REDIS_ERR) {
     return Status::RedisError(std::string(async_context_->errstr));
   }

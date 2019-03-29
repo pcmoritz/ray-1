@@ -51,29 +51,33 @@ class RedisCallbackManager {
 
 class RedisCommandBuilder {
  public:
+  void StartCommand(int size) {
+    command_.clear();
+    command_.reserve(1000);
+    absl::StrAppend(&command_, "*", size, "\r\n");
+  }
+  void AppendString(const absl::string_view &str) {
+    absl::StrAppend(&command_, "$", str.length(), "\r\n", str, "\r\n");
+  }
   void BuildCommand(const std::string &command, const UniqueID &id,
                     const uint8_t *data, int64_t length,
                     const TablePrefix prefix, const TablePubsub pubsub_channel,
                     int log_length) {
     std::string prefix_str = absl::StrCat(static_cast<int>(prefix));
     std::string pubsub_str = absl::StrCat(static_cast<int>(pubsub_channel));
-    command_.clear();
-    command_.reserve(1000);
     if (length <= 0) {
-      RAY_CHECK(log_length == -1);
-      absl::StrAppend(&command_, "*4\r\n$");
+      StartCommand(4);
     } else {
       if (log_length < 0) {
-        RAY_CHECK(log_length == -1);
-        absl::StrAppend(&command_, "*5\r\n$");
+        StartCommand(5);
       } else {
-        absl::StrAppend(&command_, "*6\r\n$");
+        StartCommand(6);
       }
     }
-    absl::StrAppend(&command_, command.length(), "\r\n", command);
-    absl::StrAppend(&command_, "\r\n$", prefix_str.length(), "\r\n", prefix_str);
-    absl::StrAppend(&command_, "\r\n$", pubsub_str.length(), "\r\n", pubsub_str);
-    absl::StrAppend(&command_, "\r\n$20\r\n");
+    AppendString(command);
+    AppendString(prefix_str);
+    AppendString(pubsub_str);
+    absl::StrAppend(&command_, "$20\r\n");
     command_.append(reinterpret_cast<const char *>(id.data()), id.size());
     if (length > 0) {
       absl::StrAppend(&command_, "\r\n$", length, "\r\n");
@@ -125,6 +129,10 @@ class RedisContext {
   /// \param args The vector of command args to pass to Redis.
   /// \return Status.
   Status RunArgvAsync(const std::vector<std::string> &args);
+
+  Status RunBuilderAsync();
+
+  RedisCommandBuilder& command_builder() { return command_builder_; }
 
   /// Subscribe to a specific Pub-Sub channel.
   ///

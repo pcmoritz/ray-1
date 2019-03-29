@@ -556,11 +556,15 @@ class TaskLeaseTable : public Table<TaskID, TaskLeaseData> {
     // entry will overestimate the expiration time.
     // TODO(swang): Use a common helper function to format the key instead of
     // hardcoding it to match the Redis module.
-    std::vector<std::string> args = {"PEXPIRE",
-                                     EnumNameTablePrefix(prefix_) + id.binary(),
-                                     std::to_string(data->timeout)};
 
-    return GetRedisContext(id)->RunArgvAsync(args);
+    auto& command_builder = GetRedisContext(id)->command_builder();
+
+    command_builder.StartCommand(3);
+    command_builder.AppendString("PEXPIRE");
+    command_builder.AppendString(EnumNameTablePrefix(prefix_) + id.binary());
+    command_builder.AppendString(std::to_string(data->timeout));
+
+    return GetRedisContext(id)->RunBuilderAsync();
   }
 };
 
