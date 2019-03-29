@@ -4,6 +4,8 @@
 #include <gtest/gtest_prod.h>
 #include <boost/optional.hpp>
 
+#include "absl/container/flat_hash_set.h"
+
 // clang-format off
 #include "ray/common/common_protocol.h"
 #include "ray/raylet/task.h"
@@ -85,7 +87,7 @@ class LineageEntry {
   /// that created its arguments.
   ///
   /// \return The IDs of the parent entries.
-  const std::unordered_set<TaskID> &GetParentTaskIds() const;
+  const absl::flat_hash_set<TaskID> &GetParentTaskIds() const;
 
   /// Get the task data.
   ///
@@ -116,9 +118,9 @@ class LineageEntry {
   Task task_;
   /// A cached copy of the parent task IDs. This task is dependent on values
   /// returned by these tasks.
-  std::unordered_set<TaskID> parent_task_ids_;
+  absl::flat_hash_set<TaskID> parent_task_ids_;
   /// IDs of node managers that this task has been explicitly forwarded to.
-  std::unordered_set<ClientID> forwarded_to_;
+  absl::flat_hash_set<ClientID> forwarded_to_;
 };
 
 /// \class Lineage

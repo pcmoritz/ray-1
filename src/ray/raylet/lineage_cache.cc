@@ -39,7 +39,7 @@ const TaskID LineageEntry::GetEntryId() const {
   return task_.GetTaskSpecification().TaskId();
 }
 
-const std::unordered_set<TaskID> &LineageEntry::GetParentTaskIds() const {
+const absl::flat_hash_set<TaskID> &LineageEntry::GetParentTaskIds() const {
   return parent_task_ids_;
 }
 
@@ -107,7 +107,7 @@ bool Lineage::SetEntry(const Task &task, GcsStatus status) {
   auto task_id = task.GetTaskSpecification().TaskId();
   auto it = entries_.find(task_id);
   bool updated = false;
-  std::unordered_set<TaskID> old_parents;
+  absl::flat_hash_set<TaskID> old_parents;
   if (it != entries_.end()) {
     if (it->second.SetStatus(status)) {
       // The task's spec may have changed, so record its old dependencies.
