@@ -244,7 +244,7 @@ ray::Status RayletClient::SubmitTaskFast(const std::vector<ObjectID> &execution_
   auto message = ray::protocol::CreateSubmitTaskRequest(
       fbb, execution_dependencies_message, task_spec.ToFlatbuffer(fbb));
   fbb.Finish(message);
-  auto payload = std::string(fbb.GetBufferPointer(), fbb.GetBufferLength());
+  auto payload = std::string(fbb.GetBufferPointer(), fbb.GetSize());
   auto s = db_->Put(rocksdb::WriteOptions(), task_spec.TaskId().binary(), payload);
   RAY_CHECK(s.ok());
   ray::Status::OK();
