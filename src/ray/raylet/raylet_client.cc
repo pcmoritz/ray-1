@@ -228,7 +228,7 @@ RayletClient::RayletClient(const std::string &raylet_socket, const ClientID &cli
   RAY_CHECK(s.ok()) << s.ToString();
 }
 
-ray::Status RayletClient::SubmitTask(const std::vector<ObjectID> &execution_dependencies,
+ray::Status RayletClient::SubmitTaskFast(const std::vector<ObjectID> &execution_dependencies,
                                      const ray::raylet::TaskSpecification &task_spec) {
   flatbuffers::FlatBufferBuilder fbb;
   auto execution_dependencies_message = to_flatbuf(fbb, execution_dependencies);
@@ -238,7 +238,7 @@ ray::Status RayletClient::SubmitTask(const std::vector<ObjectID> &execution_depe
   return conn_->WriteMessage(MessageType::SubmitTask, &fbb);
 }
 
-ray::Status RayletClient::SubmitTaskFast(const std::vector<ObjectID> &execution_dependencies,
+ray::Status RayletClient::SubmitTask(const std::vector<ObjectID> &execution_dependencies,
                                      const ray::raylet::TaskSpecification &task_spec) {
   flatbuffers::FlatBufferBuilder fbb;
   auto execution_dependencies_message = to_flatbuf(fbb, execution_dependencies);
