@@ -232,6 +232,11 @@ ray::Status RayletClient::SubmitTask(const std::vector<ObjectID> &execution_depe
   return conn_->WriteMessage(MessageType::SubmitTask, &fbb);
 }
 
+ray::Status RayletClient::SubmitTaskFast(const std::vector<ObjectID> &execution_dependencies,
+                                     const ray::raylet::TaskSpecification &task_spec) {
+  ray::Status::OK();
+}
+
 ray::Status RayletClient::GetTask(
     std::unique_ptr<ray::raylet::TaskSpecification> *task_spec) {
   std::unique_ptr<uint8_t[]> reply;

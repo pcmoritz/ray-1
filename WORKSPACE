@@ -47,6 +47,13 @@ new_git_repository(
 )
 
 new_git_repository(
+    name = "com_github_facebook_rocksdb",
+    remote = "https://github.com/facebook/rocksdb.git",
+    tag = "v5.7.3",
+    build_file = "@//bazel:BUILD.rocksdb",
+)
+
+new_git_repository(
     name = "plasma",
     build_file = "@//bazel:BUILD.plasma",
     commit = "d00497b38be84fd77c40cbf77f3422f2a81c44f9",
