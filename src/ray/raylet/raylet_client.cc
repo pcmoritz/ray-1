@@ -221,10 +221,11 @@ RayletClient::RayletClient(const std::string &raylet_socket, const ClientID &cli
   auto status = conn_->WriteMessage(MessageType::RegisterClientRequest, &fbb);
   RAY_CHECK_OK_PREPEND(status, "[RayletClient] Unable to register worker with raylet.");
 
+  rocksdb::Options options;
   options.create_if_missing = true;
-  rocksdb::Status status =
+  rocksdb::Status s =
     rocksdb::DB::Open(options, "/tmp/testdb", &db_);
-  RAY_CHECK(status.ok());
+  RAY_CHECK(s.ok());
 }
 
 ray::Status RayletClient::SubmitTask(const std::vector<ObjectID> &execution_dependencies,
