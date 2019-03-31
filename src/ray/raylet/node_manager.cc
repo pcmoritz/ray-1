@@ -688,7 +688,7 @@ void NodeManager::ProcessClientMessage(
     return;
   } break;
   case protocol::MessageType::SubmitTask: {
-    ProcessSubmitTaskMessage(message_data);
+    // ProcessSubmitTaskMessage(message_data);
   } break;
   case protocol::MessageType::FetchOrReconstruct: {
     ProcessFetchOrReconstructMessage(client, message_data);
