@@ -688,7 +688,7 @@ void NodeManager::ProcessClientMessage(
     return;
   } break;
   case protocol::MessageType::SubmitTask: {
-    // ProcessSubmitTaskMessage(message_data);
+    ProcessSubmitTaskMessage(message_data);
   } break;
   case protocol::MessageType::FetchOrReconstruct: {
     ProcessFetchOrReconstructMessage(client, message_data);
@@ -936,7 +936,7 @@ void NodeManager::ProcessSubmitTaskMessage(const uint8_t *message_data) {
   Task task(task_execution_spec, task_spec);
   // Submit the task to the local scheduler. Since the task was submitted
   // locally, there is no uncommitted lineage.
-  SubmitTask(task, Lineage());
+  // SubmitTask(task, Lineage());
 }
 
 void NodeManager::ProcessFetchOrReconstructMessage(
