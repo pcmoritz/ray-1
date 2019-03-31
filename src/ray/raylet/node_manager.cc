@@ -1435,7 +1435,7 @@ void NodeManager::SubmitTask(const Task &task, const Lineage &uncommitted_lineag
       EnqueuePlaceableTask(task);
     } else {
       // (See design_docs/task_states.rst for the state transition diagram.)
-      //// local_queues_.QueueTasks({task}, TaskState::PLACEABLE);
+      local_queues_.QueueTasks({task}, TaskState::PLACEABLE);
       //// ScheduleTasks(cluster_resource_map_);
       // TODO(atumanov): assert that !placeable.isempty() => insufficient available
       // resources locally.
