@@ -118,6 +118,9 @@ class ServerConnection : public std::enable_shared_from_this<ServerConnection<T>
   /// async_write_in_flight_ will be set. This should only be called when no async writes
   /// are currently in flight.
   void DoAsyncWrites();
+
+  std::vector<boost::asio::const_buffer> message_buffers_;
+  int64_t write_cookie_;
 };
 
 template <typename T>

@@ -44,7 +44,11 @@ ServerConnection<T>::ServerConnection(boost::asio::basic_stream_socket<T> &&sock
     : socket_(std::move(socket)),
       async_write_max_messages_(1),
       async_write_queue_(),
-      async_write_in_flight_(false) {}
+      async_write_in_flight_(false),
+      message_buffers_(4) {
+  write_cookie_ = RayConfig::instance().ray_cookie();
+  message_buffers_[0] = boost::asio::buffer(&write_cookie_, sizeof(write_cookie_));
+}
 
 template <class T>
 ServerConnection<T>::~ServerConnection() {
@@ -107,14 +111,10 @@ ray::Status ServerConnection<T>::WriteMessage(int64_t type, int64_t length,
                                               const uint8_t *message) {
   sync_writes_ += 1;
   bytes_written_ += length;
-
-  std::vector<boost::asio::const_buffer> message_buffers;
-  auto write_cookie = RayConfig::instance().ray_cookie();
-  message_buffers.push_back(boost::asio::buffer(&write_cookie, sizeof(write_cookie)));
-  message_buffers.push_back(boost::asio::buffer(&type, sizeof(type)));
-  message_buffers.push_back(boost::asio::buffer(&length, sizeof(length)));
-  message_buffers.push_back(boost::asio::buffer(message, length));
-  return WriteBuffer(message_buffers);
+  message_buffers_[1] = boost::asio::buffer(&type, sizeof(type));
+  message_buffers_[2] = boost::asio::buffer(&length, sizeof(length));
+  message_buffers_[3] = boost::asio::buffer(message, length);
+  return WriteBuffer(message_buffers_);
 }
 
 template <class T>
