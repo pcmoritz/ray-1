@@ -688,7 +688,7 @@ void NodeManager::ProcessClientMessage(
     return;
   } break;
   case protocol::MessageType::SubmitTask: {
-    ProcessSubmitTaskMessage(message_data);
+    // ProcessSubmitTaskMessage(message_data);
   } break;
   case protocol::MessageType::FetchOrReconstruct: {
     ProcessFetchOrReconstructMessage(client, message_data);
@@ -1436,7 +1436,7 @@ void NodeManager::SubmitTask(const Task &task, const Lineage &uncommitted_lineag
     } else {
       // (See design_docs/task_states.rst for the state transition diagram.)
       local_queues_.QueueTasks({task}, TaskState::PLACEABLE);
-      //// ScheduleTasks(cluster_resource_map_);
+      ScheduleTasks(cluster_resource_map_);
       // TODO(atumanov): assert that !placeable.isempty() => insufficient available
       // resources locally.
     }
