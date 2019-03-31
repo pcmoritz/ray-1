@@ -224,7 +224,7 @@ RayletClient::RayletClient(const std::string &raylet_socket, const ClientID &cli
   auto status = conn_->WriteMessage(MessageType::RegisterClientRequest, &fbb);
   RAY_CHECK_OK_PREPEND(status, "[RayletClient] Unable to register worker with raylet.");
   std::string path = "/tmp/raylet_client_" + client_id_.hex();
-  fd_ = open(path.c_str(), O_WRONLY | O_CREAT);
+  fd_ = open(path.c_str(), O_WRONLY | O_CREAT, 0644);
 }
 
 ray::Status RayletClient::SubmitTask(const std::vector<ObjectID> &execution_dependencies,
