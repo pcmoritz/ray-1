@@ -211,6 +211,9 @@ class ClientConnection : public ServerConnection<T> {
   int64_t read_type_;
   uint64_t read_length_;
   std::vector<uint8_t> read_message_;
+
+  /// We are also caching the boost asio buffer vectors
+  std::vector<boost::asio::mutable_buffer> header_buffers_;
 };
 
 using LocalServerConnection = ServerConnection<boost::asio::local::stream_protocol>;

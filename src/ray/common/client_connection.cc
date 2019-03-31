@@ -214,7 +214,13 @@ ClientConnection<T>::ClientConnection(
       message_handler_(message_handler),
       debug_label_(debug_label),
       message_type_enum_names_(message_type_enum_names),
-      error_message_type_(error_message_type) {}
+      error_message_type_(error_message_type) {
+  // The message header includes the protocol version, the message type,
+  // and the length of the message.
+  header_buffers_.push_back(boost::asio::buffer(&read_cookie_, sizeof(read_cookie_)));
+  header_buffers_.push_back(boost::asio::buffer(&read_type_, sizeof(read_type_)));
+  header_buffers_.push_back(boost::asio::buffer(&read_length_, sizeof(read_length_)));
+}
 
 template <class T>
 const ClientID &ClientConnection<T>::GetClientId() const {
@@ -228,14 +234,9 @@ void ClientConnection<T>::SetClientID(const ClientID &client_id) {
 
 template <class T>
 void ClientConnection<T>::ProcessMessages() {
-  // Wait for a message header from the client. The message header includes the
-  // protocol version, the message type, and the length of the message.
-  std::vector<boost::asio::mutable_buffer> header;
-  header.push_back(boost::asio::buffer(&read_cookie_, sizeof(read_cookie_)));
-  header.push_back(boost::asio::buffer(&read_type_, sizeof(read_type_)));
-  header.push_back(boost::asio::buffer(&read_length_, sizeof(read_length_)));
+  // Wait for a message header from the client.
   boost::asio::async_read(
-      ServerConnection<T>::socket_, header,
+      ServerConnection<T>::socket_, header_buffers_,
       boost::bind(&ClientConnection<T>::ProcessMessageHeader,
                   shared_ClientConnection_from_this(), boost::asio::placeholders::error));
 }

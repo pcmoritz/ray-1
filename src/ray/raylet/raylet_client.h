@@ -185,8 +185,6 @@ class RayletClient {
   ResourceMappingType resource_ids_;
   /// The connection to the raylet server.
   std::unique_ptr<RayletConnection> conn_;
-
-  int fd_;
 };
 
 #endif
