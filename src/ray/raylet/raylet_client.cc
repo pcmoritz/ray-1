@@ -223,7 +223,7 @@ RayletClient::RayletClient(const std::string &raylet_socket, const ClientID &cli
   // NOTE(swang): If raylet exits and we are registered as a worker, we will get killed.
   auto status = conn_->WriteMessage(MessageType::RegisterClientRequest, &fbb);
   RAY_CHECK_OK_PREPEND(status, "[RayletClient] Unable to register worker with raylet.");
-  std::string path = "/tmp/raylet_client_" + client_id_.hex();
+  std::string path = "/dev/shm/raylet_client_" + client_id_.hex();
   fd_ = open(path.c_str(), O_WRONLY | O_CREAT, 0644);
 }
 
