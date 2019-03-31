@@ -936,7 +936,7 @@ void NodeManager::ProcessSubmitTaskMessage(const uint8_t *message_data) {
   Task task(task_execution_spec, task_spec);
   // Submit the task to the local scheduler. Since the task was submitted
   // locally, there is no uncommitted lineage.
-  // SubmitTask(task, Lineage());
+  SubmitTask(task, Lineage());
 }
 
 void NodeManager::ProcessFetchOrReconstructMessage(
@@ -1435,8 +1435,8 @@ void NodeManager::SubmitTask(const Task &task, const Lineage &uncommitted_lineag
       EnqueuePlaceableTask(task);
     } else {
       // (See design_docs/task_states.rst for the state transition diagram.)
-      local_queues_.QueueTasks({task}, TaskState::PLACEABLE);
-      ScheduleTasks(cluster_resource_map_);
+      //// local_queues_.QueueTasks({task}, TaskState::PLACEABLE);
+      //// ScheduleTasks(cluster_resource_map_);
       // TODO(atumanov): assert that !placeable.isempty() => insufficient available
       // resources locally.
     }
