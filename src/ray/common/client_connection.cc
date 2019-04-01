@@ -35,6 +35,10 @@ ray::Status TcpConnect(boost::asio::ip::tcp::socket &socket,
 template <class T>
 std::shared_ptr<ServerConnection<T>> ServerConnection<T>::Create(
     boost::asio::basic_stream_socket<T> &&socket) {
+  boost::asio::socket_base::receive_buffer_size receive_option(10 * 1024 * 1024);
+  socket.set_option(receive_option);
+  boost::asio::socket_base::send_buffer_size send_option(10 * 1024 * 1024);
+  socket.set_option(send_option);
   std::shared_ptr<ServerConnection<T>> self(new ServerConnection(std::move(socket)));
   return self;
 }
@@ -196,6 +200,10 @@ std::shared_ptr<ClientConnection<T>> ClientConnection<T>::Create(
     ClientHandler<T> &client_handler, MessageHandler<T> &message_handler,
     boost::asio::basic_stream_socket<T> &&socket, const std::string &debug_label,
     const std::vector<std::string> &message_type_enum_names, int64_t error_message_type) {
+  boost::asio::socket_base::receive_buffer_size receive_option(10 * 1024 * 1024);
+  socket.set_option(receive_option);
+  boost::asio::socket_base::send_buffer_size send_option(10 * 1024 * 1024);
+  socket.set_option(send_option);
   std::shared_ptr<ClientConnection<T>> self(
       new ClientConnection(message_handler, std::move(socket), debug_label,
                            message_type_enum_names, error_message_type));

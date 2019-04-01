@@ -31,6 +31,9 @@ int connect_ipc_sock(const std::string &socket_pathname) {
     return -1;
   }
 
+  int val = 10 * 1024 * 1024;
+  setsockopt(socket_fd, SOL_SOCKET, SO_SNDBUF, (char *) &val, sizeof (int));
+
   memset(&socket_address, 0, sizeof(socket_address));
   socket_address.sun_family = AF_UNIX;
   if (socket_pathname.length() + 1 > sizeof(socket_address.sun_path)) {
