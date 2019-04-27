@@ -376,6 +376,7 @@ class Node(object):
 
     def start_plasma_store(self):
         """Start the plasma store."""
+        """
         stdout_file, stderr_file = self.new_log_files("plasma_store")
         process_info = ray.services.start_plasma_store(
             stdout_file=stdout_file,
@@ -389,6 +390,8 @@ class Node(object):
         self.all_processes[ray_constants.PROCESS_TYPE_PLASMA_STORE] = [
             process_info
         ]
+        """
+        pass
 
     def start_raylet(self, use_valgrind=False, use_profiler=False):
         """Start the raylet.
