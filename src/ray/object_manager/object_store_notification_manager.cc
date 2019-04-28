@@ -41,13 +41,11 @@ void ObjectStoreNotificationManager::NotificationWait() {
 
 void ObjectStoreNotificationManager::ProcessStoreLength(
     const boost::system::error_code &error) {
-  if (length_ != 0) {
-    notification_.resize(length_);
-    boost::asio::async_read(
-        socket_, boost::asio::buffer(notification_),
-        boost::bind(&ObjectStoreNotificationManager::ProcessStoreNotification, this,
-                    boost::asio::placeholders::error));
-  }
+  notification_.resize(length_);
+  boost::asio::async_read(
+      socket_, boost::asio::buffer(notification_),
+      boost::bind(&ObjectStoreNotificationManager::ProcessStoreNotification, this,
+                  boost::asio::placeholders::error));
 }
 
 void ObjectStoreNotificationManager::ProcessStoreNotification(
