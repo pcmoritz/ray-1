@@ -50,6 +50,8 @@ class ObjectStoreNotificationManager {
   /// \return string.
   std::string DebugString() const;
 
+  void HandleObjectAvailable();
+
  private:
   /// Async loop for handling object store notifications.
   void NotificationWait();

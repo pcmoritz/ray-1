@@ -13,6 +13,13 @@
 
 namespace ray {
 
+void ObjectStoreNotificationManager::HandleObjectAvailable() {
+  while(true) {
+    store_client_.WaitForNotification();
+    std::cout << "object added" << std::endl;
+  }
+}
+
 ObjectStoreNotificationManager::ObjectStoreNotificationManager(
     boost::asio::io_service &io_service, const std::string &store_socket_name)
     : store_client_(),
@@ -22,11 +29,13 @@ ObjectStoreNotificationManager::ObjectStoreNotificationManager(
       socket_(io_service) {
   RAY_ARROW_CHECK_OK(store_client_.Connect(store_socket_name.c_str(), "", 0, 300));
 
-  RAY_ARROW_CHECK_OK(store_client_.Subscribe(&c_socket_));
-  boost::system::error_code ec;
-  socket_.assign(boost::asio::local::stream_protocol(), c_socket_, ec);
-  assert(!ec.value());
-  NotificationWait();
+  // RAY_ARROW_CHECK_OK(store_client_.Subscribe(&c_socket_));
+  // boost::system::error_code ec;
+  // socket_.assign(boost::asio::local::stream_protocol(), c_socket_, ec);
+  // assert(!ec.value());
+  // NotificationWait();
+
+  // std::thread( [this] { HandleObjectAvailable(); } );
 }
 
 ObjectStoreNotificationManager::~ObjectStoreNotificationManager() {
