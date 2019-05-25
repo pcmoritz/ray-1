@@ -82,7 +82,7 @@ echo "Using Python executable $PYTHON_EXECUTABLE."
 
 RAY_BUILD_PYTHON=$RAY_BUILD_PYTHON \
 RAY_BUILD_JAVA=$RAY_BUILD_JAVA \
-bash $ROOT_DIR/setup_thirdparty.sh $PYTHON_EXECUTABLE
+# bash $ROOT_DIR/setup_thirdparty.sh $PYTHON_EXECUTABLE
 
 # Now we build everything.
 BUILD_DIR="$ROOT_DIR/build/"
@@ -95,9 +95,9 @@ pushd "$BUILD_DIR"
 # The following line installs pyarrow from S3, these wheels have been
 # generated from https://github.com/ray-project/arrow-build from
 # the commit listed in the command.
-$PYTHON_EXECUTABLE -m pip install \
-    --target=$ROOT_DIR/python/ray/pyarrow_files pyarrow==0.12.0.RAY \
-    --find-links https://s3-us-west-2.amazonaws.com/arrow-wheels/ca1fa51f0901f5a4298f0e4faea00f24e5dd7bb7/index.html
+# $PYTHON_EXECUTABLE -m pip install \
+#     --target=$ROOT_DIR/python/ray/pyarrow_files pyarrow==0.12.0.RAY \
+#     --find-links https://s3-us-west-2.amazonaws.com/arrow-wheels/ca1fa51f0901f5a4298f0e4faea00f24e5dd7bb7/index.html
 export PYTHON_BIN_PATH="$PYTHON_EXECUTABLE"
 
 if [ "$RAY_BUILD_JAVA" == "YES" ]; then

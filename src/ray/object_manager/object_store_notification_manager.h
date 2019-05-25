@@ -50,6 +50,8 @@ class ObjectStoreNotificationManager {
   /// \return string.
   std::string DebugString() const;
 
+  void HandleObjectAvailable();
+
  private:
   /// Async loop for handling object store notifications.
   void NotificationWait();
@@ -71,6 +73,9 @@ class ObjectStoreNotificationManager {
   int64_t num_removes_processed_;
   std::vector<uint8_t> notification_;
   boost::asio::local::stream_protocol::socket socket_;
+
+  /// Reference to the event loop.
+  boost::asio::io_service &io_service_;
 };
 
 }  // namespace ray

@@ -13,20 +13,46 @@
 
 namespace ray {
 
+void ObjectStoreNotificationManager::HandleObjectAvailable() {
+  while(true) {
+    store_client_.WaitForNotification();
+    std::cout << "object added" << std::endl;
+    plasma::ObjectID object_id;
+    int64_t data_size;
+    int64_t metadata_size;
+    store_client_.GetNotification(-1, &object_id, &data_size, &metadata_size);
+    if (data_size == -1) {
+      continue;
+    }
+    object_manager::protocol::ObjectInfoT object_info;
+    object_info.object_id = object_id.binary();
+    object_info.data_size = data_size;
+    object_info.metadata_size = metadata_size;
+    object_info.is_deletion = false;
+    std::cout << "data_size = " << data_size << std::endl;
+    std::cout << "object_id = " << object_id.hex() << std::endl;
+    io_service_.post([this, object_info]() { ProcessStoreAdd(object_info); });
+  }
+}
+
 ObjectStoreNotificationManager::ObjectStoreNotificationManager(
     boost::asio::io_service &io_service, const std::string &store_socket_name)
     : store_client_(),
       length_(0),
       num_adds_processed_(0),
       num_removes_processed_(0),
-      socket_(io_service) {
+      socket_(io_service),
+      io_service_(io_service) {
   RAY_ARROW_CHECK_OK(store_client_.Connect(store_socket_name.c_str(), "", 0, 300));
 
-  RAY_ARROW_CHECK_OK(store_client_.Subscribe(&c_socket_));
-  boost::system::error_code ec;
-  socket_.assign(boost::asio::local::stream_protocol(), c_socket_, ec);
-  assert(!ec.value());
-  NotificationWait();
+  // RAY_ARROW_CHECK_OK(store_client_.Subscribe(&c_socket_));
+  // boost::system::error_code ec;
+  // socket_.assign(boost::asio::local::stream_protocol(), c_socket_, ec);
+  // assert(!ec.value());
+  // NotificationWait();
+
+  auto t = std::thread( [this] { HandleObjectAvailable(); } );
+  t.detach();
 }
 
 ObjectStoreNotificationManager::~ObjectStoreNotificationManager() {
