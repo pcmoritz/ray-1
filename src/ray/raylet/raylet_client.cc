@@ -134,6 +134,7 @@ ray::Status RayletConnection::Disconnect() {
     RAY_LOG(ERROR) << status.ToString()
                    << " [RayletClient] Failed to disconnect from raylet.";
   }
+  close(conn_);
   return ray::Status::OK();
 }
 
