@@ -1031,11 +1031,12 @@ void NodeManager::ProcessDisconnectClientMessage(
     RAY_CHECK(!job_id.IsNil());
     local_queues_.RemoveDriverTaskId(job_id);
     worker_pool_.DisconnectDriver(worker);
-    client->Close();
 
     RAY_LOG(DEBUG) << "Driver (pid=" << worker->Pid() << ") is disconnected. "
                    << "job_id: " << worker->GetAssignedJobId();
   }
+
+  client->Close();
 
   // TODO(rkn): Tell the object manager that this client has disconnected so
   // that it can clean up the wait requests for this client. Currently I think
