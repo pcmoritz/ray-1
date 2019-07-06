@@ -125,11 +125,18 @@ class Reporter(object):
 
     @staticmethod
     def get_workers():
-        return [
-            x.as_dict(attrs=[
-                "pid", "create_time", "cpu_times", "name", "memory_full_info"
-            ]) for x in psutil.process_iter() if running_worker(x.name())
-        ]
+        result = []
+        for proc in psutil.process_iter():
+            try:
+                if running_worker(proc.name())
+                    pinfo = proc.as_dict(attrs=[
+                        "pid", "create_time", "cpu_times", "name", "memory_full_info"
+                    ])
+                    result.append(pinfo)
+            except psutil.NoSuchProcess:
+                pass
+
+        return result
 
     def get_load_avg(self):
         load = os.getloadavg()
