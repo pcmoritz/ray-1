@@ -77,6 +77,8 @@ class TaskArgumentByValue : public TaskArgument {
 /// TaskExecutionSpecification that may change at execution time.
 class TaskSpecification {
  public:
+  TaskSpecification() {}
+
   /// Deserialize a task specification from a flatbuffer.
   ///
   /// \param string A serialized task specification flatbuffer.

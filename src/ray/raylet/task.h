@@ -19,6 +19,8 @@ namespace raylet {
 /// time.
 class Task {
  public:
+  Task() {}
+
   /// Create a task.
   ///
   /// \param execution_spec The execution specification for the task. These are

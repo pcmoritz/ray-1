@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "ray/common/status.h"
 #include "ray/raylet/task.h"
 #include "ray/util/logging.h"
 #include "ray/util/ordered_set.h"
@@ -230,7 +231,7 @@ class SchedulingQueue {
   /// \param task_state If this is not nullptr, then the state of the removed
   /// task will be written here.
   /// \return The task that was removed.
-  Task RemoveTask(const TaskID &task_id, TaskState *task_state = nullptr);
+  Status RemoveTask(const TaskID &task_id, Task *removed_task, TaskState *removed_task_state = nullptr);
 
   /// Remove a driver task ID. This is an empty task used to represent a driver.
   ///
