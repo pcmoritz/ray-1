@@ -551,7 +551,10 @@ void NodeManager::HeartbeatAdded(const ClientID &client_id,
     // (See design_docs/task_states.rst for the state transition diagram.)
     TaskState state;
     Task task;
-    RAY_CHECK_OK(local_queues_.RemoveTask(task_id, &task, &state));
+    auto s = local_queues_.RemoveTask(task_id, &task, &state);
+    if (!s.ok()) {
+      return;
+    }
     // Since we are spilling back from the ready and waiting queues, we need
     // to unsubscribe the dependencies.
     if (state != TaskState::INFEASIBLE) {
@@ -1319,10 +1322,12 @@ void NodeManager::ScheduleTasks(
       // TODO(atumanov): need a better interface for task exit on forward.
       // (See design_docs/task_states.rst for the state transition diagram.)
       Task task;
-      RAY_CHECK_OK(local_queues_.RemoveTask(task_id, &task));
-      // Attempt to forward the task. If this fails to forward the task,
-      // the task will be resubmit locally.
-      ForwardTaskOrResubmit(task, client_id);
+      auto s = local_queues_.RemoveTask(task_id, &task);
+      if (s.ok()) {
+        // Attempt to forward the task. If this fails to forward the task,
+        // the task will be resubmit locally.
+        ForwardTaskOrResubmit(task, client_id);
+      }
     }
   }
 
@@ -2259,8 +2264,12 @@ void NodeManager::ForwardTask(
     // Remove the FORWARDING task from the SWAP queue.
     Task task;
     TaskState state;
-    RAY_CHECK_OK(local_queues_.RemoveTask(task_id, &task, &state));
-    RAY_CHECK(state == TaskState::SWAP);
+    auto s = local_queues_.RemoveTask(task_id, &task, &state);
+    if (s.ok()) {
+      RAY_CHECK(state == TaskState::SWAP);
+    } else {
+      return;
+    }
 
     if (status.ok()) {
       const auto &spec = task.GetTaskSpecification();
