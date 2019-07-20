@@ -5,9 +5,6 @@ from libcpp.memory cimport (
     shared_ptr,
     static_pointer_cast,
 )
-from ray.includes.common cimport (
-    CBuffer,
-)
 
 
 cdef class Buffer:

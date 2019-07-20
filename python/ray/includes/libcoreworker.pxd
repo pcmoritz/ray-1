@@ -4,17 +4,17 @@ from libcpp.memory cimport shared_ptr
 from libcpp.string cimport string as c_string
 from libcpp.vector cimport vector as c_vector
 
-from ray.includes.common cimport (
-    CRayStatus,
-    CRayObject,
-    CWorkerType,
-    CLanguage,
-)
 from ray.includes.unique_ids cimport (
     CJobID,
     CObjectID,
 )
 
+from ray.includes.common cimport (
+    CRayStatus,
+    CRayObject,
+    CLanguage,
+    CWorkerType
+)
 
 cdef extern from "ray/core_worker/object_interface.h" namespace "ray" nogil:
     cdef cppclass CObjectInterface "CoreWorkerObjectInterface":

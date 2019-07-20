@@ -132,9 +132,6 @@ cdef extern from "arrow/python/serialize.h" namespace "arrow::py" nogil:
     cdef cppclass CSerializedPyObject "arrow::py::SerializedPyObject":
         pass
 
-cdef class SerializedPyObject:
-    cdef CSerializedPyObject data
-
 cdef extern from "ray/common/buffer.h" namespace "ray" nogil:
     cdef cppclass CBuffer "ray::Buffer":
         uint8_t *Data() const

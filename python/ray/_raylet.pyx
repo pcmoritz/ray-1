@@ -25,7 +25,7 @@ from ray.includes.common cimport (
     CBuffer,
     CRayObject,
     CSerializedPyObject,
-    SerializedPyObject,
+    # SerializedPyObject,
     PyArrowRayObject,
     WORKER_WORKER,
     WORKER_DRIVER,
@@ -54,6 +54,8 @@ from ray.utils import decode
 
 cimport cpython
 
+import pyarrow
+
 include "includes/unique_ids.pxi"
 include "includes/ray_config.pxi"
 include "includes/task.pxi"
@@ -72,6 +74,10 @@ cdef int check_status(const CRayStatus& status) nogil except -1:
     with gil:
         message = status.message().decode()
         raise Exception(message)
+
+
+cdef class SerializedPyObject:
+    cdef CSerializedPyObject data
 
 
 cdef c_vector[CObjectID] ObjectIDsToVector(object_ids):
