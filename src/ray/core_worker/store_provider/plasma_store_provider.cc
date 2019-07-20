@@ -19,6 +19,7 @@ Status CoreWorkerPlasmaStoreProvider::Put(const RayObject &object,
 Status CoreWorkerPlasmaStoreProvider::Get(
     const std::vector<ObjectID> &ids, int64_t timeout_ms, const TaskID &task_id,
     std::vector<std::shared_ptr<RayObject>> *results) {
+  return Status::OK();
   (*results).resize(ids.size(), nullptr);
 
   bool was_blocked = false;
@@ -89,6 +90,7 @@ Status CoreWorkerPlasmaStoreProvider::Wait(const std::vector<ObjectID> &object_i
                                            int num_objects, int64_t timeout_ms,
                                            const TaskID &task_id,
                                            std::vector<bool> *results) {
+  return Status::OK();
   WaitResultPair result_pair;
   auto status = raylet_client_->Wait(object_ids, num_objects, timeout_ms, false, task_id,
                                      &result_pair);
@@ -111,6 +113,7 @@ Status CoreWorkerPlasmaStoreProvider::Wait(const std::vector<ObjectID> &object_i
 Status CoreWorkerPlasmaStoreProvider::Delete(const std::vector<ObjectID> &object_ids,
                                              bool local_only,
                                              bool delete_creating_tasks) {
+  return Status::OK();
   return raylet_client_->FreeObjects(object_ids, local_only, delete_creating_tasks);
 }
 
@@ -130,6 +133,7 @@ bool CoreWorkerPlasmaStoreProvider::IsException(const RayObject &object) {
 
 void CoreWorkerPlasmaStoreProvider::WarnIfAttemptedTooManyTimes(
     int num_attempts, const std::unordered_map<ObjectID, int> &unready) {
+  return;
   if (num_attempts % RayConfig::instance().object_store_get_warn_per_num_attempts() ==
       0) {
     std::ostringstream oss;

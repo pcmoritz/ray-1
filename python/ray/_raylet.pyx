@@ -21,6 +21,15 @@ from ray.includes.common cimport (
     LANGUAGE_CPP,
     LANGUAGE_JAVA,
     LANGUAGE_PYTHON,
+    #################
+    CBuffer,
+    CRayObject,
+    CSerializedPyObject,
+    SerializedPyObject,
+    PyArrowRayObject,
+    WORKER_WORKER,
+    WORKER_DRIVER,
+    #################
 )
 from ray.includes.libraylet cimport (
     CRayletClient,
@@ -29,6 +38,11 @@ from ray.includes.libraylet cimport (
     ResourceMappingType,
     WaitResultPair,
 )
+#########################################
+from ray.includes.libcoreworker cimport (
+    CCoreWorker,
+)
+#########################################
 from ray.includes.unique_ids cimport (
     CActorCheckpointID,
     CObjectID,
@@ -382,3 +396,38 @@ cdef class RayletClient:
     @property
     def is_worker(self):
         return self.client.get().IsWorker()
+
+
+cdef class CoreWorker:
+    cdef unique_ptr[CCoreWorker] core_worker
+
+    def __cinit__(self, is_driver, store_socket, raylet_socket, JobID job_id):
+        self.core_worker.reset(new CCoreWorker(
+            WORKER_DRIVER if is_driver else WORKER_WORKER,
+            LANGUAGE_PYTHON, store_socket.encode("ascii"),
+            raylet_socket.encode("ascii"), job_id.native()))
+
+    def get_objects(self, object_ids):
+        cdef c_vector[CObjectID] get_ids = ObjectIDsToVector(object_ids)
+        cdef c_vector[shared_ptr[CRayObject]] results
+
+        timeout = RayConfig.instance().get_timeout_milliseconds()
+        self.core_worker.get().Objects().Get(get_ids, timeout, &results)
+
+    def serialize_and_put(self, object value, ObjectID object_id=None, serialization_context=None):
+        cdef shared_ptr[CBuffer] metadata
+        cdef shared_ptr[CSerializedPyObject] data
+        cdef CRayObject ray_object
+
+        cdef SerializedPyObject serialized = pyarrow.serialize(value, serialization_context)
+        cdef CSerializedPyObject pyobject = serialized.data
+        #PyArrowRayObject ray_object = new PyArrowRayObject(shared_ptr[CBuffer] &metadata, shared_ptr[CSerializedPyObject] &object, size_t object_size)
+
+        object_id.native()
+
+        #self.core_worker.get().Objects().Put(&ray_object, &object_id.native())
+        pass
+
+    # TODO: wait_local?
+    def wait(self, object_ids, int num_returns, int64_t timeout_milliseconds):
+        pass

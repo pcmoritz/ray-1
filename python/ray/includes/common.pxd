@@ -1,7 +1,8 @@
-from libcpp.string cimport string as c_string
 from libcpp cimport bool as c_bool
+from libcpp.memory cimport shared_ptr
+from libcpp.string cimport string as c_string
 
-from libc.stdint cimport int64_t
+from libc.stdint cimport int64_t, uint8_t
 from libcpp.unordered_map cimport unordered_map
 from libcpp.vector cimport vector as c_vector
 
@@ -90,6 +91,8 @@ cdef extern from "ray/common/id.h" namespace "ray" nogil:
 cdef extern from "ray/protobuf/common.pb.h" nogil:
     cdef cppclass CLanguage "Language":
         pass
+    cdef cppclass CWorkerType "ray::WorkerType":
+        pass
 
 
 # This is a workaround for C++ enum class since Cython has no corresponding
@@ -98,6 +101,10 @@ cdef extern from "ray/protobuf/common.pb.h" namespace "Language" nogil:
     cdef CLanguage LANGUAGE_PYTHON "Language::PYTHON"
     cdef CLanguage LANGUAGE_CPP "Language::CPP"
     cdef CLanguage LANGUAGE_JAVA "Language::JAVA"
+
+cdef extern from "ray/protobuf/common.pb.h" namespace "ray" nogil:
+    cdef CWorkerType WORKER_WORKER "ray::WorkerType::WORKER"
+    cdef CWorkerType WORKER_DRIVER "ray::WorkerType::DRIVER"
 
 
 cdef extern from "ray/common/task/scheduling_resources.h" \
@@ -120,3 +127,31 @@ cdef extern from "ray/common/task/scheduling_resources.h" \
         c_bool IsEmpty() const
         const unordered_map[c_string, double] &GetResourceMap() const
         const c_string ToString() const
+
+cdef extern from "arrow/python/serialize.h" namespace "arrow::py" nogil:
+    cdef cppclass CSerializedPyObject "arrow::py::SerializedPyObject":
+        pass
+
+cdef class SerializedPyObject:
+    cdef CSerializedPyObject data
+
+cdef extern from "ray/common/buffer.h" namespace "ray" nogil:
+    cdef cppclass CBuffer "ray::Buffer":
+        uint8_t *Data() const
+        size_t *Size() const
+
+    cdef cppclass LocalMemoryBuffer(CBuffer):
+        LocalMemoryBuffer(uint8_t *data, size_t size) except +
+
+cdef extern from "ray/core_worker/store_provider/store_provider.h" namespace "ray" nogil:
+    cdef cppclass CRayObject "ray::RayObject":
+        const shared_ptr[CBuffer] &Data()
+        const size_t DataSize() const
+        const shared_ptr[CBuffer] &Metadata() const
+        CRayStatus WriteDataTo(shared_ptr[CBuffer]) const
+
+    cdef cppclass BufferedRayObject(CRayObject):
+        BufferedRayObject(shared_ptr[CBuffer] metadata, shared_ptr[CBuffer] data)
+
+    cdef cppclass PyArrowRayObject(CRayObject):
+        PyArrowRayObject(shared_ptr[CBuffer] &metadata, shared_ptr[CSerializedPyObject] &object, size_t object_size)

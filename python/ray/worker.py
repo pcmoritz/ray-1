@@ -324,6 +324,7 @@ class Worker(object):
                         memcopy_threads=self.memcopy_threads,
                         serialization_context=self.get_serialization_context(
                             self.current_job_id))
+                    self.core_worker.serialize_and_put(value, object_id, self.get_serialization_context(self.current_job_id))
                 break
             except pyarrow.SerializationCallbackError as e:
                 try:
@@ -512,6 +513,8 @@ class Worker(object):
 
         if self.mode == LOCAL_MODE:
             return self.local_mode_manager.get_object(object_ids)
+
+        self.core_worker.get_objects(object_ids)
 
         # Do an initial fetch for remote objects. We divide the fetch into
         # smaller fetches so as to not block the manager for a prolonged period
@@ -1912,6 +1915,12 @@ def connect(node,
         # driver task.
         worker.task_context.current_task_id = driver_task_spec.task_id()
 
+    worker.core_worker = ray._raylet.CoreWorker(
+        (mode == SCRIPT_MODE),
+        node.plasma_store_socket_name,
+        node.raylet_socket_name,
+        worker.current_job_id,
+    )
     worker.raylet_client = ray._raylet.RayletClient(
         node.raylet_socket_name,
         ClientID(worker.worker_id),
