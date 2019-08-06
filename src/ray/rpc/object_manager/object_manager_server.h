@@ -14,6 +14,8 @@ namespace rpc {
 /// `src/ray/protobuf/object_manager.proto`.
 class ObjectManagerServiceHandler {
  public:
+  virtual ~ObjectManagerServiceHandler() = default;
+
   /// Handle a `Push` request.
   /// The implementation can handle this request asynchronously. When handling is done,
   /// the `send_reply_callback` should be called.
@@ -42,6 +44,8 @@ class ObjectManagerGrpcService : public GrpcService {
   ObjectManagerGrpcService(boost::asio::io_service &io_service,
                            ObjectManagerServiceHandler &service_handler)
       : GrpcService(io_service), service_handler_(service_handler){};
+
+
 
  protected:
   grpc::Service &GetGrpcService() override { return service_; }
