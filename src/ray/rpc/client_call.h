@@ -4,6 +4,8 @@
 #include <grpcpp/grpcpp.h>
 #include <boost/asio.hpp>
 
+#include <iostream>
+
 #include "ray/common/grpc_util.h"
 #include "ray/common/status.h"
 
@@ -132,6 +134,7 @@ class ClientCallManager {
 
   ~ClientCallManager() {
     cq_.Shutdown();
+    std::cout << "shutdown queue" << std::endl;
     polling_thread_.join();
   }
 
