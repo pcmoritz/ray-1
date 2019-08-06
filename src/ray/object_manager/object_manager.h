@@ -154,7 +154,7 @@ class ObjectManager : public ObjectManagerInterface,
                          const ObjectManagerConfig &config,
                          std::shared_ptr<ObjectDirectoryInterface> object_directory);
 
-  virtual ~ObjectManager();
+  virtual ~ObjectManager() override;
 
   /// Register GCS-related functionality.
   void RegisterGcs();
