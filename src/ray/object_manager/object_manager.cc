@@ -51,11 +51,12 @@ void ObjectManager::StartRpcService() {
 }
 
 void ObjectManager::StopRpcService() {
+  object_manager_server_.Shutdown();
+  client_call_manager_.Shutdown();
   rpc_service_.stop();
   for (int i = 0; i < config_.rpc_service_threads_number; i++) {
     rpc_threads_[i].join();
   }
-  object_manager_server_.Shutdown();
 }
 
 void ObjectManager::HandleObjectAdded(

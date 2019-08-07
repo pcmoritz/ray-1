@@ -132,10 +132,11 @@ class ClientCallManager {
         std::thread(&ClientCallManager::PollEventsFromCompletionQueue, this);
   }
 
-  ~ClientCallManager() {
+  void Shutdown() {
     cq_.Shutdown();
     std::cout << "shutdown queue" << std::endl;
     polling_thread_.join();
+    std::cout << "XXX finished joining" << std::endl;
   }
 
   /// Create a new `ClientCall` and send request.
@@ -194,6 +195,7 @@ class ClientCallManager {
         delete tag;
       }
     }
+    std::cout << "XXX exited polling thread" << std::endl;
   }
 
   /// The main event loop, to which the callback functions will be posted.

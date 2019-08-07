@@ -26,7 +26,7 @@ REDIS_MODULE="./bazel-bin/libray_redis_module.so"
 LOAD_MODULE_ARGS="--loadmodule ${REDIS_MODULE}"
 STORE_EXEC="./bazel-bin/external/plasma/plasma_store_server"
 
-VALGRIND_CMD="valgrind --track-origins=yes --leak-check=full --show-leak-kinds=all --leak-check-heuristics=stdstring --error-exitcode=1"
+VALGRIND_CMD="valgrind --track-origins=yes --leak-check=full --show-reachable=yes --show-leak-kinds=all --leak-check-heuristics=stdstring --error-exitcode=1 --dsymutil=yes"
 
 # Allow cleanup commands to fail.
 killall plasma_store || true

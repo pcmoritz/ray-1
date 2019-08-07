@@ -1,5 +1,5 @@
 # build config
-build --compilation_mode=opt
+build --compilation_mode=dbg
 build --action_env=PATH
 build --action_env=PYTHON_BIN_PATH
 # This workaround is needed due to https://github.com/bazelbuild/bazel/issues/4341

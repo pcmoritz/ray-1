@@ -408,14 +408,14 @@ class ObjectManager : public ObjectManagerInterface,
   /// Internally maintained random number generator.
   std::mt19937_64 gen_;
 
+  /// The client call manager used to deal with reply.
+  rpc::ClientCallManager client_call_manager_;
+
   /// The gPRC server.
   rpc::GrpcServer object_manager_server_;
 
   /// The gRPC service.
   rpc::ObjectManagerGrpcService object_manager_service_;
-
-  /// The client call manager used to deal with reply.
-  rpc::ClientCallManager client_call_manager_;
 
   /// Client id - object manager gRPC client.
   std::unordered_map<ClientID, std::shared_ptr<rpc::ObjectManagerClient>>

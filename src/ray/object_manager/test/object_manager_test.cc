@@ -34,7 +34,10 @@ class MockServer {
     RAY_CHECK_OK(RegisterGcs(main_service));
   }
 
-  ~MockServer() { RAY_CHECK_OK(gcs_client_->client_table().Disconnect()); }
+  ~MockServer() {
+    RAY_CHECK_OK(gcs_client_->client_table().Disconnect());
+    std::cout << "XXXX destroyed mock server" << std::endl;
+  }
 
  private:
   ray::Status RegisterGcs(boost::asio::io_service &io_service) {
@@ -86,7 +89,7 @@ class TestObjectManagerBase : public ::testing::Test {
 
     // start store
     store_id_1 = StartStore(UniqueID::FromRandom().Hex());
-    store_id_2 = StartStore(UniqueID::FromRandom().Hex());
+    // store_id_2 = StartStore(UniqueID::FromRandom().Hex());
 
     uint pull_timeout_ms = 1;
     push_timeout_ms = 1000;
@@ -106,6 +109,7 @@ class TestObjectManagerBase : public ::testing::Test {
     om_config_1.rpc_service_threads_number = 3;
     server1.reset(new MockServer(main_service, om_config_1, gcs_client_1));
 
+    /*
     // start second server
     gcs_client_2 =
         std::shared_ptr<gcs::RedisGcsClient>(new gcs::RedisGcsClient(client_options));
@@ -118,25 +122,27 @@ class TestObjectManagerBase : public ::testing::Test {
     om_config_2.object_manager_port = 23456;
     om_config_2.rpc_service_threads_number = 3;
     server2.reset(new MockServer(main_service, om_config_2, gcs_client_2));
+    */
 
     // connect to stores.
     RAY_ARROW_CHECK_OK(client1.Connect(store_id_1));
-    RAY_ARROW_CHECK_OK(client2.Connect(store_id_2));
+    // RAY_ARROW_CHECK_OK(client2.Connect(store_id_2));
   }
 
   void TearDown() {
     arrow::Status client1_status = client1.Disconnect();
-    arrow::Status client2_status = client2.Disconnect();
-    ASSERT_TRUE(client1_status.ok() && client2_status.ok());
+    // arrow::Status client2_status = client2.Disconnect();
+    // ASSERT_TRUE(client1_status.ok() && client2_status.ok());
+    ASSERT_TRUE(client1_status.ok());
 
     gcs_client_1->Disconnect();
-    gcs_client_2->Disconnect();
+    // gcs_client_2->Disconnect();
 
     this->server1.reset();
     this->server2.reset();
 
     StopStore(store_id_1);
-    StopStore(store_id_2);
+    // StopStore(store_id_2);
   }
 
   ObjectID WriteDataToClient(plasma::PlasmaClient &client, int64_t data_size) {
@@ -449,11 +455,17 @@ class TestObjectManager : public TestObjectManagerBase {
   }
 };
 
+/*
 TEST_F(TestObjectManager, StartTestObjectManager) {
   // TODO: Break this test suite into unit tests.
   auto AsyncStartTests = main_service.wrap([this]() { WaitConnections(); });
   AsyncStartTests();
   main_service.run();
+}
+*/
+
+TEST_F(TestObjectManagerBase, TestObjectManager) {
+  
 }
 
 }  // namespace ray
@@ -462,5 +474,7 @@ int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   store_executable = std::string(argv[1]);
   wait_timeout_ms = std::stoi(std::string(argv[2]));
-  return RUN_ALL_TESTS();
+  auto r = RUN_ALL_TESTS();
+  grpc_shutdown();
+  return r;
 }
