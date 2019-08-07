@@ -133,6 +133,7 @@ class ClientCallManager {
   ~ClientCallManager() {
     cq_.Shutdown();
     polling_thread_.join();
+    grpc_shutdown();
   }
 
   /// Create a new `ClientCall` and send request.
