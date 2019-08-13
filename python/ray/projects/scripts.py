@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import argparse
 import logging
 import os
 import sys
@@ -151,12 +152,41 @@ def stop():
         override_cluster_name=None)
 
 
-@session_cli.command(help="Start a session based on current project config")
-def start():
+@session_cli.command(
+    context_settings=dict(ignore_unknown_options=True,),
+    help="Start a session based on current project config")
+@click.argument("command")
+@click.option(
+    "--dry", help="If set, print cluster commands instead of executing them", is_flag=True)
+@click.argument('args', nargs=-1, type=click.UNPROCESSED)
+def start(command, dry, args):
     project_definition = load_project_or_throw()
 
     cluster_yaml = project_definition["cluster"]
     working_directory = project_definition["name"]
+
+    if dry:
+        command_to_run = None
+        params = None
+        for command_definition in project_definition["commands"]:
+            if command_definition["name"] == command:
+                command_to_run = command_definition["command"]
+                params = command_definition.get("params", [])
+        if not command_to_run:
+            raise click.ClickException("Cannot find the command '" + command + "' in commmands section of the project file.")
+
+        # Build argument parser dynamically to parse parameter arguments.
+        parser = argparse.ArgumentParser()
+        for param in params:
+            parser.add_argument("--" + param["name"])
+
+        result = parser.parse_args(list(args))
+        for key, val in result.__dict__.items():
+            command_to_run = command_to_run.replace("{{" + key + "}}", val)
+
+        print(command_to_run)
+
+        return
 
     logger.info("[1/4] Creating cluster")
     create_or_update_cluster(
