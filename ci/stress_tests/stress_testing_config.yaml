@@ -26,8 +26,8 @@ idle_timeout_minutes: 5
 # Cloud-provider specific configuration.
 provider:
     type: aws
-    region: us-west-2
-    availability_zone: us-west-2a
+    region: us-east-1
+    availability_zone: us-east-1a
 
 # How Ray will authenticate with newly launched nodes.
 auth:
@@ -43,7 +43,7 @@ auth:
 # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
 head_node:
     InstanceType: m5.12xlarge
-    ImageId: ami-0def3275  # Default Ubuntu 16.04 AMI.
+    ImageId: ami-0cfee17793b08a293  # Default Ubuntu 16.04 AMI.
 
     # Set primary volume to 25 GiB
     BlockDeviceMappings:
@@ -59,7 +59,7 @@ head_node:
 # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
 worker_nodes:
     InstanceType: m5.large
-    ImageId: ami-0def3275  # Default Ubuntu 16.04 AMI.
+    ImageId: ami-0cfee17793b08a293  # Default Ubuntu 16.04 AMI.
 
     # Set primary volume to 25 GiB
     BlockDeviceMappings:
@@ -101,8 +101,7 @@ setup_commands:
     # - ray/ci/travis/install-bazel.sh
     - pip install boto3==1.4.8 cython==0.29.0
     # - cd ray/python; git checkout master; git pull; pip install -e . --verbose
-    - pip install https://s3-us-west-2.amazonaws.com/ray-wheels/releases/<<<RAY_VERSION>>>/<<<RAY_COMMIT>>>/ray-<<<RAY_VERSION>>>-cp36-cp36m-manylinux1_x86_64.whl
-    - echo "sudo halt" | at now + 60 minutes
+    - pip install https://s3-us-west-2.amazonaws.com/ray-wheels/master/<<<RAY_COMMIT>>>/ray-<<<RAY_VERSION>>>-cp36-cp36m-manylinux1_x86_64.whl
 
 # Custom commands that will be run on the head node after common setup.
 head_setup_commands: []
