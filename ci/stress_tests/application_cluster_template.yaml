@@ -33,11 +33,11 @@ idle_timeout_minutes: 5
 # Cloud-provider specific configuration.
 provider:
     type: aws
-    region: us-west-2
+    region: us-east-1
     # Availability zone(s), comma-separated, that nodes may be launched in.
     # Nodes are currently spread between zones by a round-robin approach,
     # however this implementation detail should not be relied upon.
-    availability_zone: us-west-2b
+    availability_zone: us-east-1b
 
 # How Ray will authenticate with newly launched nodes.
 auth:
@@ -53,7 +53,7 @@ auth:
 # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
 head_node:
     InstanceType: <<<HEAD_TYPE>>>
-    ImageId: ami-0027dfad6168539c7  # Amazon Deep Learning AMI (Ubuntu), Version 21.2
+    ImageId: ami-0d96d570269578cd7  # Amazon Deep Learning AMI (Ubuntu), Version 21.2
 
     # You can provision additional disk space with a conf as follows
     BlockDeviceMappings:
@@ -69,7 +69,7 @@ head_node:
 # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
 worker_nodes:
     InstanceType: <<<WORKER_TYPE>>>
-    ImageId: ami-0027dfad6168539c7  # Amazon Deep Learning AMI (Ubuntu), Version 21.2
+    ImageId: ami-0d96d570269578cd7  # Amazon Deep Learning AMI (Ubuntu), Version 21.2
 
     # Run workers on spot by default. Comment this out to use on-demand.
     InstanceMarketOptions:
@@ -90,7 +90,7 @@ file_mounts: {
 # List of shell commands to run to set up nodes.
 setup_commands:
     - echo 'export PATH="$HOME/anaconda3/envs/tensorflow_<<<PYTHON_VERSION>>>/bin:$PATH"' >> ~/.bashrc
-    - ray || wget https://s3-us-west-2.amazonaws.com/ray-wheels/releases/<<<RAY_VERSION>>>/<<<RAY_COMMIT>>>/ray-<<<RAY_VERSION>>>-<<<WHEEL_STR>>>-manylinux1_x86_64.whl
+    - ray || wget https://s3-us-west-2.amazonaws.com/ray-wheels/master/<<<RAY_COMMIT>>>/ray-<<<RAY_VERSION>>>-<<<WHEEL_STR>>>-manylinux1_x86_64.whl
     - rllib || pip install -U ray-<<<RAY_VERSION>>>-<<<WHEEL_STR>>>-manylinux1_x86_64.whl[rllib]
     - pip install tensorflow-gpu==1.12.0
     - echo "sudo halt" | at now + 60 minutes
