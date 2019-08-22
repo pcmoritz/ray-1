@@ -7,14 +7,14 @@ idle_timeout_minutes: 5
 # Cloud-provider specific configuration.
 provider:
     type: aws
-    region: us-west-2
-    availability_zone: us-west-2a
+    region: us-east-1
+    availability_zone: us-east-1a
 auth:
     ssh_user: ubuntu
 
 head_node:
     InstanceType: m5.xlarge
-    ImageId: ami-0888a3b5189309429  # DLAMI 7/1/19
+    ImageId: ami-0d96d570269578cd7  # DLAMI 7/1/19
     BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
@@ -22,7 +22,7 @@ head_node:
 
 worker_nodes:
     InstanceType: m5.large
-    ImageId: ami-0888a3b5189309429  # DLAMI 7/1/19
+    ImageId: ami-0d96d570269578cd7  # DLAMI 7/1/19
     BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
@@ -39,7 +39,7 @@ setup_commands:
     - source activate tensorflow_p36 && pip install -U tensorflow==1.14
     # Install nightly Ray wheels.
     # Example: https://s3-us-west-2.amazonaws.com/ray-wheels/<<<RAY_BRANCH>>>/<<<RAY_COMMIT>>>/ray-<<<RAY_VERSION>>>-cp36-cp36m-manylinux1_x86_64.whl
-    - source activate tensorflow_p36 && pip install -U RAY_WHEEL_TO_TEST_HERE
+    - source activate tensorflow_p36 && pip install -U https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray-0.8.0.dev3-cp36-cp36m-manylinux1_x86_64.whl
     - source activate tensorflow_p36 && pip install ray[rllib] ray[debug] gym[atari]
     - source activate tensorflow_p36 && pip install ray[debug]
     - echo set-window-option -g mouse on > ~/.tmux.conf
