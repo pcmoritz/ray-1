@@ -1,4 +1,4 @@
-# This workload tests submitting and getting many tasks over and over.
+# This workload tests repeatedly killing a node and adding a new node.
 
 from __future__ import absolute_import
 from __future__ import division
@@ -17,7 +17,7 @@ num_nodes = 10
 message = ("Make sure there is enough memory on this machine to run this "
            "workload. We divide the system memory by 2 to provide a buffer.")
 assert (num_nodes * object_store_memory + num_redis_shards * redis_max_memory <
-        ray.utils.get_system_memory() / 2)
+        ray.utils.get_system_memory() / 2), message
 
 # Simulate a cluster on one machine.
 
@@ -42,19 +42,22 @@ def f(*xs):
 
 
 iteration = 0
-ids = []
+previous_ids = [1 for _ in range(100)]
 start_time = time.time()
 previous_time = start_time
 while True:
-    for _ in range(50):
-        new_constrained_ids = [
-            f._remote(args=[*ids], resources={str(i % num_nodes): 1})
-            for i in range(25)
-        ]
-        new_unconstrained_ids = [f.remote(*ids) for _ in range(25)]
-        ids = new_constrained_ids + new_unconstrained_ids
+    for _ in range(100):
+        previous_ids = [f.remote(previous_id) for previous_id in previous_ids]
 
-    ray.get(ids)
+    ray.get(previous_ids)
+
+    for _ in range(100):
+        previous_ids = [f.remote(previous_id) for previous_id in previous_ids]
+
+    node_to_kill = cluster.list_all_nodes()[1]
+    # Remove the first non-head node.
+    cluster.remove_node(node_to_kill)
+    cluster.add_node()
 
     new_time = time.time()
     print("Iteration {}:\n"
