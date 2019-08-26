@@ -1851,7 +1851,9 @@ std::shared_ptr<ActorTableData> NodeManager::CreateActorTableDataFromCreationTas
   } else {
     // If we've already seen this actor, it means that this actor was reconstructed.
     // Thus, its previous state must be RECONSTRUCTING.
-    RAY_CHECK(actor_entry->second.GetState() == ActorTableData::RECONSTRUCTING);
+    if(actor_entry->second.GetState() != ActorTableData::RECONSTRUCTING) {
+      RAY_LOG(ERROR) << "actor_entry->second.GetState() = " << actor_entry->second.GetState();
+    }
     // Copy the static fields from the current actor entry.
     actor_info_ptr.reset(new ActorTableData(actor_entry->second.GetTableData()));
     // We are reconstructing the actor, so subtract its
