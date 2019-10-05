@@ -97,6 +97,8 @@ if __name__ == "__main__":
                           for reducer in reducers])
         for count in counts:
             wordcounts.update(count)
+        if "million" in wordcounts:
+            print("Found the word!")
         most_frequent_words = heapq.nlargest(10, wordcounts,
                                              key=wordcounts.get)
         for word in most_frequent_words:
