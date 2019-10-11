@@ -12,10 +12,21 @@ environment:
   requirements: .rayproject/requirements.txt
 
 commands:
+  - name: train
+    help: "Train a model for clustering news for the newsreader"
+    command: |
+      wget -nc {{dataset}} -O dataset.zip
+      python train.py --dataset /tmp/dataset.zip
+    params:
+      - name: dataset
+        help: "Dataset with news articles to use for training"
+        default: https://s3-us-west-2.amazonaws.com/ray-tutorials/hackernews_articles.zip
+
   - name: run-backend
     command: python server.py
     config:
       port_forward: 5000
+
   - name: run-frontend
     command: |
       git clone https://github.com/ray-project/qreader
@@ -27,5 +38,9 @@ commands:
 
 output_files: [
   # Save the logs from the latest run in snapshots.
-  "/tmp/ray/session_latest/logs"
+  "/tmp/ray/session_latest/logs",
+  # Save the clustering model.
+  "/tmp/model.pkl",
+  # Save timeline data.
+  "/tmp/timeline.json"
 ]
