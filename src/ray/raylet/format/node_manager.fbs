@@ -106,7 +106,7 @@ table ResourceIdSetInfo {
   // The fraction of each resource ID that is reserved for this worker. Note
   // that the length of this list must be the same as the length of
   // resource_ids.
-  resource_fractions: [double];
+  resource_fractions: [long];
 }
 
 // This message is sent from a worker to the node manager.

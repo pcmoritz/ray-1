@@ -9,29 +9,14 @@ namespace ray {
 
 FractionalResourceQuantity::FractionalResourceQuantity() { resource_quantity_ = 0; }
 
-FractionalResourceQuantity::FractionalResourceQuantity(double resource_quantity) {
-  // We check for nonnegativeity due to the implicit conversion to
-  // FractionalResourceQuantity from ints/doubles when we do logical
-  // comparisons.
-  RAY_CHECK(resource_quantity >= 0)
-      << "Resource capacity, " << resource_quantity << ", should be nonnegative.";
-
-  resource_quantity_ =
-      static_cast<int64_t>(resource_quantity * kResourceConversionFactor);
-}
-
 const FractionalResourceQuantity FractionalResourceQuantity::operator+(
     const FractionalResourceQuantity &rhs) const {
-  FractionalResourceQuantity result = *this;
-  result += rhs;
-  return result;
+  return resource_quantity_ + rhs.resource_quantity_;
 }
 
 const FractionalResourceQuantity FractionalResourceQuantity::operator-(
     const FractionalResourceQuantity &rhs) const {
-  FractionalResourceQuantity result = *this;
-  result -= rhs;
-  return result;
+  return resource_quantity_ - rhs.resource_quantity_;
 }
 
 void FractionalResourceQuantity::operator+=(const FractionalResourceQuantity &rhs) {
@@ -67,8 +52,8 @@ bool FractionalResourceQuantity::operator>=(const FractionalResourceQuantity &rh
   return result;
 }
 
-double FractionalResourceQuantity::ToDouble() const {
-  return static_cast<double>(resource_quantity_) / kResourceConversionFactor;
+bool FractionalResourceQuantity::IsWhole() const {
+  return resource_quantity_ % kResourceConversionFactor == 0;
 }
 
 ResourceSet::ResourceSet() {}
@@ -78,24 +63,6 @@ ResourceSet::ResourceSet(
     : resource_capacity_(resource_map) {
   for (auto const &resource_pair : resource_map) {
     RAY_CHECK(resource_pair.second > 0);
-  }
-}
-
-ResourceSet::ResourceSet(const std::unordered_map<std::string, double> &resource_map) {
-  for (auto const &resource_pair : resource_map) {
-    RAY_CHECK(resource_pair.second > 0);
-    resource_capacity_[resource_pair.first] =
-        FractionalResourceQuantity(resource_pair.second);
-  }
-}
-
-ResourceSet::ResourceSet(const std::vector<std::string> &resource_labels,
-                         const std::vector<double> resource_capacity) {
-  RAY_CHECK(resource_labels.size() == resource_capacity.size());
-  for (uint i = 0; i < resource_labels.size(); i++) {
-    RAY_CHECK(resource_capacity[i] > 0);
-    resource_capacity_[resource_labels[i]] =
-        FractionalResourceQuantity(resource_capacity[i]);
   }
 }
 
@@ -173,14 +140,14 @@ void ResourceSet::SubtractResourcesStrict(const ResourceSet &other) {
     const FractionalResourceQuantity &resource_capacity = resource_pair.second;
     RAY_CHECK(resource_capacity_.count(resource_label) == 1)
         << "Attempt to acquire unknown resource: " << resource_label << " capacity "
-        << resource_capacity.ToDouble();
+        << resource_capacity;
     resource_capacity_[resource_label] -= resource_capacity;
 
     // Ensure that quantity is positive. Note, we have to have the check before
     // erasing the object to make sure that it doesn't get added back.
     RAY_CHECK(resource_capacity_[resource_label] >= 0)
         << "Capacity of resource after subtraction is negative, "
-        << resource_capacity_[resource_label].ToDouble() << ".";
+        << resource_capacity_[resource_label] << ".";
 
     if (resource_capacity_[resource_label] == 0) {
       resource_capacity_.erase(resource_label);
@@ -244,48 +211,38 @@ const ResourceSet ResourceSet::GetNumCpus() const {
   return cpu_resource_set;
 }
 
-const std::string format_resource(std::string resource_name, double quantity) {
+const std::string format_resource(const std::string& resource_name, FractionalResourceQuantity quantity) {
   if (resource_name == "object_store_memory" || resource_name == "memory") {
     // Convert to 100MiB chunks and then to GiB
-    return std::to_string(quantity * (50 * 1024 * 1024) / (1024 * 1024 * 1024)) + " GiB";
+    return std::to_string(quantity.val() * (50 * 1024 * 1024) / (1024 * 1024 * 1024)) + " GiB";
   }
-  return std::to_string(quantity);
+  return std::to_string(quantity.val());
 }
 
 const std::string ResourceSet::ToString() const {
   if (resource_capacity_.size() == 0) {
     return "{}";
   } else {
-    std::string return_string = "";
+    std::stringstream result;
 
     auto it = resource_capacity_.begin();
 
     // Convert the first element to a string.
     if (it != resource_capacity_.end()) {
-      double resource_amount = (it->second).ToDouble();
-      return_string +=
-          "{" + it->first + ": " + format_resource(it->first, resource_amount) + "}";
+      result <<
+          "{" << it->first << ": " << format_resource(it->first, it->second) << "}";
       it++;
     }
 
     // Add the remaining elements to the string (along with a comma).
     for (; it != resource_capacity_.end(); ++it) {
-      double resource_amount = (it->second).ToDouble();
-      return_string +=
-          ", {" + it->first + ": " + format_resource(it->first, resource_amount) + "}";
+      result <<
+          ", {" << it->first + ": " << format_resource(it->first, it->second) << "}";
     }
 
-    return return_string;
+    return result.str();
   }
 }
-
-const std::unordered_map<std::string, double> ResourceSet::GetResourceMap() const {
-  std::unordered_map<std::string, double> result;
-  for (const auto resource_pair : resource_capacity_) {
-    result[resource_pair.first] = resource_pair.second.ToDouble();
-  }
-  return result;
-};
 
 const std::unordered_map<std::string, FractionalResourceQuantity>
     &ResourceSet::GetResourceAmountMap() const {
@@ -296,9 +253,9 @@ const std::unordered_map<std::string, FractionalResourceQuantity>
 
 ResourceIds::ResourceIds() {}
 
-ResourceIds::ResourceIds(double resource_quantity) {
-  RAY_CHECK(IsWhole(resource_quantity));
-  int64_t whole_quantity = resource_quantity;
+ResourceIds::ResourceIds(FractionalResourceQuantity resource_quantity) {
+  RAY_CHECK(resource_quantity.IsWhole());
+  int64_t whole_quantity = resource_quantity.get() % kResourceConversionFactor;
   whole_ids_.reserve(whole_quantity);
   for (int64_t i = 0; i < whole_quantity; ++i) {
     whole_ids_.push_back(i);
@@ -326,9 +283,8 @@ ResourceIds::ResourceIds(
 
 bool ResourceIds::Contains(const FractionalResourceQuantity &resource_quantity) const {
   if (resource_quantity >= 1) {
-    double whole_quantity = resource_quantity.ToDouble();
-    RAY_CHECK(IsWhole(whole_quantity));
-    return whole_ids_.size() >= whole_quantity;
+    RAY_CHECK(resource_quantity.IsWhole());
+    return whole_ids_.size() >= resource_quantity.whole();
   } else {
     if (whole_ids_.size() > 0) {
       return true;
@@ -346,13 +302,11 @@ bool ResourceIds::Contains(const FractionalResourceQuantity &resource_quantity) 
 ResourceIds ResourceIds::Acquire(const FractionalResourceQuantity &resource_quantity) {
   if (resource_quantity >= 1) {
     // Handle the whole case.
-    double whole_quantity = resource_quantity.ToDouble();
-    RAY_CHECK(IsWhole(whole_quantity));
-    RAY_CHECK(static_cast<int64_t>(whole_ids_.size()) >=
-              static_cast<int64_t>(whole_quantity));
+    RAY_CHECK(resource_quantity.IsWhole());
+    RAY_CHECK(whole_ids_.size() >= resource_quantity.whole());
 
     std::vector<int64_t> ids_to_return;
-    for (int64_t i = 0; i < whole_quantity; ++i) {
+    for (int64_t i = 0; i < resource_quantity.whole(); ++i) {
       ids_to_return.push_back(whole_ids_.back());
       whole_ids_.pop_back();
     }
@@ -422,7 +376,7 @@ void ResourceIds::Release(const ResourceIds &resource_ids) {
       fractional_pair_it->second += fractional_pair_to_return.second;
       RAY_CHECK(fractional_pair_it->second <= 1)
           << "Fractional Resource Id " << fractional_pair_it->first << " capacity is "
-          << fractional_pair_it->second.ToDouble() << ". Should have been less than one.";
+          << fractional_pair_it->second << ". Should have been less than one.";
       // If this makes the ID whole, then return it to the list of whole IDs.
       if (fractional_pair_it->second == 1) {
         if (decrement_backlog_ > 0) {
@@ -470,9 +424,8 @@ std::string ResourceIds::ToString() const {
   }
   return_string += "], Fractional IDs: ";
   for (auto const &fractional_pair : fractional_ids_) {
-    double fractional_amount = fractional_pair.second.ToDouble();
     return_string += "(" + std::to_string(fractional_pair.first) + ", " +
-                     std::to_string(fractional_amount) + "), ";
+                     std::to_string(fractional_pair.second.val()) + "), ";
   }
   return_string += "]";
   return return_string;
@@ -505,10 +458,7 @@ void ResourceIds::IncreaseCapacity(int64_t increment_quantity) {
 }
 
 void ResourceIds::DecreaseCapacity(int64_t decrement_quantity) {
-  // Get total quantity, but casting to int to truncate any fractional resources. Updates
-  // are supported only on whole resources.
-  int64_t available_quantity = TotalQuantity().ToDouble();
-  RAY_LOG(DEBUG) << "[DecreaseCapacity] Available quantity: " << available_quantity;
+  RAY_LOG(DEBUG) << "[DecreaseCapacity] Available quantity: " << TotalQuantity();
 
   if (available_quantity < decrement_quantity) {
     RAY_LOG(DEBUG) << "[DecreaseCapacity] Available quantity < decrement quantity  "
@@ -527,11 +477,6 @@ void ResourceIds::DecreaseCapacity(int64_t decrement_quantity) {
     Acquire(decrement_quantity);
   }
   total_capacity_ -= decrement_quantity;
-}
-
-bool ResourceIds::IsWhole(double resource_quantity) const {
-  int64_t whole_quantity = resource_quantity;
-  return whole_quantity == resource_quantity;
 }
 
 /// ResourceIdSet class implementation
@@ -690,7 +635,7 @@ std::vector<flatbuffers::Offset<protocol::ResourceIdSetInfo>> ResourceIdSet::ToF
   std::vector<flatbuffers::Offset<protocol::ResourceIdSetInfo>> return_message;
   for (auto const &resource_pair : available_resources_) {
     std::vector<int64_t> resource_ids;
-    std::vector<double> resource_fractions;
+    std::vector<int64_t> resource_fractions;
     for (auto whole_id : resource_pair.second.WholeIds()) {
       resource_ids.push_back(whole_id);
       resource_fractions.push_back(1);
@@ -698,7 +643,7 @@ std::vector<flatbuffers::Offset<protocol::ResourceIdSetInfo>> ResourceIdSet::ToF
 
     for (auto const &fractional_pair : resource_pair.second.FractionalIds()) {
       resource_ids.push_back(fractional_pair.first);
-      resource_fractions.push_back(fractional_pair.second.ToDouble());
+      resource_fractions.push_back(fractional_pair.second);
     }
 
     auto resource_id_set_message = protocol::CreateResourceIdSetInfo(

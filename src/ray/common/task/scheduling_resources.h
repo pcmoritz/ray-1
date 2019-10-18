@@ -13,7 +13,7 @@ namespace ray {
 /// Conversion factor that is the amount in internal units is equivalent to
 /// one actual resource. Multiply to convert from actual to interal and
 /// divide to convert from internal to actual.
-constexpr double kResourceConversionFactor = 10000;
+constexpr int64_t kResourceConversionFactor = 10000;
 
 const std::string kCPU_ResourceLabel = "CPU";
 
@@ -27,9 +27,11 @@ class FractionalResourceQuantity {
   /// to add a new FractionalResourceQuantity in ResourceSets.
   FractionalResourceQuantity();
 
-  /// \brief Construct a FractionalResourceQuantity representing
-  /// resource_quantity.
-  FractionalResourceQuantity(double resource_quantity);
+  FractionalResourceQuantity(size_t resource_quantity) { resource_quantity_ = resource_quantity * kResourceConversionFactor; }
+
+  FractionalResourceQuantity(int64_t resource_quantity) { resource_quantity_ = resource_quantity * kResourceConversionFactor; }
+
+  FractionalResourceQuantity(int resource_quantity) { resource_quantity_ = resource_quantity * kResourceConversionFactor; }
 
   /// \brief Addition of FractionalResourceQuantity.
   const FractionalResourceQuantity operator+(const FractionalResourceQuantity &rhs) const;
@@ -41,7 +43,7 @@ class FractionalResourceQuantity {
   void operator+=(const FractionalResourceQuantity &rhs);
 
   /// \brief Subtraction and assignment of FractionalResourceQuantity.
-  void operator-=(const FractionalResourceQuantity &rhs);
+  void operator-=(const FractionalResourceQuantity &rh);
 
   bool operator==(const FractionalResourceQuantity &rhs) const;
   bool operator!=(const FractionalResourceQuantity &rhs) const;
@@ -50,8 +52,13 @@ class FractionalResourceQuantity {
   bool operator<=(const FractionalResourceQuantity &rhs) const;
   bool operator>=(const FractionalResourceQuantity &rhs) const;
 
-  /// \brief Return actual resource amount as a double.
-  double ToDouble() const;
+  bool IsWhole() const;
+
+  int64_t get() const { return resource_quantity_; }
+
+  double val() const { return 1.0 * resource_quantity_ / kResourceConversionFactor; }
+
+  int64_t whole() const { return resource_quantity_ / kResourceConversionFactor; }
 
  private:
   /// The resource quantity represented as 1/kResourceConversionFactor-th of a
@@ -211,7 +218,7 @@ class ResourceIds {
   ///
   /// \param resource_quantity: The total amount of resource. This must either be
   /// a whole number or a fraction less than 1.
-  explicit ResourceIds(double resource_quantity);
+  explicit ResourceIds(FractionalResourceQuantity resource_quantity);
 
   /// \brief Constructs ResourceIds with a given set of whole IDs.
   ///
@@ -297,11 +304,6 @@ class ResourceIds {
   void UpdateCapacity(int64_t new_capacity);
 
  private:
-  /// Check that a double is in fact a whole number.
-  ///
-  /// \param resource_quantity A double.
-  /// \return True if the double is an integer and false otherwise.
-  bool IsWhole(double resource_quantity) const;
 
   /// \brief Increase resource capacity by the given amount.
   ///

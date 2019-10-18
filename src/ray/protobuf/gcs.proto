@@ -154,7 +154,7 @@ message ProfileTableData {
 
 message ResourceTableData {
   // The total capacity of this resource type.
-  double resource_capacity = 1;
+  int64 resource_capacity = 1;
 }
 
 message GcsNodeInfo {
