@@ -180,16 +180,11 @@ class ClientCallManager {
     // Keep reading events from the `CompletionQueue` until it's shutdown.
     while (cq_.Next(&got_tag, &ok)) {
       auto tag = reinterpret_cast<ClientCallTag *>(got_tag);
-      if (ok && !main_service_.stopped()) {
-        // Post the callback to the main event loop.
-        main_service_.post([tag]() {
-          tag->GetCall()->OnReplyReceived();
-          // The call is finished, and we can delete this tag now.
-          delete tag;
-        });
-      } else {
-        delete tag;
+      if (ok) {
+        tag->GetCall()->OnReplyReceived();
+        // The call is finished, and we can delete this tag now.
       }
+      delete tag;
     }
   }
 
