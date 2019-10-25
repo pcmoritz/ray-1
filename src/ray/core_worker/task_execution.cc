@@ -1,3 +1,5 @@
+#include "absl/time/clock.h"
+
 #include "ray/core_worker/task_execution.h"
 #include "ray/core_worker/context.h"
 #include "ray/core_worker/core_worker.h"
@@ -43,6 +45,11 @@ CoreWorkerTaskExecutionInterface::CoreWorkerTaskExecutionInterface(
 Status CoreWorkerTaskExecutionInterface::ExecuteTask(
     const TaskSpecification &task_spec, const ResourceMappingType &resource_ids,
     std::vector<std::shared_ptr<RayObject>> *results) {
+  int64_t a = absl::GetCurrentTimeNanos();
+  for (int i = 0; i < 1000; ++i) {
+  RAY_LOG(WARNING) << "executing task " << i;
+  int64_t b = a - absl::GetCurrentTimeNanos();
+  RAY_LOG(WARNING) << "XXX " << b / 1e9;
   idle_profile_event_.reset();
   RAY_LOG(DEBUG) << "Executing task " << task_spec.TaskId();
 
@@ -84,7 +91,9 @@ Status CoreWorkerTaskExecutionInterface::ExecuteTask(
   // 1. Check and handle failure.
   // 2. Save or load checkpoint.
   idle_profile_event_.reset(new worker::ProfileEvent(profiler_, "worker_idle"));
-  return status;
+  // return status;
+  }
+  return Status::OK();
 }
 
 void CoreWorkerTaskExecutionInterface::Run() {
