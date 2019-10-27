@@ -126,13 +126,17 @@ class ClientCallManager {
   explicit ClientCallManager(boost::asio::io_service &main_service)
       : main_service_(main_service) {
     // Start the polling thread.
-    polling_thread_ =
-        std::thread(&ClientCallManager::PollEventsFromCompletionQueue, this);
+    for (int i = 0; i < 2; ++i) {
+      polling_threads_.emplace_back(
+          std::thread(&ClientCallManager::PollEventsFromCompletionQueue, this));
+    }
   }
 
   ~ClientCallManager() {
     cq_.Shutdown();
-    polling_thread_.join();
+    for (auto& thread : polling_threads_) {
+      thread.join();
+    }
   }
 
   /// Create a new `ClientCall` and send request.
@@ -189,16 +193,10 @@ class ClientCallManager {
       }
       if (status != grpc::CompletionQueue::TIMEOUT) {
         auto tag = reinterpret_cast<ClientCallTag *>(got_tag);
-        if (ok && !main_service_.stopped()) {
-          // Post the callback to the main event loop.
-          main_service_.post([tag]() {
-            tag->GetCall()->OnReplyReceived();
-            // The call is finished, and we can delete this tag now.
-            delete tag;
-          });
-        } else {
-          delete tag;
+        if (ok) {
+          tag->GetCall()->OnReplyReceived();
         }
+        delete tag;
       }
     }
   }
@@ -210,7 +208,7 @@ class ClientCallManager {
   grpc::CompletionQueue cq_;
 
   /// Polling thread to check the completion queue.
-  std::thread polling_thread_;
+  std::vector<std::thread> polling_threads_;
 };
 
 }  // namespace rpc
