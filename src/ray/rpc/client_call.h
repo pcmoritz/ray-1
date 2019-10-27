@@ -197,9 +197,18 @@ class ClientCallManager {
       if (status != grpc::CompletionQueue::TIMEOUT) {
         auto tag = reinterpret_cast<ClientCallTag *>(got_tag);
         if (ok) {
-          tag->GetCall()->OnReplyReceived();
+          if(num_threads_ == 1) {
+            main_service_.post([tag]() {
+              tag->GetCall()->OnReplyReceived();
+              delete tag;
+            });
+          } else {
+            tag->GetCall()->OnReplyReceived();
+            delete tag;
+          }
+        } else {
+          delete tag;
         }
-        delete tag;
       }
     }
   }
