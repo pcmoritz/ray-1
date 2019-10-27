@@ -4,6 +4,8 @@
 #include <grpcpp/grpcpp.h>
 #include <boost/asio.hpp>
 
+#include "absl/base/thread_annotations.h"
+#include "absl/synchronization/mutex.h"
 #include "ray/common/grpc_util.h"
 #include "ray/common/status.h"
 
@@ -127,17 +129,24 @@ class ClientCallManager {
       : main_service_(main_service), num_threads_(num_threads) {
     // Start the polling thread.
     for (int i = 0; i < num_threads_; ++i) {
-      cqs_.emplace_back(std::unique_ptr<grpc::CompletionQueue>(new grpc::CompletionQueue()));
+      {
+        absl::MutexLock lock(&mu_);
+        cqs_.emplace_back(
+            std::unique_ptr<grpc::CompletionQueue>(new grpc::CompletionQueue()));
+      }
       polling_threads_.emplace_back(
           std::thread(&ClientCallManager::PollEventsFromCompletionQueue, this, i));
     }
   }
 
   ~ClientCallManager() {
-    for (auto &cq : cqs_) {
-      cq->Shutdown();
+    {
+      absl::ReaderMutexLock lock(&mu_);
+      for (auto &cq : cqs_) {
+        cq->Shutdown();
+      }
     }
-    for (auto& thread : polling_threads_) {
+    for (auto &thread : polling_threads_) {
       thread.join();
     }
   }
@@ -161,9 +170,15 @@ class ClientCallManager {
       const PrepareAsyncFunction<GrpcService, Request, Reply> prepare_async_function,
       const Request &request, const ClientCallback<Reply> &callback) {
     auto call = std::make_shared<ClientCallImpl<Reply>>(callback);
+    grpc::CompletionQueue *queue = nullptr;
+    {
+      absl::ReaderMutexLock lock(&mu_);
+      // TODO(pcm) don't use rand for performance
+      queue = cqs_[rand() % num_threads_].get();
+    }
     // Send request.
     call->response_reader_ =
-        (stub.*prepare_async_function)(&call->context_, request, cqs_[rand() % num_threads_].get());
+        (stub.*prepare_async_function)(&call->context_, request, queue);
     call->response_reader_->StartCall();
     // Create a new tag object. This object will eventually be deleted in the
     // `ClientCallManager::PollEventsFromCompletionQueue` when reply is received.
@@ -182,6 +197,11 @@ class ClientCallManager {
   /// `CompletionQueue`, and dispatches the event to the callbacks via the `ClientCall`
   /// objects.
   void PollEventsFromCompletionQueue(int thread_index) {
+    grpc::CompletionQueue *queue = nullptr;
+    {
+      absl::ReaderMutexLock lock(&mu_);
+      queue = cqs_[thread_index].get();
+    }
     void *got_tag;
     bool ok = false;
     auto deadline = gpr_inf_future(GPR_CLOCK_REALTIME);
@@ -190,14 +210,14 @@ class ClientCallManager {
     // synchronous cq_.Next blocks indefinitely in the case that the process
     // received a SIGTERM.
     while (true) {
-      auto status = cqs_[thread_index]->AsyncNext(&got_tag, &ok, deadline);
+      auto status = queue->AsyncNext(&got_tag, &ok, deadline);
       if (status == grpc::CompletionQueue::SHUTDOWN) {
         break;
       }
       if (status != grpc::CompletionQueue::TIMEOUT) {
         auto tag = reinterpret_cast<ClientCallTag *>(got_tag);
         if (ok) {
-          if(num_threads_ == 1) {
+          if (num_threads_ == 1) {
             if (!main_service_.stopped()) {
               main_service_.post([tag]() {
                 tag->GetCall()->OnReplyReceived();
@@ -219,10 +239,13 @@ class ClientCallManager {
   boost::asio::io_service &main_service_;
 
   /// The number of threads used for GRPC.
-  int num_threads_;
+  const int num_threads_;
+
+  /// Protects access to cqs_ (note the cqs themselves are thread-safe).
+  absl::Mutex mu_;
 
   /// The gRPC `CompletionQueue` object used to poll events.
-  std::vector<std::unique_ptr<grpc::CompletionQueue>> cqs_;
+  std::vector<std::unique_ptr<grpc::CompletionQueue>> cqs_ GUARDED_BY(mu_);
 
   /// Polling thread to check the completion queue.
   std::vector<std::thread> polling_threads_;

@@ -107,11 +107,12 @@ class DirectActorClient : public std::enable_shared_from_this<DirectActorClient>
                     ClientCallManager &client_call_manager)
       : client_call_manager_(client_call_manager) {
     grpc::ResourceQuota quota;
-    quota.SetMaxThreads(4);
+    quota.SetMaxThreads(16);
     grpc::ChannelArguments argument;
     argument.SetResourceQuota(quota);
-    std::shared_ptr<grpc::Channel> channel = grpc::CreateCustomChannel(
-        address + ":" + std::to_string(port), grpc::InsecureChannelCredentials(), argument);
+    std::shared_ptr<grpc::Channel> channel =
+        grpc::CreateCustomChannel(address + ":" + std::to_string(port),
+                                  grpc::InsecureChannelCredentials(), argument);
     stub_ = DirectActorService::NewStub(channel);
   };
 

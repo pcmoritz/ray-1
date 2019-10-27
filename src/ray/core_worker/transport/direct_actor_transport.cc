@@ -18,7 +18,7 @@ CoreWorkerDirectActorTaskSubmitter::CoreWorkerDirectActorTaskSubmitter(
     boost::asio::io_service &io_service,
     std::unique_ptr<CoreWorkerStoreProvider> store_provider)
     : io_service_(io_service),
-      client_call_manager_(io_service, /*num_threads=*/4),
+      client_call_manager_(io_service, /*num_threads=*/16),
       store_provider_(std::move(store_provider)) {}
 
 Status CoreWorkerDirectActorTaskSubmitter::SubmitTask(
