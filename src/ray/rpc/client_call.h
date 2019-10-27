@@ -135,7 +135,7 @@ class ClientCallManager {
 
   ~ClientCallManager() {
     for (auto &cq : cqs_) {
-      cq.Shutdown();
+      cq->Shutdown();
     }
     for (auto& thread : polling_threads_) {
       thread.join();
@@ -163,7 +163,7 @@ class ClientCallManager {
     auto call = std::make_shared<ClientCallImpl<Reply>>(callback);
     // Send request.
     call->response_reader_ =
-        (stub.*prepare_async_function)(&call->context_, request, &cqs_[rand() % num_threads_]);
+        (stub.*prepare_async_function)(&call->context_, request, cqs_[rand() % num_threads_].get());
     call->response_reader_->StartCall();
     // Create a new tag object. This object will eventually be deleted in the
     // `ClientCallManager::PollEventsFromCompletionQueue` when reply is received.
@@ -190,7 +190,7 @@ class ClientCallManager {
     // synchronous cq_.Next blocks indefinitely in the case that the process
     // received a SIGTERM.
     while (true) {
-      auto status = cqs_[thread_index].AsyncNext(&got_tag, &ok, deadline);
+      auto status = cqs_[thread_index]->AsyncNext(&got_tag, &ok, deadline);
       if (status == grpc::CompletionQueue::SHUTDOWN) {
         break;
       }
@@ -211,7 +211,7 @@ class ClientCallManager {
   int num_threads_;
 
   /// The gRPC `CompletionQueue` object used to poll events.
-  std::vector<grpc::CompletionQueue> cqs_;
+  std::vector<std::unique_ptr<grpc::CompletionQueue>> cqs_;
 
   /// Polling thread to check the completion queue.
   std::vector<std::thread> polling_threads_;
