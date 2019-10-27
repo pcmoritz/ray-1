@@ -127,7 +127,7 @@ class ClientCallManager {
       : main_service_(main_service), num_threads_(num_threads) {
     // Start the polling thread.
     for (int i = 0; i < num_threads_; ++i) {
-      cqs_.emplace_back(std::make_unique<grpc::CompletionQueue>());
+      cqs_.emplace_back(std::unique_ptr<grpc::CompletionQueue>(new grpc::CompletionQueue()));
       polling_threads_.emplace_back(
           std::thread(&ClientCallManager::PollEventsFromCompletionQueue, this, i));
     }
