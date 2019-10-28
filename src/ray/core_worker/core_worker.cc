@@ -225,21 +225,21 @@ void CoreWorker::SetCurrentTaskId(const TaskID &task_id) {
 
 // TODO(ekl) the post is fairly expensive, optimize?
 void CoreWorker::AddActiveObjectID(const ObjectID &object_id) {
-  io_service_.post([this, object_id]() -> void {
-    active_object_ids_.insert(object_id);
-    active_object_ids_updated_ = true;
-  });
+//  io_service_.post([this, object_id]() -> void {
+//    active_object_ids_.insert(object_id);
+//    active_object_ids_updated_ = true;
+//  });
 }
 
 // TODO(ekl) the post is fairly expensive, optimize?
 void CoreWorker::RemoveActiveObjectID(const ObjectID &object_id) {
-  io_service_.post([this, object_id]() -> void {
-    if (active_object_ids_.erase(object_id)) {
-      active_object_ids_updated_ = true;
-    } else {
-      RAY_LOG(WARNING) << "Tried to erase non-existent object ID" << object_id;
-    }
-  });
+//  io_service_.post([this, object_id]() -> void {
+//    if (active_object_ids_.erase(object_id)) {
+//      active_object_ids_updated_ = true;
+//    } else {
+//      RAY_LOG(WARNING) << "Tried to erase non-existent object ID" << object_id;
+//    }
+//  });
 }
 
 void CoreWorker::ReportActiveObjectIDs() {
