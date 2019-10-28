@@ -130,11 +130,12 @@ WorkerThreadContext &WorkerContext::GetThreadContext(bool for_main_thread) {
   if (thread_context_ == nullptr) {
     thread_context_ = std::unique_ptr<WorkerThreadContext>(new WorkerThreadContext());
     if (!for_main_thread && !multithreading_warning_printed) {
-      std::cout << "WARNING: "
-                << "Calling ray.get or ray.wait in a separate thread "
-                << "may lead to deadlock if the main thread blocks on "
-                << "this thread and there are not enough resources to "
-                << "execute more tasks." << std::endl;
+// TODO(ekl) this is spuriously printed from thread pools
+//      std::cout << "WARNING: "
+//                << "Calling ray.get or ray.wait in a separate thread "
+//                << "may lead to deadlock if the main thread blocks on "
+//                << "this thread and there are not enough resources to "
+//                << "execute more tasks." << std::endl;
       multithreading_warning_printed = true;
     }
   }
