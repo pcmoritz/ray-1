@@ -1,6 +1,7 @@
 #ifndef RAY_CORE_WORKER_DIRECT_ACTOR_TRANSPORT_H
 #define RAY_CORE_WORKER_DIRECT_ACTOR_TRANSPORT_H
 
+#include <boost/asio/thread_pool.hpp>
 #include <boost/thread.hpp>
 #include <list>
 #include <set>
@@ -38,6 +39,8 @@ class CoreWorkerDirectActorTaskSubmitter {
   CoreWorkerDirectActorTaskSubmitter(
       boost::asio::io_service &io_service,
       std::unique_ptr<CoreWorkerStoreProvider> store_provider);
+
+  ~CoreWorkerDirectActorTaskSubmitter();
 
   /// Submit a task to an actor for execution.
   ///
@@ -120,6 +123,8 @@ class CoreWorkerDirectActorTaskSubmitter {
 
   /// The store provider.
   std::unique_ptr<CoreWorkerStoreProvider> store_provider_;
+
+  boost::asio::thread_pool pool_;
 
   friend class CoreWorkerTest;
 };

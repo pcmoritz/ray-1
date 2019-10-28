@@ -19,7 +19,12 @@ CoreWorkerDirectActorTaskSubmitter::CoreWorkerDirectActorTaskSubmitter(
     std::unique_ptr<CoreWorkerStoreProvider> store_provider)
     : io_service_(io_service),
       client_call_manager_(io_service, /*num_threads=*/16),
-      store_provider_(std::move(store_provider)) {}
+      store_provider_(std::move(store_provider)),
+      pool_(4) {}
+
+CoreWorkerDirectActorTaskSubmitter::~CoreWorkerDirectActorTaskSubmitter() {
+  pool_.join();
+}
 
 Status CoreWorkerDirectActorTaskSubmitter::SubmitTask(
     const TaskSpecification &task_spec) {
@@ -57,7 +62,9 @@ Status CoreWorkerDirectActorTaskSubmitter::SubmitTask(
 
     // Submit request.
     auto &client = rpc_clients_[actor_id];
-    PushTask(*client, std::move(request), actor_id, task_id, num_returns);
+    boost::asio::post(pool_, [this, client, &request, actor_id, task_id, num_returns]() {
+      PushTask(*client, std::move(request), actor_id, task_id, num_returns);
+    });
   } else {
     // Actor is dead, treat the task as failure.
     RAY_CHECK(iter->second.state_ == ActorTableData::DEAD);
