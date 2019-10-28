@@ -476,6 +476,7 @@ class ActorHandle(object):
                 self._ray_class_name).get_function_descriptor_list()
             for method_name in self._ray_method_signatures.keys()
         }
+        self._cached_attrs = {}
 
     def _actor_method_call(self,
                            method_name,
@@ -534,6 +535,8 @@ class ActorHandle(object):
         return self._ray_actor_method_names
 
     def __getattribute__(self, attr):
+        if attr in self._cached_attrs:
+            return self._cached_attrs[attr]
         try:
             # Check whether this is an actor method.
             actor_method_names = object.__getattribute__(
@@ -545,11 +548,13 @@ class ActorHandle(object):
                 # this was causing cyclic references which were prevent
                 # object deallocation from behaving in a predictable
                 # manner.
-                return ActorMethod(
+                method = ActorMethod(
                     self,
                     attr,
                     self._ray_method_num_return_vals[attr],
                     decorator=self._ray_method_decorators.get(attr))
+                self._cached_attrs[attr] = method
+                return method
         except AttributeError:
             pass
 
