@@ -62,7 +62,9 @@ Status CoreWorkerDirectActorTaskSubmitter::SubmitTask(
 
     // Submit request.
     auto &client = rpc_clients_[actor_id];
-    boost::asio::post(pool_, [this, client, &request, actor_id, task_id, num_returns]() {
+    auto request2 = request.release();
+    boost::asio::post(pool_, [this, client, request2, actor_id, task_id, num_returns]() {
+      auto request = std::unique_ptr<rpc::PushTaskRequest>(request2);
       PushTask(*client, std::move(request), actor_id, task_id, num_returns);
     });
   } else {
