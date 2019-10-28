@@ -235,9 +235,8 @@ class CoreWorker {
   /// \return Status error if the task is invalid or if the task submission
   /// failed. Tasks can be invalid for direct actor calls because not all tasks
   /// are currently supported.
-  Status SubmitActorTask(const ActorID &actor_id, const RayFunction &function,
-                         const std::vector<TaskArg> &args,
-                         const TaskOptions &task_options,
+  Status SubmitActorTask(const ActorID actor_id, const RayFunction function,
+                         const std::vector<TaskArg> args, const TaskOptions &task_options,
                          std::vector<ObjectID> *return_ids);
 
   /// Add an actor handle from a serialized string.

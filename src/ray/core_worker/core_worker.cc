@@ -28,12 +28,14 @@ void BuildCommonTaskSpec(
     }
   }
 
-  // Compute return IDs.
-  return_ids->resize(num_returns);
-  for (size_t i = 0; i < num_returns; i++) {
-    (*return_ids)[i] =
-        ObjectID::ForTaskReturn(task_id, i + 1,
-                                /*transport_type=*/static_cast<int>(transport_type));
+  // Compute return IDs if needed.
+  if (return_ids != nullptr) {
+    return_ids->resize(num_returns);
+    for (size_t i = 0; i < num_returns; i++) {
+      (*return_ids)[i] =
+          ObjectID::ForTaskReturn(task_id, i + 1,
+                                  /*transport_type=*/static_cast<int>(transport_type));
+    }
   }
 }
 
@@ -484,8 +486,8 @@ Status CoreWorker::CreateActor(const RayFunction &function,
   return Status::OK();
 }
 
-Status CoreWorker::SubmitActorTask(const ActorID &actor_id, const RayFunction &function,
-                                   const std::vector<TaskArg> &args,
+Status CoreWorker::SubmitActorTask(const ActorID actor_id, const RayFunction function,
+                                   const std::vector<TaskArg> args,
                                    const TaskOptions &task_options,
                                    std::vector<ObjectID> *return_ids) {
   ActorHandle *actor_handle = nullptr;
@@ -499,26 +501,46 @@ Status CoreWorker::SubmitActorTask(const ActorID &actor_id, const RayFunction &f
       is_direct_call ? TaskTransportType::DIRECT_ACTOR : TaskTransportType::RAYLET;
 
   // Build common task spec.
-  TaskSpecBuilder builder;
   const int next_task_index = worker_context_.GetNextTaskIndex();
   const TaskID actor_task_id = TaskID::ForActorTask(
       worker_context_.GetCurrentJobID(), worker_context_.GetCurrentTaskID(),
       next_task_index, actor_handle->GetActorID());
-  BuildCommonTaskSpec(builder, actor_handle->CreationJobID(), actor_task_id,
-                      worker_context_.GetCurrentTaskID(), next_task_index, GetCallerId(),
-                      function, args, num_returns, task_options.resources, {},
-                      transport_type, return_ids);
-
-  const ObjectID new_cursor = return_ids->back();
-  actor_handle->SetActorTaskSpec(builder, transport_type, new_cursor);
-  // Remove cursor from return ids.
-  return_ids->pop_back();
 
   // Submit task.
   Status status;
   if (is_direct_call) {
-    status = direct_actor_submitter_->SubmitTask(builder.Build());
+    return_ids->resize(num_returns);
+    for (int i = 0; i < num_returns; i++) {
+      (*return_ids)[i] =
+          ObjectID::ForTaskReturn(actor_task_id, i + 1,
+                                  /*transport_type=*/static_cast<int>(transport_type));
+    }
+    const ObjectID new_cursor = return_ids->back();
+    return_ids->pop_back();
+    status = direct_actor_submitter_->SubmitTask(
+        actor_id, actor_task_id, num_returns,
+        [this, actor_id, actor_task_id, next_task_index, actor_handle, function, args,
+         num_returns, new_cursor]() {
+          TaskSpecBuilder builder;
+          BuildCommonTaskSpec(builder, actor_handle->CreationJobID(), actor_task_id,
+                              worker_context_.GetCurrentTaskID(), next_task_index,
+                              GetCallerId(), function, args, num_returns, {}, {},
+                              TaskTransportType::DIRECT_ACTOR, nullptr);
+          actor_handle->SetActorTaskSpec(builder, TaskTransportType::DIRECT_ACTOR,
+                                         new_cursor);
+          return builder.Build();
+        });
   } else {
+    TaskSpecBuilder builder;
+    BuildCommonTaskSpec(builder, actor_handle->CreationJobID(), actor_task_id,
+                        worker_context_.GetCurrentTaskID(), next_task_index,
+                        GetCallerId(), function, args, num_returns,
+                        task_options.resources, {}, transport_type, return_ids);
+
+    const ObjectID new_cursor = return_ids->back();
+    actor_handle->SetActorTaskSpec(builder, transport_type, new_cursor);
+    // Remove cursor from return ids.
+    return_ids->pop_back();
     status = raylet_client_->SubmitTask(builder.Build());
   }
   return status;

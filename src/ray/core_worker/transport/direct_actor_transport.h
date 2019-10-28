@@ -19,32 +19,33 @@
 
 namespace ray {
 
-  struct thread_pool {
-    typedef std::unique_ptr<boost::asio::io_service::work> asio_worker;
+struct thread_pool {
+  typedef std::unique_ptr<boost::asio::io_service::work> asio_worker;
 
-    thread_pool(int threads) :service(), service_worker(new asio_worker::element_type(service)) {
-      for (int i = 0; i < threads; ++i) {
-        auto worker = [this] { return service.run(); };
-        grp.add_thread(new boost::thread(worker));
-      }
+  thread_pool(int threads)
+      : service(), service_worker(new asio_worker::element_type(service)) {
+    for (int i = 0; i < threads; ++i) {
+      auto worker = [this] { return service.run(); };
+      grp.add_thread(new boost::thread(worker));
     }
+  }
 
-    template<class F>
-    void post(F f) {
-      service.post(f);
-    }
+  template <class F>
+  void post(F f) {
+    service.post(f);
+  }
 
-    ~thread_pool() {
-      service_worker.reset();
-      grp.join_all();
-      service.stop();
-    }
+  ~thread_pool() {
+    service_worker.reset();
+    grp.join_all();
+    service.stop();
+  }
 
-  private:
-    boost::asio::io_service service;
-    asio_worker service_worker;
-    boost::thread_group grp;
-  };
+ private:
+  boost::asio::io_service service;
+  asio_worker service_worker;
+  boost::thread_group grp;
+};
 
 /// The max time to wait for out-of-order tasks.
 const int kMaxReorderWaitSeconds = 30;
@@ -77,7 +78,8 @@ class CoreWorkerDirectActorTaskSubmitter {
   ///
   /// \param[in] task The task spec to submit.
   /// \return Status::Invalid if the task is not yet supported.
-  Status SubmitTask(const TaskSpecification &task_spec);
+  Status SubmitTask(const ActorID &actor_id, const TaskID &task_id, int num_returns,
+                    std::function<TaskSpecification()> task_producer);
 
   /// Handle an update about an actor.
   ///
@@ -147,7 +149,7 @@ class CoreWorkerDirectActorTaskSubmitter {
       GUARDED_BY(mutex_);
 
   /// Map from actor id to the actor's pending requests.
-  std::unordered_map<ActorID, std::list<std::unique_ptr<rpc::PushTaskRequest>>>
+  std::unordered_map<ActorID, std::list<std::function<TaskSpecification()>>>
       pending_requests_ GUARDED_BY(mutex_);
 
   /// Map from actor id to the tasks that are waiting for reply.

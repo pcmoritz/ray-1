@@ -90,7 +90,8 @@ class DirectActorClient : public std::enable_shared_from_this<DirectActorClient>
             }
             SendRequests();
             callback(status, reply);
-          }, client_id_);
+          },
+          client_id_);
     }
 
     if (!send_queue_.empty()) {

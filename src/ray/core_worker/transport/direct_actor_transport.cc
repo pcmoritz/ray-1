@@ -27,18 +27,8 @@ CoreWorkerDirectActorTaskSubmitter::~CoreWorkerDirectActorTaskSubmitter() {
 }
 
 Status CoreWorkerDirectActorTaskSubmitter::SubmitTask(
-    const TaskSpecification &task_spec) {
-  RAY_LOG(DEBUG) << "Submitting task " << task_spec.TaskId();
-
-  RAY_CHECK(task_spec.IsActorTask());
-  const auto &actor_id = task_spec.ActorId();
-
-  const auto task_id = task_spec.TaskId();
-  const auto num_returns = task_spec.NumReturns();
-
-  auto request = std::unique_ptr<rpc::PushTaskRequest>(new rpc::PushTaskRequest);
-  request->mutable_task_spec()->Swap(&task_spec.GetMutableMessage());
-
+    const ActorID &actor_id, const TaskID &task_id, int num_returns,
+    std::function<TaskSpecification()> task_producer) {
   absl::MutexLock lock(&mutex_);
 
   auto iter = actor_states_.find(actor_id);
@@ -50,7 +40,7 @@ Status CoreWorkerDirectActorTaskSubmitter::SubmitTask(
     // actor handle (e.g. from unpickling), in that case it might be desirable
     // to have a timeout to mark it as invalid if it doesn't show up in the
     // specified time.
-    pending_requests_[actor_id].emplace_back(std::move(request));
+    pending_requests_[actor_id].push_back(task_producer);
     RAY_LOG(DEBUG) << "Actor " << actor_id << " is not yet created.";
   } else if (iter->second.state_ == ActorTableData::ALIVE) {
     // Actor is alive, submit the request.
@@ -62,9 +52,11 @@ Status CoreWorkerDirectActorTaskSubmitter::SubmitTask(
 
     // Submit request.
     auto &client = rpc_clients_[actor_id];
-    auto request2 = request.release();
-    pool_.post([this, client, request2, actor_id, task_id, num_returns]() {
-      auto request = std::unique_ptr<rpc::PushTaskRequest>(request2);
+    pool_.post([this, client, task_producer, actor_id, task_id]() {
+      auto task_spec = task_producer();
+      auto request = std::unique_ptr<rpc::PushTaskRequest>(new rpc::PushTaskRequest);
+      auto num_returns = task_spec.NumReturns();
+      request->mutable_task_spec()->Swap(&task_spec.GetMutableMessage());
       PushTask(*client, std::move(request), actor_id, task_id, num_returns);
     });
   } else {
@@ -112,10 +104,12 @@ void CoreWorkerDirectActorTaskSubmitter::HandleActorUpdate(
     // If there are pending requests, treat the pending tasks as failed.
     auto pending_it = pending_requests_.find(actor_id);
     if (pending_it != pending_requests_.end()) {
-      for (const auto &request : pending_it->second) {
-        TreatTaskAsFailed(TaskID::FromBinary(request->task_spec().task_id()),
-                          request->task_spec().num_returns(), rpc::ErrorType::ACTOR_DIED);
-      }
+      // TODO(ekl)
+      //      for (const auto &request : pending_it->second) {
+      //        TreatTaskAsFailed(TaskID::FromBinary(request->task_spec().task_id()),
+      //                          request->task_spec().num_returns(),
+      //                          rpc::ErrorType::ACTOR_DIED);
+      //      }
       pending_requests_.erase(pending_it);
     }
   }
@@ -131,12 +125,13 @@ void CoreWorkerDirectActorTaskSubmitter::ConnectAndSendPendingTasks(
   auto &client = rpc_clients_[actor_id];
   auto &requests = pending_requests_[actor_id];
   while (!requests.empty()) {
-    auto request = std::move(requests.front());
-    auto num_returns = request->task_spec().num_returns();
-    auto task_id = TaskID::FromBinary(request->task_spec().task_id());
-    auto request2 = request.release();
-    pool_.post([this, client, request2, actor_id, task_id, num_returns]() {
-      auto request = std::unique_ptr<rpc::PushTaskRequest>(request2);
+    auto task_producer = requests.front();
+    pool_.post([this, client, actor_id, task_producer]() {
+      auto task_spec = task_producer();
+      auto task_id = task_spec.TaskId();
+      auto request = std::unique_ptr<rpc::PushTaskRequest>(new rpc::PushTaskRequest);
+      auto num_returns = task_spec.NumReturns();
+      request->mutable_task_spec()->Swap(&task_spec.GetMutableMessage());
       PushTask(*client, std::move(request), actor_id, task_id, num_returns);
     });
     requests.pop_front();
