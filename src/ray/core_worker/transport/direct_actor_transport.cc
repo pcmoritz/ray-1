@@ -39,7 +39,7 @@ Status CoreWorkerDirectActorTaskSubmitter::SubmitTask(
   auto request = std::unique_ptr<rpc::PushTaskRequest>(new rpc::PushTaskRequest);
   request->mutable_task_spec()->Swap(&task_spec.GetMutableMessage());
 
-  std::unique_lock<std::mutex> guard(mutex_);
+  absl::MutexLock lock(&mutex_);
 
   auto iter = actor_states_.find(actor_id);
   if (iter == actor_states_.end() ||
@@ -80,7 +80,7 @@ Status CoreWorkerDirectActorTaskSubmitter::SubmitTask(
 
 void CoreWorkerDirectActorTaskSubmitter::HandleActorUpdate(
     const ActorID &actor_id, const ActorTableData &actor_data) {
-  std::unique_lock<std::mutex> guard(mutex_);
+  absl::MutexLock lock(&mutex_);
   actor_states_.erase(actor_id);
   actor_states_.emplace(
       actor_id,
@@ -134,7 +134,11 @@ void CoreWorkerDirectActorTaskSubmitter::ConnectAndSendPendingTasks(
     auto request = std::move(requests.front());
     auto num_returns = request->task_spec().num_returns();
     auto task_id = TaskID::FromBinary(request->task_spec().task_id());
-    PushTask(*client, std::move(request), actor_id, task_id, num_returns);
+    auto request2 = request.release();
+    boost::asio::post(pool_, [this, client, request2, actor_id, task_id, num_returns]() {
+      auto request = std::unique_ptr<rpc::PushTaskRequest>(request2);
+      PushTask(*client, std::move(request), actor_id, task_id, num_returns);
+    });
     requests.pop_front();
   }
 }
@@ -143,13 +147,16 @@ void CoreWorkerDirectActorTaskSubmitter::PushTask(
     rpc::DirectActorClient &client, std::unique_ptr<rpc::PushTaskRequest> request,
     const ActorID &actor_id, const TaskID &task_id, int num_returns) {
   RAY_LOG(DEBUG) << "Pushing task " << task_id << " to actor " << actor_id;
-  waiting_reply_tasks_[actor_id].insert(std::make_pair(task_id, num_returns));
+  {
+    absl::MutexLock lock(&mutex_);
+    waiting_reply_tasks_[actor_id].insert(std::make_pair(task_id, num_returns));
+  }
 
   auto status = client.PushTask(
       std::move(request), [this, actor_id, task_id, num_returns](
                               Status status, const rpc::PushTaskReply &reply) {
         {
-          std::unique_lock<std::mutex> guard(mutex_);
+          absl::MutexLock lock(&mutex_);
           waiting_reply_tasks_[actor_id].erase(task_id);
         }
         if (!status.ok()) {
@@ -201,7 +208,7 @@ void CoreWorkerDirectActorTaskSubmitter::TreatTaskAsFailed(
 }
 
 bool CoreWorkerDirectActorTaskSubmitter::IsActorAlive(const ActorID &actor_id) const {
-  std::unique_lock<std::mutex> guard(mutex_);
+  absl::MutexLock lock(&mutex_);
 
   auto iter = actor_states_.find(actor_id);
   return (iter != actor_states_.end() && iter->second.state_ == ActorTableData::ALIVE);

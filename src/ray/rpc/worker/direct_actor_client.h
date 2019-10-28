@@ -8,6 +8,7 @@
 
 #include <grpcpp/grpcpp.h>
 #include "absl/base/thread_annotations.h"
+#include "absl/synchronization/mutex.h"
 
 #include "ray/common/status.h"
 #include "ray/rpc/client_call.h"
@@ -43,7 +44,7 @@ class DirectActorClient : public std::enable_shared_from_this<DirectActorClient>
                        const ClientCallback<PushTaskReply> &callback) {
     request->set_sequence_number(request->task_spec().actor_task_spec().actor_counter());
     {
-      std::lock_guard<std::mutex> lock(mutex_);
+      absl::MutexLock lock(&mutex_);
       if (request->task_spec().caller_id() != cur_caller_id_) {
         // We are running a new task, reset the seq no counter.
         max_finished_seq_no_ = -1;
@@ -61,7 +62,7 @@ class DirectActorClient : public std::enable_shared_from_this<DirectActorClient>
   /// sent at once. This prevents the server scheduling queue from being overwhelmed.
   /// See direct_actor.proto for a description of the ordering protocol.
   void SendRequests() {
-    std::lock_guard<std::mutex> lock(mutex_);
+    absl::MutexLock lock(&mutex_);
     auto this_ptr = this->shared_from_this();
 
     while (!send_queue_.empty() && rpc_bytes_in_flight_ < kMaxBytesInFlight) {
@@ -80,7 +81,7 @@ class DirectActorClient : public std::enable_shared_from_this<DirectActorClient>
           [this, this_ptr, seq_no, task_size, callback](Status status,
                                                         const rpc::PushTaskReply &reply) {
             {
-              std::lock_guard<std::mutex> lock(mutex_);
+              absl::MutexLock lock(&mutex_);
               if (seq_no > max_finished_seq_no_) {
                 max_finished_seq_no_ = seq_no;
               }
@@ -117,7 +118,7 @@ class DirectActorClient : public std::enable_shared_from_this<DirectActorClient>
   };
 
   /// Protects against unsafe concurrent access from the callback thread.
-  std::mutex mutex_;
+  absl::Mutex mutex_;
 
   /// The gRPC-generated stub.
   std::unique_ptr<DirectActorService::Stub> stub_;

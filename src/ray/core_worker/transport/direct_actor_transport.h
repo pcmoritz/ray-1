@@ -7,6 +7,8 @@
 #include <set>
 #include <utility>
 
+#include "absl/base/thread_annotations.h"
+#include "absl/synchronization/mutex.h"
 #include "ray/common/id.h"
 #include "ray/core_worker/object_interface.h"
 #include "ray/gcs/redis_gcs_client.h"
@@ -67,7 +69,7 @@ class CoreWorkerDirectActorTaskSubmitter {
   /// \return Void.
   void PushTask(rpc::DirectActorClient &client,
                 std::unique_ptr<rpc::PushTaskRequest> request, const ActorID &actor_id,
-                const TaskID &task_id, int num_returns);
+                const TaskID &task_id, int num_returns) LOCKS_EXCLUDED(mutex_);
 
   /// Treat a task as failed.
   ///
@@ -102,24 +104,26 @@ class CoreWorkerDirectActorTaskSubmitter {
   rpc::ClientCallManager client_call_manager_;
 
   /// Mutex to proect the various maps below.
-  mutable std::mutex mutex_;
+  mutable absl::Mutex mutex_;
 
   /// Map from actor id to actor state. This only includes actors that we send tasks to.
-  std::unordered_map<ActorID, ActorStateData> actor_states_;
+  std::unordered_map<ActorID, ActorStateData> actor_states_ GUARDED_BY(mutex_);
 
   /// Map from actor id to rpc client. This only includes actors that we send tasks to.
   /// We use shared_ptr to enable shared_from_this for pending client callbacks.
   ///
   /// TODO(zhijunfu): this will be moved into `actor_states_` later when we can
   /// subscribe updates for a specific actor.
-  std::unordered_map<ActorID, std::shared_ptr<rpc::DirectActorClient>> rpc_clients_;
+  std::unordered_map<ActorID, std::shared_ptr<rpc::DirectActorClient>> rpc_clients_
+      GUARDED_BY(mutex_);
 
   /// Map from actor id to the actor's pending requests.
   std::unordered_map<ActorID, std::list<std::unique_ptr<rpc::PushTaskRequest>>>
-      pending_requests_;
+      pending_requests_ GUARDED_BY(mutex_);
 
   /// Map from actor id to the tasks that are waiting for reply.
   std::unordered_map<ActorID, std::unordered_map<TaskID, int>> waiting_reply_tasks_;
+  GUARDED_BY(mutex_);
 
   /// The store provider.
   std::unique_ptr<CoreWorkerStoreProvider> store_provider_;
