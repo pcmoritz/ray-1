@@ -90,7 +90,7 @@ class DirectActorClient : public std::enable_shared_from_this<DirectActorClient>
             }
             SendRequests();
             callback(status, reply);
-          });
+          }, client_id_);
     }
 
     if (!send_queue_.empty()) {
@@ -107,14 +107,12 @@ class DirectActorClient : public std::enable_shared_from_this<DirectActorClient>
   DirectActorClient(const std::string &address, const int port,
                     ClientCallManager &client_call_manager)
       : client_call_manager_(client_call_manager) {
-    grpc::ResourceQuota quota;
-    quota.SetMaxThreads(16);
     grpc::ChannelArguments argument;
-    argument.SetResourceQuota(quota);
     std::shared_ptr<grpc::Channel> channel =
         grpc::CreateCustomChannel(address + ":" + std::to_string(port),
                                   grpc::InsecureChannelCredentials(), argument);
     stub_ = DirectActorService::NewStub(channel);
+    client_id_ = rand();
   };
 
   /// Protects against unsafe concurrent access from the callback thread.
@@ -139,6 +137,9 @@ class DirectActorClient : public std::enable_shared_from_this<DirectActorClient>
   /// The task id we are currently sending requests for. When this changes,
   /// the max finished seq no counter is reset.
   std::string cur_caller_id_;
+
+  /// Unique client id.
+  int64_t client_id_;
 };
 
 }  // namespace rpc

@@ -168,13 +168,14 @@ class ClientCallManager {
   std::shared_ptr<ClientCall> CreateCall(
       typename GrpcService::Stub &stub,
       const PrepareAsyncFunction<GrpcService, Request, Reply> prepare_async_function,
-      const Request &request, const ClientCallback<Reply> &callback) {
+      const Request &request, const ClientCallback<Reply> &callback,
+      const int64_t client_id = 0) {
     auto call = std::make_shared<ClientCallImpl<Reply>>(callback);
     grpc::CompletionQueue *queue = nullptr;
     {
       absl::ReaderMutexLock lock(&mu_);
-      // TODO(pcm) don't use rand for performance
-      queue = cqs_[rand() % num_threads_].get();
+      // affinized client to queue assignment
+      queue = cqs_[client_id % num_threads_].get();
     }
     // Send request.
     call->response_reader_ =
