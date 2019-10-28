@@ -18,9 +18,9 @@ CoreWorkerDirectActorTaskSubmitter::CoreWorkerDirectActorTaskSubmitter(
     boost::asio::io_service &io_service,
     std::unique_ptr<CoreWorkerMemoryStoreProvider> store_provider)
     : io_service_(io_service),
-      client_call_manager_(io_service, /*num_threads=*/8),
+      client_call_manager_(io_service, /*num_threads=*/4),
       store_provider_(std::move(store_provider)),
-      pool_(8) {}
+      pool_(4) {}
 
 CoreWorkerDirectActorTaskSubmitter::~CoreWorkerDirectActorTaskSubmitter() {
   // pool_.join();

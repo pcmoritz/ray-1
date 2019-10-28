@@ -503,11 +503,15 @@ class ActorHandle(object):
 
         worker.check_connected()
 
-        function_signature = self._ray_method_signatures[method_name]
         args = args or []
         kwargs = kwargs or {}
 
-        list_args = signature.flatten_args(function_signature, args, kwargs)
+        if not args and not kwargs:
+            list_args = []
+        else:
+            function_signature = self._ray_method_signatures[method_name]
+            list_args = signature.flatten_args(
+                function_signature, args, kwargs)
         if worker.mode == ray.LOCAL_MODE:
             function = getattr(worker.actors[self._actor_id], method_name)
             object_ids = worker.local_mode_manager.execute(

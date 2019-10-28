@@ -223,6 +223,7 @@ void CoreWorker::SetCurrentTaskId(const TaskID &task_id) {
   }
 }
 
+// TODO(ekl) the post is fairly expensive, optimize?
 void CoreWorker::AddActiveObjectID(const ObjectID &object_id) {
   io_service_.post([this, object_id]() -> void {
     active_object_ids_.insert(object_id);
@@ -230,6 +231,7 @@ void CoreWorker::AddActiveObjectID(const ObjectID &object_id) {
   });
 }
 
+// TODO(ekl) the post is fairly expensive, optimize?
 void CoreWorker::RemoveActiveObjectID(const ObjectID &object_id) {
   io_service_.post([this, object_id]() -> void {
     if (active_object_ids_.erase(object_id)) {
