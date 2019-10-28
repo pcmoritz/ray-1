@@ -23,7 +23,7 @@ CoreWorkerDirectActorTaskSubmitter::CoreWorkerDirectActorTaskSubmitter(
       pool_(16) {}
 
 CoreWorkerDirectActorTaskSubmitter::~CoreWorkerDirectActorTaskSubmitter() {
-  pool_.join();
+  // pool_.join();
 }
 
 Status CoreWorkerDirectActorTaskSubmitter::SubmitTask(
@@ -63,7 +63,7 @@ Status CoreWorkerDirectActorTaskSubmitter::SubmitTask(
     // Submit request.
     auto &client = rpc_clients_[actor_id];
     auto request2 = request.release();
-    boost::asio::post(pool_, [this, client, request2, actor_id, task_id, num_returns]() {
+    pool_.post([this, client, request2, actor_id, task_id, num_returns]() {
       auto request = std::unique_ptr<rpc::PushTaskRequest>(request2);
       PushTask(*client, std::move(request), actor_id, task_id, num_returns);
     });
@@ -135,7 +135,7 @@ void CoreWorkerDirectActorTaskSubmitter::ConnectAndSendPendingTasks(
     auto num_returns = request->task_spec().num_returns();
     auto task_id = TaskID::FromBinary(request->task_spec().task_id());
     auto request2 = request.release();
-    boost::asio::post(pool_, [this, client, request2, actor_id, task_id, num_returns]() {
+    pool_.post([this, client, request2, actor_id, task_id, num_returns]() {
       auto request = std::unique_ptr<rpc::PushTaskRequest>(request2);
       PushTask(*client, std::move(request), actor_id, task_id, num_returns);
     });
