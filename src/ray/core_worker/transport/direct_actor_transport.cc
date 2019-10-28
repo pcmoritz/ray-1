@@ -20,7 +20,7 @@ CoreWorkerDirectActorTaskSubmitter::CoreWorkerDirectActorTaskSubmitter(
     : io_service_(io_service),
       client_call_manager_(io_service, /*num_threads=*/16),
       store_provider_(std::move(store_provider)),
-      pool_(4) {}
+      pool_(16) {}
 
 CoreWorkerDirectActorTaskSubmitter::~CoreWorkerDirectActorTaskSubmitter() {
   pool_.join();
