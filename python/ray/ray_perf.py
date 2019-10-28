@@ -13,10 +13,10 @@ filter_pattern = os.environ.get("TESTS_TO_RUN", "")
 @ray.remote
 class Actor(object):
     def small_value(self):
-        return 0
+        return b"ok"
 
     def small_value_arg(self, x):
-        return 0
+        return b"ok"
 
     def small_value_batch(self, n):
         ray.get([small_value.remote() for _ in range(n)])
@@ -45,7 +45,7 @@ class Client(object):
 
 @ray.remote
 def small_value():
-    return 0
+    return b""
 
 
 @ray.remote
