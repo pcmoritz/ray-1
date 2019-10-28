@@ -460,6 +460,7 @@ class ActorHandle(object):
                  actor_method_cpus,
                  session_and_job,
                  original_handle=False):
+        self._cached_attrs = {}
         self._ray_actor_id = actor_id
         self._ray_module_name = module_name
         self._ray_original_handle = original_handle
@@ -476,7 +477,6 @@ class ActorHandle(object):
                 self._ray_class_name).get_function_descriptor_list()
             for method_name in self._ray_method_signatures.keys()
         }
-        self._cached_attrs = {}
 
     def _actor_method_call(self,
                            method_name,
@@ -535,8 +535,10 @@ class ActorHandle(object):
         return self._ray_actor_method_names
 
     def __getattribute__(self, attr):
-        if attr in self._cached_attrs:
-            return self._cached_attrs[attr]
+        cache = object.__getattribute__(self, "_cached_attrs")
+        result = cache.get(attr)
+        if result:
+            return result
         try:
             # Check whether this is an actor method.
             actor_method_names = object.__getattribute__(
@@ -553,7 +555,7 @@ class ActorHandle(object):
                     attr,
                     self._ray_method_num_return_vals[attr],
                     decorator=self._ray_method_decorators.get(attr))
-                self._cached_attrs[attr] = method
+                cache[attr] = method
                 return method
         except AttributeError:
             pass
