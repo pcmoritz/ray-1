@@ -52,13 +52,14 @@ Status CoreWorkerDirectActorTaskSubmitter::SubmitTask(
 
     // Submit request.
     auto &client = rpc_clients_[actor_id];
-    pool_.post([this, client, task_producer, actor_id, task_id]() {
+    to_submit_.push_back([this, client, task_producer, actor_id, task_id]() {
       auto task_spec = task_producer();
       auto request = std::unique_ptr<rpc::PushTaskRequest>(new rpc::PushTaskRequest);
       auto num_returns = task_spec.NumReturns();
       request->mutable_task_spec()->Swap(&task_spec.GetMutableMessage());
       PushTask(*client, std::move(request), actor_id, task_id, num_returns);
     });
+    TriggerBatchPost();
   } else {
     // Actor is dead, treat the task as failure.
     RAY_CHECK(iter->second.state_ == ActorTableData::DEAD);
@@ -68,6 +69,27 @@ Status CoreWorkerDirectActorTaskSubmitter::SubmitTask(
   // If the task submission subsequently fails, then the client will receive
   // the error in a callback.
   return Status::OK();
+}
+
+void CoreWorkerDirectActorTaskSubmitter::TriggerBatchPost() {
+  if (post_active_) {
+    return;
+  }
+  post_active_ = true;
+  pool_.post([this]() {
+    std::vector<std::function<void()>> drained;
+    {
+      absl::MutexLock lock(&mutex_);
+      while (!to_submit_.empty()) {
+        drained.push_back(to_submit_.front());
+        to_submit_.pop_front();
+      }
+      post_active_ = false;
+    }
+    for (auto& fn : drained) {
+      fn();
+    }
+  });
 }
 
 void CoreWorkerDirectActorTaskSubmitter::HandleActorUpdate(
@@ -126,7 +148,7 @@ void CoreWorkerDirectActorTaskSubmitter::ConnectAndSendPendingTasks(
   auto &requests = pending_requests_[actor_id];
   while (!requests.empty()) {
     auto task_producer = requests.front();
-    pool_.post([this, client, actor_id, task_producer]() {
+    to_submit_.push_back([this, client, actor_id, task_producer]() {
       auto task_spec = task_producer();
       auto task_id = task_spec.TaskId();
       auto request = std::unique_ptr<rpc::PushTaskRequest>(new rpc::PushTaskRequest);
@@ -136,6 +158,7 @@ void CoreWorkerDirectActorTaskSubmitter::ConnectAndSendPendingTasks(
     });
     requests.pop_front();
   }
+  TriggerBatchPost();
 }
 
 void CoreWorkerDirectActorTaskSubmitter::PushTask(

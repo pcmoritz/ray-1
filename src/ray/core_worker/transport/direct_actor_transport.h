@@ -128,6 +128,8 @@ class CoreWorkerDirectActorTaskSubmitter {
   /// \return Whether this actor is alive.
   bool IsActorAlive(const ActorID &actor_id) const;
 
+  void TriggerBatchPost();
+
   /// The IO event loop.
   boost::asio::io_service &io_service_;
 
@@ -159,7 +161,12 @@ class CoreWorkerDirectActorTaskSubmitter {
   /// The store provider.
   std::unique_ptr<CoreWorkerMemoryStoreProvider> store_provider_;
 
+  /// Task submission pool.
   thread_pool pool_;
+
+  /// Functions to post to the submission pool in batches.
+  std::list<std::function<void()>> to_submit_;
+  bool post_active_ = false;
 
   friend class CoreWorkerTest;
 };
