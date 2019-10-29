@@ -20,7 +20,7 @@ CoreWorkerDirectActorTaskSubmitter::CoreWorkerDirectActorTaskSubmitter(
     : io_service_(io_service),
       client_call_manager_(io_service, /*num_threads=*/8),
       store_provider_(std::move(store_provider)),
-      pool_(8) {}
+      pool_(8), work_combiner_(pool_.get_executor()) {}
 
 CoreWorkerDirectActorTaskSubmitter::~CoreWorkerDirectActorTaskSubmitter() {
   // pool_.join();
@@ -52,14 +52,13 @@ Status CoreWorkerDirectActorTaskSubmitter::SubmitTask(
 
     // Submit request.
     auto &client = rpc_clients_[actor_id];
-    to_submit_.push_back([this, client, task_producer, actor_id, task_id]() {
+    work_combiner_.post([this, client, task_producer, actor_id, task_id]() {
       auto task_spec = task_producer();
       auto request = std::unique_ptr<rpc::PushTaskRequest>(new rpc::PushTaskRequest);
       auto num_returns = task_spec.NumReturns();
       request->mutable_task_spec()->Swap(&task_spec.GetMutableMessage());
       PushTask(*client, std::move(request), actor_id, task_id, num_returns);
     });
-    TriggerBatchPost();
   } else {
     // Actor is dead, treat the task as failure.
     RAY_CHECK(iter->second.state_ == ActorTableData::DEAD);
@@ -69,35 +68,6 @@ Status CoreWorkerDirectActorTaskSubmitter::SubmitTask(
   // If the task submission subsequently fails, then the client will receive
   // the error in a callback.
   return Status::OK();
-}
-
-void CoreWorkerDirectActorTaskSubmitter::TriggerBatchPost() {
-  if (post_active_) {
-    return;
-  }
-  post_active_ = true;
-  pool_.post([this]() {
-    while (true) {
-      std::vector<std::function<void()>> drained;
-      {
-        absl::MutexLock lock(&mutex_);
-        while (!to_submit_.empty()) {
-          drained.push_back(to_submit_.front());
-          to_submit_.pop_front();
-        }
-        if (drained.empty()) {
-          post_active_ = false;
-          break;
-        }
-      }
-      pool_.post([this, drained]() {
-        for (auto& fn : drained) {
-          fn();
-        }
-      });
-      drained.clear();
-    }
-  });
 }
 
 void CoreWorkerDirectActorTaskSubmitter::HandleActorUpdate(
@@ -156,7 +126,7 @@ void CoreWorkerDirectActorTaskSubmitter::ConnectAndSendPendingTasks(
   auto &requests = pending_requests_[actor_id];
   while (!requests.empty()) {
     auto task_producer = requests.front();
-    to_submit_.push_back([this, client, actor_id, task_producer]() {
+    work_combiner_.post([this, client, actor_id, task_producer]() {
       auto task_spec = task_producer();
       auto task_id = task_spec.TaskId();
       auto request = std::unique_ptr<rpc::PushTaskRequest>(new rpc::PushTaskRequest);
@@ -166,7 +136,6 @@ void CoreWorkerDirectActorTaskSubmitter::ConnectAndSendPendingTasks(
     });
     requests.pop_front();
   }
-  TriggerBatchPost();
 }
 
 void CoreWorkerDirectActorTaskSubmitter::PushTask(
