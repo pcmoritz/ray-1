@@ -77,17 +77,25 @@ void CoreWorkerDirectActorTaskSubmitter::TriggerBatchPost() {
   }
   post_active_ = true;
   pool_.post([this]() {
-    std::vector<std::function<void()>> drained;
-    {
-      absl::MutexLock lock(&mutex_);
-      while (!to_submit_.empty()) {
-        drained.push_back(to_submit_.front());
-        to_submit_.pop_front();
+    while (true) {
+      std::vector<std::function<void()>> drained;
+      {
+        absl::MutexLock lock(&mutex_);
+        while (!to_submit_.empty()) {
+          drained.push_back(to_submit_.front());
+          to_submit_.pop_front();
+        }
+        if (drained.empty()) {
+          post_active_ = false;
+          break;
+        }
       }
-      post_active_ = false;
-    }
-    for (auto& fn : drained) {
-      fn();
+      pool_.post([this, drained]() {
+        for (auto& fn : drained) {
+          fn();
+        }
+      });
+      drained.clear();
     }
   });
 }
