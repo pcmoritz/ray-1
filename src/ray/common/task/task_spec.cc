@@ -34,10 +34,9 @@ void TaskSpecification::ComputeResources() {
 
   // Map the scheduling class descriptor to an integer for performance.
   auto sched_cls = std::make_pair(GetRequiredResources(), FunctionDescriptor());
-  absl::ReaderMutexLock lock(&mutex_);
+  absl::MutexLock lock(&mutex_);
   auto it = sched_cls_to_id_.find(sched_cls);
   if (it == sched_cls_to_id_.end()) {
-    absl::WriterMutexLock lock(&mutex_);
     sched_cls_id_ = ++next_sched_id_;
     // TODO(ekl) we might want to try cleaning up task types in these cases
     if (sched_cls_id_ > 100) {
