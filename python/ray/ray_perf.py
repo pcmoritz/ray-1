@@ -45,7 +45,7 @@ class Client(object):
 
 @ray.remote
 def small_value():
-    return b""
+    return b"ok"
 
 
 @ray.remote
