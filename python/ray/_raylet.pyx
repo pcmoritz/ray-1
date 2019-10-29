@@ -1006,7 +1006,8 @@ cdef class CoreWorker:
             c_vector[CObjectID] return_ids
 
         with self.profile_event(b"submit_task"):
-            prepare_resources(resources, &c_resources)
+# TODO(ekl) unnecessary for DAC?
+#            prepare_resources(resources, &c_resources)
             task_options = CTaskOptions(num_return_vals, c_resources)
             ray_function = CRayFunction(
                 LANGUAGE_PYTHON, string_vector_from_list(function_descriptor))
