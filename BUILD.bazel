@@ -242,6 +242,8 @@ cc_library(
         ":node_manager_fbs",
         ":ray_util",
         "@boost//:asio",
+        "@com_google_absl//absl/synchronization:synchronization",
+        "@com_google_absl//absl/base:core_headers",
         "@com_github_grpc_grpc//:grpc++",
         "@plasma//:plasma_client",
     ],
