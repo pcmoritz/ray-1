@@ -147,6 +147,8 @@ void CoreWorkerDirectActorTaskSubmitter::PushTask(
     waiting_reply_tasks_[actor_id].insert(std::make_pair(task_id, num_returns));
   }
 
+  // TODO(ekl) make sure pushtask sees sequentially increasing tasks even when
+  // submitted via the thread pool
   auto status = client.PushTask(
       std::move(request), [this, actor_id, task_id, num_returns](
                               Status status, const rpc::PushTaskReply &reply) {
