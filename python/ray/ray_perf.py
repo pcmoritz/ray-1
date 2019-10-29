@@ -10,7 +10,7 @@ import ray
 filter_pattern = os.environ.get("TESTS_TO_RUN", "")
 
 
-@ray.remote
+@ray.remote(num_cpus=0)
 class Actor(object):
     def small_value(self):
         return b"ok"
@@ -22,7 +22,7 @@ class Actor(object):
         ray.get([small_value.remote() for _ in range(n)])
 
 
-@ray.remote
+@ray.remote(num_cpus=0)
 class Client(object):
     def __init__(self, servers):
         if not isinstance(servers, list):
