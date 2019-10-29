@@ -16,7 +16,6 @@
 #include "ray/gcs/redis_gcs_client.h"
 #include "ray/rpc/worker/direct_actor_client.h"
 #include "ray/rpc/worker/direct_actor_server.h"
-#include "ray/util/work_combiner.h"
 
 namespace ray {
 
@@ -136,9 +135,6 @@ class CoreWorkerDirectActorTaskSubmitter {
 
   /// Task submission pool.
   boost::asio::thread_pool pool_;
-
-  /// Batcher for fast submissions to the pool above.
-  WorkCombiner work_combiner_;
 
   friend class CoreWorkerTest;
 };

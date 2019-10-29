@@ -20,8 +20,7 @@ CoreWorkerDirectActorTaskSubmitter::CoreWorkerDirectActorTaskSubmitter(
     : io_service_(io_service),
       client_call_manager_(io_service, /*num_threads=*/8),
       store_provider_(std::move(store_provider)),
-      pool_(8),
-      work_combiner_(pool_.get_executor(), 512) {}
+      pool_(8) {}
 
 CoreWorkerDirectActorTaskSubmitter::~CoreWorkerDirectActorTaskSubmitter() {
   // pool_.join();
@@ -53,7 +52,7 @@ Status CoreWorkerDirectActorTaskSubmitter::SubmitTask(
 
     // Submit request.
     auto &client = rpc_clients_[actor_id];
-    work_combiner_.post([this, client, task_producer, actor_id, task_id]() {
+    boost::asio::post(pool_, [this, client, task_producer, actor_id, task_id]() {
       auto task_spec = task_producer();
       auto request = std::unique_ptr<rpc::PushTaskRequest>(new rpc::PushTaskRequest);
       auto num_returns = task_spec.NumReturns();
@@ -127,7 +126,7 @@ void CoreWorkerDirectActorTaskSubmitter::ConnectAndSendPendingTasks(
   auto &requests = pending_requests_[actor_id];
   while (!requests.empty()) {
     auto task_producer = requests.front();
-    work_combiner_.post([this, client, actor_id, task_producer]() {
+    boost::asio::post(pool_, [this, client, actor_id, task_producer]() {
       auto task_spec = task_producer();
       auto task_id = task_spec.TaskId();
       auto request = std::unique_ptr<rpc::PushTaskRequest>(new rpc::PushTaskRequest);
