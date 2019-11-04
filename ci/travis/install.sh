@@ -24,5 +24,5 @@ else
   # Mac OS X test
   ./install-dependencies.sh
   ./setup.sh
-  ./build.sh
+  ./build.sh  # TODO(pcmoritz)
 fi
