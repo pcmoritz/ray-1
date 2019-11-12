@@ -133,29 +133,33 @@ def bazel_build(root_dir, build_ext=None):  # Keep this as a global function to 
     # version of Python to build pyarrow inside the build.sh script. Note
     # that certain flags will not be passed along such as --user or sudo.
     # TODO(rkn): Fix this.
-    pyarrow_url = 'https://s3-us-west-2.amazonaws.com/arrow-wheels/3a11193d9530fe8ec7fdb98057f853b708f6f6ae/index.html'
+    pyarrow_url = "https://s3-us-west-2.amazonaws.com/arrow-wheels/3a11193d9530fe8ec7fdb98057f853b708f6f6ae/index.html"
     subprocess.check_call([
-        sys.executable, '-m', 'pip', 'install', '-q', 'pyarrow==0.14.0.RAY',
-        '--find-links', pyarrow_url,
-        '--target', os.path.join(root_dir, 'python', 'ray', 'pyarrow_files')
+        sys.executable, "-m", "pip", "install", "-q", "pyarrow==0.14.0.RAY",
+        "--find-links", pyarrow_url,
+        "--target", os.path.join(root_dir, "python", "ray", "pyarrow_files")
     ])
     if (3, 6) <= sys.version_info[:2] <= (3, 7):
-        pickle5_backport_url = 'https://github.com/pitrou/pickle5-backport/archive/5186f9ca4ce55ae530027db196da51e08208a16b.zip'
-        pickle5_dir = os.path.join(root_dir, 'python', 'ray', 'pickle5_files')
+        pickle5_commit = "5186f9ca4ce55ae530027db196da51e08208a16b"
+        pickle5_backport_url = "https://github.com/pitrou/pickle5-backport/archive/" + pickle5_commit + ".zip"
+        pickle5_dir = os.path.join(root_dir, "python", "ray", "pickle5_files")
         work_dir = tempfile.mkdtemp()
         try:
-            zipfile.ZipFile(io.BytesIO(download(pickle5_backport_url)), 'r').extractall(work_dir)
-            subprocess.check_call([sys.executable, 'setup.py', 'bdist_wheel'], cwd=work_dir)
-            for wheel in glob.glob(os.path.join(work_dir, 'dist', '*.whl')):
-                zipfile.ZipFile(wheel, 'r').extractall(pickle5_dir)
+            zipfile.ZipFile(io.BytesIO(download(pickle5_backport_url)), "r").extractall(work_dir)
+            work_dir = os.path.join(work_dir, "pickle5-backport-" + pickle5_commit)
+            subprocess.check_call([sys.executable, "setup.py", "bdist_wheel"], cwd=work_dir)
+            for wheel in glob.glob(os.path.join(work_dir, "dist", "*.whl")):
+                zipfile.ZipFile(wheel, "r").extractall(pickle5_dir)
+        except Exception as e:
+            raise e
         finally:
             shutil.rmtree(work_dir)
-    bazel_env = dict(os.environ.copy(), **{'PYTHON%d_BIN_PATH' % sys.version_info[0]: sys.executable})
-    bazel_build_cmd = ['bazel', 'build', '--verbose_failures']
-    bazel_build_cmd.append('//:ray_pkg')
-    if os.getenv('RAY_INSTALL_JAVA') == '1':
+    bazel_env = dict(os.environ.copy(), **{"PYTHON%d_BIN_PATH" % sys.version_info[0]: sys.executable})
+    bazel_build_cmd = ["bazel", "build", "--verbose_failures"]
+    bazel_build_cmd.append("//:ray_pkg")
+    if os.getenv("RAY_INSTALL_JAVA") == "1":
         # Also build binaries for Java if the above env variable exists.
-        bazel_build_cmd.append('//java:all')
+        bazel_build_cmd.append("//java:all")
     subprocess.check_call(bazel_build_cmd, env=bazel_env)
 
 class build_ext(_build_ext.build_ext):
@@ -207,7 +211,7 @@ class build_ext(_build_ext.build_ext):
         source = filename
         destination = os.path.join(self.build_lib, filename)
         # Create the target directory if it doesn't already exist.
-        makedirs(os.path.dirname(destination), exist_ok=Trues)
+        makedirs(os.path.dirname(destination), exist_ok=True)
         if not os.path.exists(destination):
             print("Copying {} to {}.".format(source, destination))
             shutil.copy(source, destination)
