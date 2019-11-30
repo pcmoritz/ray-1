@@ -1,0 +1,49 @@
+name: ray-example-rl
+
+description: "Training reinforcement learning policies"
+tags: ["ray-example", "reinforcement-learning", "rllib"]
+
+cluster: .rayproject/cluster.yaml
+
+environment:
+  requirements: .rayproject/requirements.txt
+
+commands:
+  - name: train
+    command: rllib train -f tuned_examples/humanoid-ppo-gae.yaml
+    params:
+      - name: "workload"
+        help: "Name of the workload"
+        choices: ["atari", "cartpole", "halfcheetah", "hopper", "humanoid", "invertedpendulum", "pong", "swimmber", "walker2d"]
+      - name: "gamma"
+        help: "Discount factor of the MDP"
+        default: 0.995
+      - name: "lambda"
+        help: "Trade-off factor for GAE"
+        default: 0.95
+      - name: "clip_param"
+        help: "Clip parameter for PPO"
+        default: 0.2
+      - name: "kl_coeff"
+        help: "KL Divergence coefficient for PPO"
+        default: 1.0
+      - name: "num_sgd_iter"
+        help: "Number of SGD iterations for PPO"
+        default: 20
+      - name: "lr"
+        help: "SGD learning rate for PPO"
+        default: .0001
+      - name: "sgd_minibatch_size"
+        help: "SGD minibatch size for PPO"
+        default: 32768
+      - name: "horizon"
+        help: "Horizon of the MDP"
+        default: 5000
+      - name: "train_batch_size"
+        help: "Simulation batch size"
+        default: 320000
+
+output_files: [
+  # Save the logs from the latest run in snapshots.
+  "/tmp/ray/session_latest/logs"
+]
