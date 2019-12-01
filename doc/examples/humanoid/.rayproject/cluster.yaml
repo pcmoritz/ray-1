@@ -74,6 +74,9 @@ head_node:
     InstanceType: m5.large
     ImageId: ami-05931d11d2bf831c3 # Deep Learning AMI (Ubuntu) Version 24.3
 
+    SecurityGroupIds:
+      - sg-0e4f3e25580551bc2
+
     # You can provision additional disk space with a conf as follows
     BlockDeviceMappings:
         - DeviceName: /dev/sda1
@@ -89,6 +92,9 @@ head_node:
 worker_nodes:
     InstanceType: m5.large
     ImageId: ami-05931d11d2bf831c3 # Deep Learning AMI (Ubuntu) Version 24.3
+
+    SecurityGroupIds:
+      - sg-0e4f3e25580551bc2
 
     # Run workers on spot by default. Comment this out to use on-demand.
     InstanceMarketOptions:
