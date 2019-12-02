@@ -70,8 +70,8 @@ auth:
 # For more documentation on available fields, see:
 # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
 head_node:
-    # InstanceType: p3.16xlarge
-    InstanceType: m5.large
+    InstanceType: p3.16xlarge
+    # InstanceType: m5.large
     ImageId: ami-05931d11d2bf831c3 # Deep Learning AMI (Ubuntu) Version 24.3
 
     SecurityGroupIds:
