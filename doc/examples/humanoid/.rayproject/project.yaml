@@ -11,6 +11,14 @@ environment:
 commands:
   - name: train
     command: |
+      sudo apt install -y libosmesa6-dev libgl1-mesa-glx libglfw3
+      wget https://www.roboti.us/download/mujoco200_linux.zip
+      unzip mujoco200_linux.zip
+      mkdir -p ~/.mujoco
+      mv mujoco200_linux ~/.mujoco/mujoco200
+      cp mjkey.txt ~/.mujoco/mjkey.txt
+      pip install mujoco-py==2.0.2.8
+      export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.mujoco/mujoco200/bin
       rllib train -f humanoid-ppo-gae.yaml
     params:
       - name: "workload"
