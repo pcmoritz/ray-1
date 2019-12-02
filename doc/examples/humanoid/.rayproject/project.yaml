@@ -17,7 +17,7 @@ commands:
       mkdir -p ~/.mujoco
       mv mujoco200_linux ~/.mujoco/mujoco200
       cp mjkey.txt ~/.mujoco/mjkey.txt
-      pip install mujoco-py==2.0.2.8
+      source activate tensorflow_p36 && pip install mujoco-py==2.0.2.8
       export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.mujoco/mujoco200/bin
       rllib train -f humanoid-ppo-gae.yaml
     params:
