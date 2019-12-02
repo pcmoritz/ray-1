@@ -10,7 +10,9 @@ environment:
 
 commands:
   - name: train
-    command: rllib train -f tuned_examples/humanoid-ppo-gae.yaml
+    command: |
+      tensorboard --logdir ~/ray_results/ --port=6006 &
+      rllib train -f tuned_examples/humanoid-ppo-gae.yaml
     params:
       - name: "workload"
         help: "Name of the workload"
