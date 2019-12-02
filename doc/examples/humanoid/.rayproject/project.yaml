@@ -11,11 +11,11 @@ environment:
 commands:
   - name: train
     command: |
-      rllib train -f tuned_examples/humanoid-ppo-gae.yaml
+      rllib train -f humanoid-ppo-gae.yaml
     params:
       - name: "workload"
         help: "Name of the workload"
-        choices: ["atari", "cartpole", "halfcheetah", "hopper", "humanoid", "invertedpendulum", "pong", "swimmber", "walker2d"]
+        choices: ["atari", "cartpole", "halfcheetah", "hopper", "humanoid", "invertedpendulum", "pong", "swimmer", "walker2d"]
       - name: "gamma"
         help: "Discount factor of the MDP"
         default: 0.995
