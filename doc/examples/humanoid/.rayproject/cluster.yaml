@@ -72,7 +72,7 @@ auth:
 head_node:
     InstanceType: p3.16xlarge
     # InstanceType: m5.large
-    ImageId: ami-05931d11d2bf831c3 # Deep Learning AMI (Ubuntu) Version 24.3
+    ImageId: ami-0f758706ee6e8ad0b # Deep Learning AMI (Ubuntu) Version 24.3
 
     SecurityGroupIds:
       - sg-0e4f3e25580551bc2
@@ -91,7 +91,7 @@ head_node:
 # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
 worker_nodes:
     InstanceType: m5.large
-    ImageId: ami-05931d11d2bf831c3 # Deep Learning AMI (Ubuntu) Version 24.3
+    ImageId: ami-0f758706ee6e8ad0b # Deep Learning AMI (Ubuntu) Version 24.3
 
     SecurityGroupIds:
       - sg-0e4f3e25580551bc2
@@ -125,7 +125,7 @@ setup_commands:
     - echo 'export PATH="$HOME/anaconda3/envs/tensorflow_p36/bin:$PATH"' >> ~/.bashrc
     # - pip install -U https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray-0.8.0.dev6-cp27-cp27mu-manylinux1_x86_64.whl
     # - pip install -U https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray-0.8.0.dev6-cp35-cp35m-manylinux1_x86_64.whl
-    - pip install -U https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray-0.8.0.dev6-cp36-cp36m-manylinux1_x86_64.whl
+    # - pip install -U https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray-0.8.0.dev6-cp36-cp36m-manylinux1_x86_64.whl
     # Consider uncommenting these if you also want to run apt-get commands during setup
     # - sudo pkill -9 apt-get || true
     # - sudo pkill -9 dpkg || true
@@ -133,7 +133,8 @@ setup_commands:
 
 # Custom commands that will be run on the head node after common setup.
 head_setup_commands:
-    - pip install boto3==1.4.8  # 1.4.8 adds InstanceMarketOptions
+    # - pip install boto3==1.4.8  # 1.4.8 adds InstanceMarketOptions
+    []
 
 # Custom commands that will be run on worker nodes after common setup.
 worker_setup_commands: []

@@ -1,6 +1,7 @@
 humanoid-ppo-gae:
     env: Humanoid-v3
     run: PPO
+    checkpoint_freq: 10
     stop:
         episode_reward_mean: 6000
     config:
