@@ -309,6 +309,10 @@ class NodeStats(threading.Thread):
         p.subscribe(error_channel)
         logger.info("NodeStats: subscribed to {}".format(error_channel))
 
+        actor_channel = ray.gcs_utils.TablePubsub.Value("DIRECT_ACTOR_PUBSUB")
+        p.subscribe(actor_channel)
+        print("NodeStats: subscribed to {}".format(actor_channel))
+
         for x in p.listen():
             try:
                 with self._node_stats_lock:
@@ -334,6 +338,12 @@ class NodeStats(threading.Thread):
                                 "timestamp": error_data.timestamp,
                                 "type": error_data.type
                             })
+                    elif channel == str(actor_channel):
+                        gcs_entry = ray.gcs_utils.GcsEntry.FromString(data)
+                        print("got actor channel publish", gcs_entry)
+                        actor_data = ray.gcs_utils.ActorTableData.FromString(
+                            gcs_entry.entries[0])
+                        print("actor_data", actor_data)
                     else:
                         data = json.loads(ray.utils.decode(data))
                         self._node_stats[data["hostname"]] = data
