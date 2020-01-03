@@ -83,8 +83,7 @@ CoreWorker::CoreWorker(const WorkerType worker_type, const Language language,
       internal_timer_(io_service_),
       core_worker_server_(WorkerTypeString(worker_type), 0 /* let grpc choose a port */),
       reference_counter_(std::make_shared<ReferenceCounter>()),
-      num_tasks_accepted_(0),
-      num_tasks_executed_(0),
+      task_queue_length_(0),
       task_execution_service_work_(task_execution_service_),
       task_execution_callback_(task_execution_callback),
       resource_ids_(new ResourceMappingType()),
@@ -882,7 +881,7 @@ Status CoreWorker::AllocateReturnObjects(
 Status CoreWorker::ExecuteTask(const TaskSpecification &task_spec,
                                const std::shared_ptr<ResourceMappingType> &resource_ids,
                                std::vector<std::shared_ptr<RayObject>> *return_objects) {
-  num_tasks_executed_ += 1;
+  task_queue_length_ -= 1;
 
   if (resource_ids != nullptr) {
     resource_ids_ = resource_ids;
@@ -1030,7 +1029,7 @@ void CoreWorker::HandleAssignTask(const rpc::AssignTaskRequest &request,
                         nullptr);
     return;
   } else {
-    num_tasks_accepted_ += 1;
+    task_queue_length_ += 1;
     task_execution_service_.post([=] {
       raylet_task_receiver_->HandleAssignTask(request, reply, send_reply_callback);
     });
@@ -1045,7 +1044,7 @@ void CoreWorker::HandlePushTask(const rpc::PushTaskRequest &request,
     return;
   }
 
-  num_tasks_accepted_ += 1;
+  task_queue_length_ += 1;
   task_execution_service_.post([=] {
     direct_task_receiver_->HandlePushTask(request, reply, send_reply_callback);
   });
@@ -1126,7 +1125,7 @@ void CoreWorker::HandleGetCoreWorkerStats(const rpc::GetCoreWorkerStatsRequest &
   absl::MutexLock lock(&mutex_);
   auto stats = reply->mutable_core_worker_stats();
   stats->set_num_pending_tasks(task_manager_->NumPendingTasks());
-  stats->set_task_queue_length(num_tasks_accepted_ - num_tasks_executed_);
+  stats->set_task_queue_length(task_queue_length_);
   stats->set_num_object_ids_in_scope(reference_counter_->NumObjectIDsInScope());
   if (!current_task_.TaskId().IsNil()) {
     stats->set_current_task_desc(current_task_.DebugString());
