@@ -182,4 +182,6 @@ message CoreWorkerStats {
   map<string, double> used_resources = 9;
   // A string displayed on Dashboard.
   string webui_display = 10;
+  // Length of the task queue.
+  int32 task_queue_length = 11;
 }

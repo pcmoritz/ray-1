@@ -332,6 +332,7 @@ class NodeStats(threading.Thread):
             for worker_info in workers_info:
                 if "coreWorkerStats" in worker_info:
                     core_worker_stats = worker_info["coreWorkerStats"]
+                    print(core_worker_stats)
                     addr = (core_worker_stats["ipAddress"],
                             str(core_worker_stats["port"]))
                     if addr in self._addr_to_actor_id:
