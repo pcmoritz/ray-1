@@ -214,7 +214,7 @@ class Actor extends React.Component<Props & WithStyles<typeof styles>, State> {
 
           if (actor.state !== -1) {
             let foundPending = information.find((object=>object.label ==="Pending"))
-            if (foundPending && actor.taskQueueLength >= 50) {
+            if (foundPending && actor.taskQueueLength >= 20) {
               foundPending.rendered = <React.Fragment key={foundPending.label}>
               <span className={classes.overloaded}>{foundPending.label}: {foundPending.value}</span>{" "}
             </React.Fragment>
