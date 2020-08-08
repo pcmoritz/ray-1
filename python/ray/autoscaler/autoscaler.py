@@ -175,10 +175,15 @@ class StandardAutoscaler:
                 nodes_to_terminate.append(node_id)
 
         if nodes_to_terminate:
-            self.provider.terminate_nodes(nodes_to_terminate)
-            nodes = self.workers()
-            self.log_info_string(nodes, target_workers)
+            # self.provider.terminate_nodes(nodes_to_terminate)
+            # nodes = self.workers()
+            # self.log_info_string(nodes, target_workers)
+            print(
+                "Autoscaler is trying to terminate nodes {}"
+                .format(nodes_to_terminate)
+            )
 
+        """
         # Terminate nodes if there are too many
         nodes_to_terminate = []
         while len(nodes) > self.config["max_workers"]:
@@ -191,6 +196,7 @@ class StandardAutoscaler:
             self.provider.terminate_nodes(nodes_to_terminate)
             nodes = self.workers()
             self.log_info_string(nodes, target_workers)
+        """
 
         # First let the resource demand scheduler launch nodes, if enabled.
         if self.resource_demand_scheduler and self.resource_demand_vector:
@@ -202,6 +208,7 @@ class StandardAutoscaler:
             # TODO(ekl) also enforce max launch concurrency here?
             for instance_type, count in instances:
                 self.launch_new_node(count, instance_type=instance_type)
+                print("Launching {} nodes of type {}".format(count, instance_type))
 
         # Launch additional nodes of the default type, if still needed.
         num_workers = len(nodes) + num_pending
