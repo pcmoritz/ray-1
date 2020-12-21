@@ -4,15 +4,17 @@
 
 import errno
 import inspect
+import io
 import json
 import logging
+import multiprocessing
 import os
-import re
-import select
+import pty
 import socket
 import sys
 import uuid
 from pdb import Pdb
+import select
 import setproctitle
 import traceback
 
@@ -28,36 +30,31 @@ def cry(message, stderr=sys.__stderr__):
     stderr.flush()
 
 
-class LF2CRLF_FileWrapper(object):
-    def __init__(self, connection):
-        self.connection = connection
-        self.stream = fh = connection.makefile("rw")
-        self.read = fh.read
-        self.readline = fh.readline
-        self.readlines = fh.readlines
-        self.close = fh.close
-        self.flush = fh.flush
-        self.fileno = fh.fileno
-        if hasattr(fh, "encoding"):
-            self._send = lambda data: connection.sendall(
-                data.encode(fh.encoding))
-        else:
-            self._send = connection.sendall
+def copy_worker(file_from, file_to):
+    while True:
+        c = file_from.read(1)
+        if not c:
+            break
+        file_to.write(c)
+        file_to.flush()
 
-    @property
-    def encoding(self):
-        return self.stream.encoding
 
-    def __iter__(self):
-        return self.stream.__iter__()
-
-    def write(self, data, nl_rex=re.compile("\r?\n")):
-        data = nl_rex.sub("\r\n", data)
-        self._send(data)
-
-    def writelines(self, lines, nl_rex=re.compile("\r?\n")):
-        for line in lines:
-            self.write(line, nl_rex)
+def connect_to_pty(sock):
+    ptym_fd, ptys_fd = pty.openpty()
+    _ptym = os.fdopen(ptym_fd, 'r+b', 0)
+    ptym = io.TextIOWrapper(_ptym, write_through=True)
+    _ptys = os.fdopen(ptys_fd, 'r+b', 0)
+    ptys = io.TextIOWrapper(_ptys, write_through=True)
+    # Setup two processes for copying between socket and master pty.
+    sock_to_ptym = multiprocessing.Process(target=copy_worker,
+                                           args=(sock, ptym))
+    sock_to_ptym.daemon = True
+    sock_to_ptym.start()
+    ptym_to_sock = multiprocessing.Process(target=copy_worker,
+                                           args=(ptym, sock))
+    ptym_to_sock.daemon = True
+    ptym_to_sock.start()
+    return ptys
 
 
 class RemotePdb(Pdb):
@@ -95,28 +92,12 @@ class RemotePdb(Pdb):
         connection, address = self._listen_socket.accept()
         if not self._quiet:
             cry("RemotePdb accepted connection from %s." % repr(address))
-        self.handle = LF2CRLF_FileWrapper(connection)
-        Pdb.__init__(
-            self, completekey="tab", stdin=self.handle, stdout=self.handle)
-        self.backup = []
-        if self._patch_stdstreams:
-            for name in (
-                    "stderr",
-                    "stdout",
-                    "__stderr__",
-                    "__stdout__",
-                    "stdin",
-                    "__stdin__",
-            ):
-                self.backup.append((name, getattr(sys, name)))
-                setattr(sys, name, self.handle)
+        self.handle = connect_to_pty(connection.makefile('rw', None))
+        io.stdout = sys.stdout = sys.stdin = self.handle
+        Pdb.__init__(self)
         RemotePdb.active_instance = self
 
     def __restore(self):
-        if self.backup and not self._quiet:
-            cry("Restoring streams: %s ..." % self.backup)
-        for name, fh in self.backup:
-            setattr(sys, name, fh)
         self.handle.close()
         RemotePdb.active_instance = None
 
@@ -238,8 +219,17 @@ def post_mortem():
 
 
 def connect_pdb_client(host, port):
+    import subprocess
+    print("connect to {} {}", host, port)
+    # t = subprocess.Popen("SAVED_STTY=`stty -g`; stty -icanon -opost -echo -echoe -echok -echoctl -echoke; nc {} {}; stty $SAVED_STTY".format(host, port), shell=True)
+
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((host, port))
+
+    import tty
+
+    # fd = sys.stdin.fileno()
+    tty.setraw(sys.stdin.fileno())
 
     while True:
         # Get the list of sockets which are readable.
@@ -257,5 +247,6 @@ def connect_pdb_client(host, port):
                     sys.stdout.flush()
             else:
                 # User entered a message.
-                msg = sys.stdin.readline()
-                s.send(msg.encode())
+                # print("reading")
+                msg = sys.stdin.read(1)
+                # print("read", msg)
