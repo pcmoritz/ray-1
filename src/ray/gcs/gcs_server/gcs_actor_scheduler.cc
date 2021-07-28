@@ -14,6 +14,12 @@
 
 #include "ray/gcs/gcs_server/gcs_actor_scheduler.h"
 
+#include <fstream>
+
+#include "nlohmann/json.hpp"
+
+using json = nlohmann::json;
+
 #include "ray/common/asio/asio_util.h"
 #include "ray/common/asio/instrumented_io_context.h"
 #include "ray/common/ray_config.h"
@@ -44,6 +50,32 @@ GcsActorScheduler::GcsActorScheduler(
 }
 
 void GcsActorScheduler::Schedule(std::shared_ptr<GcsActor> actor) {
+  if (actor->GetCreationTaskSpecification().HasRuntimeEnv()) {
+    auto serialized_runtime_env = actor->GetCreationTaskSpecification().SerializedRuntimeEnv();
+    std::cout << "serialized_runtime_env = " << serialized_runtime_env << std::endl;
+    json runtime_env = json::parse(serialized_runtime_env);
+    if (runtime_env.contains("container")) {
+      if (runtime_env["container"].contains("image")) {
+        std::string container_image = runtime_env["container"]["image"].get<std::string>();
+        std::ofstream pod_spec;
+        pod_spec.open("/tmp/actor-pod.yaml", std::ios::trunc);
+        pod_spec << "apiVersion: v1" << std::endl;
+        pod_spec << "kind: Pod" << std::endl;
+        pod_spec << "metadata:" << std::endl;
+        pod_spec << "  name: test-actor" << std::endl;
+        pod_spec << "spec:" << std::endl;
+        pod_spec << "  containers:" << std::endl;
+        pod_spec << "  - image: " << container_image << std::endl;
+        pod_spec << "    name: test-actor" << std::endl;
+        pod_spec.close();
+        // std::cout << "container_image = " << container_image << std::endl;
+        // TODO: Replace this with a REST call to the k8s API server.
+        std::system("kubectl apply -f /tmp/actor-pod.yaml");
+      }
+    }
+    return;
+  }
+
   RAY_CHECK(actor->GetNodeID().IsNil() && actor->GetWorkerID().IsNil());
 
   // Select a node to lease worker for the actor.
