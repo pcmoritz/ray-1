@@ -252,7 +252,9 @@ ProcessFD::ProcessFD(pid_t pid, intptr_t fd) : pid_(pid), fd_(fd) {
       process_does_not_exist = true;
     }
 #endif
+    (void)process_does_not_exist;
     // Don't verify anything if the PID is too high, since that's used for testing
+    /*
     if (pid < PID_MAX_LIMIT) {
       if (process_does_not_exist) {
         // NOTE: This indicates a race condition where a process died and its process
@@ -269,6 +271,7 @@ ProcessFD::ProcessFD(pid_t pid, intptr_t fd) : pid_(pid), fd_(fd) {
                        << error.message();
       }
     }
+    */
   }
 }
 

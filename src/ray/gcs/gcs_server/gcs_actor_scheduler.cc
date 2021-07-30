@@ -67,10 +67,21 @@ void GcsActorScheduler::Schedule(std::shared_ptr<GcsActor> actor) {
         pod_spec << "  containers:" << std::endl;
         pod_spec << "  - image: " << container_image << std::endl;
         pod_spec << "    name: test-actor" << std::endl;
+        pod_spec << "    command: [\"sleep\", \"3600\"]" << std::endl;
+        pod_spec << "    volumeMounts:" << std::endl;
+        pod_spec << "    - name: ray-dir" << std::endl;
+        pod_spec << "      mountPath: /tmp/ray" << std::endl;
+        pod_spec << "      mountPropagation: HostToContainer" << std::endl;
+        pod_spec << "  volumes:" << std::endl;
+        pod_spec << "    - name: ray-dir" << std::endl;
+        pod_spec << "      hostPath:" << std::endl;
+        pod_spec << "        path: /tmp/ray" << std::endl;
+        pod_spec << "        type: Directory" << std::endl;
         pod_spec.close();
         // std::cout << "container_image = " << container_image << std::endl;
         // TODO: Replace this with a REST call to the k8s API server.
-        std::system("kubectl apply -f /tmp/actor-pod.yaml");
+        int result = std::system("kubectl apply -f /tmp/actor-pod.yaml");
+        std::cout << "result = " << result << std::endl;
       }
     }
     return;
