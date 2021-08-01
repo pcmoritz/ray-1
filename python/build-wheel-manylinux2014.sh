@@ -12,15 +12,17 @@ EOF
 chmod +x /usr/bin/nproc
 
 NODE_VERSION="14"
-PYTHONS=("cp36-cp36m"
+PYTHONS=(# "cp36-cp36m"
          "cp37-cp37m"
-         "cp38-cp38"
-         "cp39-cp39")
+         # "cp38-cp38"
+         # "cp39-cp39"
+)
 
-NUMPY_VERSIONS=("1.14.5"
+NUMPY_VERSIONS=(# "1.14.5"
                 "1.14.5"
-                "1.14.5"
-                "1.19.3")
+                # "1.14.5"
+                # "1.19.3"
+)
 
 yum -y install unzip zip sudo
 yum -y install java-1.8.0-openjdk java-1.8.0-openjdk-devel xz
