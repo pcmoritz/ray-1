@@ -418,6 +418,11 @@ CoreWorker::CoreWorker(const CoreWorkerOptions &options, const WorkerID &worker_
 
   RAY_CHECK(assigned_port >= 0);
 
+  // TODO: Introduce k8s worker type
+  if (options_.worker_type == WorkerType::WORKER) {
+    assigned_port = 7891;
+  }
+
   // Parse job config from serialized string.
   job_config_.reset(new rpc::JobConfig());
   job_config_->ParseFromString(serialized_job_config);

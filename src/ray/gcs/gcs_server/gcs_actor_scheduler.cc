@@ -67,7 +67,7 @@ void GcsActorScheduler::Schedule(std::shared_ptr<GcsActor> actor) {
         pod_spec << "  containers:" << std::endl;
         pod_spec << "  - image: " << container_image << std::endl;
         pod_spec << "    name: test-actor" << std::endl;
-        pod_spec << "    command: [\"sleep\", \"3600\"]" << std::endl;
+        pod_spec << "    command: [\"sleep\", \"60000\"]" << std::endl;
         pod_spec << "    volumeMounts:" << std::endl;
         pod_spec << "    - name: ray-dir" << std::endl;
         pod_spec << "      mountPath: /tmp/ray" << std::endl;
@@ -77,6 +77,17 @@ void GcsActorScheduler::Schedule(std::shared_ptr<GcsActor> actor) {
         pod_spec << "      hostPath:" << std::endl;
         pod_spec << "        path: /tmp/ray" << std::endl;
         pod_spec << "        type: Directory" << std::endl;
+        pod_spec << "---" << std::endl;
+        pod_spec << "apiVersion: v1" << std::endl;
+        pod_spec << "kind: Service" << std::endl;
+        pod_spec << "metadata:" << std::endl;
+        pod_spec << "  name: test-actor" << std::endl;
+        pod_spec << "spec:" << std::endl;
+        pod_spec << "  ports:" << std::endl;
+        pod_spec << "  - port: 7891" << std::endl;
+        pod_spec << "    targetPort: 7891" << std::endl;
+        pod_spec << "  selector:" << std::endl;
+        pod_spec << "    app: test-actor" << std::endl;
         pod_spec.close();
         // std::cout << "container_image = " << container_image << std::endl;
         // TODO: Replace this with a REST call to the k8s API server.
