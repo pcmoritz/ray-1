@@ -33,6 +33,8 @@ enum WorkerType {
   SPILL_WORKER = 2;
   RESTORE_WORKER = 3;
   UTIL_WORKER = 4;
+  // Worker that is a k8s pod
+  K8S_WORKER = 5;
 }
 
 // Type of a task.

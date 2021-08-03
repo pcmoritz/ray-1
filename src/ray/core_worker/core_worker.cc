@@ -418,8 +418,7 @@ CoreWorker::CoreWorker(const CoreWorkerOptions &options, const WorkerID &worker_
 
   RAY_CHECK(assigned_port >= 0);
 
-  // TODO: Introduce k8s worker type
-  if (options_.worker_type == WorkerType::WORKER) {
+  if (options_.worker_type == WorkerType::K8S_WORKER) {
     assigned_port = 7891;
   }
 
