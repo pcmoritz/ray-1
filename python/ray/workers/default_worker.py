@@ -152,6 +152,8 @@ if __name__ == "__main__":
         mode = ray.RESTORE_WORKER_MODE
     elif args.worker_type == "UTIL_WORKER":
         mode = ray.UTIL_WORKER_MODE
+    elif args.worker_type == "K8S_WORKER":
+        mode = 5
     else:
         raise ValueError("Unknown worker type: " + args.worker_type)
 
