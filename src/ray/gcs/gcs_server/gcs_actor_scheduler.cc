@@ -93,6 +93,8 @@ void GcsActorScheduler::Schedule(std::shared_ptr<GcsActor> actor) {
         // TODO: Replace this with a REST call to the k8s API server.
         int result = std::system("kubectl apply -f /tmp/actor-pod.yaml");
         std::cout << "result = " << result << std::endl;
+        auto client = core_worker_clients_.GetOrConnect("test-actor.default.svc.cluster.local:7891");
+        std::cout << "connected" << std::endl;
       }
     }
     return;
