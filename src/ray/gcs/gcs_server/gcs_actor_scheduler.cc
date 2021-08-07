@@ -96,7 +96,7 @@ void GcsActorScheduler::Schedule(std::shared_ptr<GcsActor> actor) {
         rpc::Address address;
         address.set_ip_address("test-actor.default.svc.cluster.local");
         address.set_port(7891);
-        address.set_worker_id("test-actor");
+        address.set_worker_id("test-actor000000000000000000");
         auto client = core_worker_clients_.GetOrConnect(address);
         std::cout << "connected" << std::endl;
       }
