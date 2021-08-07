@@ -218,7 +218,7 @@ if __name__ == "__main__":
         get_worker_log_file_name(args.worker_type))
     configure_log_file(out_file, err_file)
 
-    if mode == ray.WORKER_MODE:
+    if mode == ray.WORKER_MODE or mode == 5:
         ray.worker.global_worker.main_loop()
     elif (mode == ray.RESTORE_WORKER_MODE or mode == ray.SPILL_WORKER_MODE
           or mode == ray.UTIL_WORKER_MODE):

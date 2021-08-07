@@ -331,7 +331,8 @@ void CoreWorkerProcess::RemoveWorker(std::shared_ptr<CoreWorker> worker) {
 
 void CoreWorkerProcess::RunTaskExecutionLoop() {
   EnsureInitialized();
-  RAY_CHECK(core_worker_process->options_.worker_type == WorkerType::WORKER);
+  RAY_CHECK(core_worker_process->options_.worker_type == WorkerType::WORKER ||
+            core_worker_process->options_.worker_type == WorkerType::K8S_WORKER);
   if (core_worker_process->options_.num_workers == 1) {
     // Run the task loop in the current thread only if the number of workers is 1.
     auto worker = core_worker_process->global_worker_
