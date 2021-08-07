@@ -98,6 +98,16 @@ void GcsActorScheduler::Schedule(std::shared_ptr<GcsActor> actor) {
         address.set_port(7891);
         address.set_worker_id("test-actor000000000000000000");
         auto client = core_worker_clients_.GetOrConnect(address);
+        std::unique_ptr<rpc::PushTaskRequest> request(new rpc::PushTaskRequest());
+        request->set_intended_worker_id("test-actor000000000000000000");
+        request->mutable_task_spec()->CopyFrom(
+          actor->GetCreationTaskSpecification().GetMessage());
+
+        client->PushNormalTask(
+          std::move(request),
+          [](Status status, const rpc::PushTaskReply &reply) {
+
+          });
         std::cout << "connected" << std::endl;
       }
     }
