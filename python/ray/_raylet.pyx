@@ -911,6 +911,9 @@ cdef class CoreWorker:
         elif worker_type == ray.UTIL_WORKER_MODE:
             self.is_driver = False
             options.worker_type = WORKER_TYPE_UTIL_WORKER
+        elif worker_type == ray.K8S_WORKER_MODE:
+            self.is_driver = False
+            options.worker_type = WORKER_TYPE_K8S_WORKER
         else:
             raise ValueError(f"Unknown worker type: {worker_type}")
         options.language = LANGUAGE_PYTHON
