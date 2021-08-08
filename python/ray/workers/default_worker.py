@@ -153,7 +153,7 @@ if __name__ == "__main__":
     elif args.worker_type == "UTIL_WORKER":
         mode = ray.UTIL_WORKER_MODE
     elif args.worker_type == "K8S_WORKER":
-        mode = 5
+        mode = ray.K8S_WORKER_MODE
     else:
         raise ValueError("Unknown worker type: " + args.worker_type)
 
@@ -218,7 +218,7 @@ if __name__ == "__main__":
         get_worker_log_file_name(args.worker_type))
     configure_log_file(out_file, err_file)
 
-    if mode == ray.WORKER_MODE or mode == 5:
+    if mode == ray.WORKER_MODE or mode == ray.K8S_WORKER_MODE:
         ray.worker.global_worker.main_loop()
     elif (mode == ray.RESTORE_WORKER_MODE or mode == ray.SPILL_WORKER_MODE
           or mode == ray.UTIL_WORKER_MODE):
