@@ -28,6 +28,8 @@ std::string WorkerTypeString(WorkerType type) {
     return "restore_worker";
   } else if (type == WorkerType::UTIL_WORKER) {
     return "util_worker";
+  } else if (type == WorkerType::K8S_WORKER) {
+    return "k8s_worker";
   }
   RAY_CHECK(false);
   return "";

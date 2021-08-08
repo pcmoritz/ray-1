@@ -65,10 +65,10 @@ ray::JobID GetProcessJobID(const ray::CoreWorkerOptions &options) {
   if (options.worker_type == ray::WorkerType::DRIVER) {
     RAY_CHECK(!options.job_id.IsNil());
   } else {
-    RAY_CHECK(options.job_id.IsNil());
+    // RAY_CHECK(options.job_id.IsNil());
   }
 
-  if (options.worker_type == ray::WorkerType::WORKER) {
+  if (options.worker_type == ray::WorkerType::WORKER || options.worker_type == ray::WorkerType::K8S_WORKER) {
     // For workers, the job ID is assigned by Raylet via an environment variable.
     const char *job_id_env = std::getenv(kEnvVarKeyJobId);
     RAY_CHECK(job_id_env);
