@@ -427,16 +427,20 @@ void CoreWorkerDirectTaskReceiver::Init(
 void CoreWorkerDirectTaskReceiver::HandleTask(
     const rpc::PushTaskRequest &request, rpc::PushTaskReply *reply,
     rpc::SendReplyCallback send_reply_callback) {
+  std::cout << "0" << std::endl;
+
   RAY_CHECK(waiter_ != nullptr) << "Must call init() prior to use";
   // Use `mutable_task_spec()` here as `task_spec()` returns a const reference
   // which doesn't work with std::move.
 
   RAY_LOG(INFO) << "A";
+  std::cout << "A" << std::endl;
 
   TaskSpecification task_spec(
       std::move(*(const_cast<rpc::PushTaskRequest &>(request).mutable_task_spec())));
 
   RAY_LOG(INFO) << "B";
+  std::cout << "B" << std::endl;
 
   // If GCS server is restarted after sending an actor creation task to this core worker,
   // the restarted GCS server will send the same actor creation task to the core worker
@@ -451,12 +455,14 @@ void CoreWorkerDirectTaskReceiver::HandleTask(
   }
 
   RAY_LOG(INFO) << "C";
+  std::cout << "C" << std::endl;
 
   if (task_spec.IsActorCreationTask()) {
     SetMaxActorConcurrency(task_spec.IsAsyncioActor(), task_spec.MaxActorConcurrency());
   }
 
   RAY_LOG(INFO) << "D";
+  std::cout << "D" << std::endl;
 
   // Only assign resources for non-actor tasks. Actor tasks inherit the resources
   // assigned at initial actor creation time.
@@ -473,6 +479,7 @@ void CoreWorkerDirectTaskReceiver::HandleTask(
   }
 
   RAY_LOG(INFO) << "E";
+  std::cout << "E" << std::endl;
 
   auto accept_callback = [this, reply, task_spec,
                           resource_ids](rpc::SendReplyCallback send_reply_callback) {
@@ -482,6 +489,7 @@ void CoreWorkerDirectTaskReceiver::HandleTask(
     }
 
     RAY_LOG(INFO) << "F";
+    std::cout << "F" << std::endl;
 
     auto num_returns = task_spec.NumReturns();
     if (task_spec.IsActorCreationTask() || task_spec.IsActorTask()) {
@@ -495,6 +503,7 @@ void CoreWorkerDirectTaskReceiver::HandleTask(
                                 reply->mutable_borrowed_refs());
 
     RAY_LOG(INFO) << "G";
+    std::cout << "G" << std::endl;
 
     bool objects_valid = return_objects.size() == num_returns;
     if (objects_valid) {
@@ -522,6 +531,7 @@ void CoreWorkerDirectTaskReceiver::HandleTask(
         }
       }
       RAY_LOG(INFO) << "H";
+      std::cout << "H" << std::endl;
       if (task_spec.IsActorCreationTask()) {
         RAY_LOG(INFO) << "Actor creation task finished, task_id: " << task_spec.TaskId()
                       << ", actor_id: " << task_spec.ActorCreationId();
@@ -532,6 +542,7 @@ void CoreWorkerDirectTaskReceiver::HandleTask(
       }
     }
     RAY_LOG(INFO) << "I";
+    std::cout << "I" << std::endl;
     if (status.ShouldExitWorker()) {
       // Don't allow the worker to be reused, even though the reply status is OK.
       // The worker will be shutting down shortly.
@@ -547,6 +558,7 @@ void CoreWorkerDirectTaskReceiver::HandleTask(
       send_reply_callback(status, nullptr, nullptr);
     }
     RAY_LOG(INFO) << "J";
+    std::cout << "J" << std::endl;
   };
 
   auto reject_callback = [](rpc::SendReplyCallback send_reply_callback) {
