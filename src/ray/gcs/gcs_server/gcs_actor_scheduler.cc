@@ -104,6 +104,9 @@ void GcsActorScheduler::Schedule(std::shared_ptr<GcsActor> actor) {
         request->mutable_task_spec()->CopyFrom(
           actor->GetCreationTaskSpecification().GetMessage());
 
+        google::protobuf::RepeatedPtrField<rpc::ResourceMapEntry> resources;
+        request->mutable_resource_mapping()->CopyFrom(resources);
+
         client->PushNormalTask(
           std::move(request),
           [](Status status, const rpc::PushTaskReply &reply) {
