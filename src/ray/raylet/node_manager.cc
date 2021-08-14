@@ -1114,6 +1114,7 @@ void NodeManager::ProcessRegisterClientRequestMessage(
         });
   };
   if (worker_type == rpc::WorkerType::WORKER ||
+      worker_type == rpc::WorkerType::K8S_WORKER ||
       worker_type == rpc::WorkerType::SPILL_WORKER ||
       worker_type == rpc::WorkerType::RESTORE_WORKER ||
       worker_type == rpc::WorkerType::UTIL_WORKER) {
@@ -1171,7 +1172,9 @@ void NodeManager::HandleWorkerAvailable(const std::shared_ptr<ClientConnection> 
 }
 
 void NodeManager::HandleWorkerAvailable(const std::shared_ptr<WorkerInterface> &worker) {
-  RAY_CHECK(worker);
+  if(!worker) {
+    return;
+  }
 
   if (worker->GetWorkerType() == rpc::WorkerType::SPILL_WORKER) {
     // Return the worker to the idle pool.
@@ -1188,6 +1191,10 @@ void NodeManager::HandleWorkerAvailable(const std::shared_ptr<WorkerInterface> &
   if (worker->GetWorkerType() == rpc::WorkerType::UTIL_WORKER) {
     // Return the worker to the idle pool.
     worker_pool_.PushUtilWorker(worker);
+    return;
+  }
+
+  if (worker->GetWorkerType() == rpc::WorkerType::K8S_WORKER) {
     return;
   }
 

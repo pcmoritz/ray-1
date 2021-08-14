@@ -912,7 +912,7 @@ void GcsActorManager::OnActorCreationSuccess(const std::shared_ptr<GcsActor> &ac
   auto worker_id = actor->GetWorkerID();
   auto node_id = actor->GetNodeID();
   RAY_CHECK(!worker_id.IsNil());
-  RAY_CHECK(!node_id.IsNil());
+  // RAY_CHECK(!node_id.IsNil());
   RAY_CHECK(created_actors_[node_id].emplace(worker_id, actor_id).second);
 
   auto actor_table_data = *mutable_actor_table_data;

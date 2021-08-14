@@ -99,6 +99,16 @@ void GcsActorScheduler::Schedule(std::shared_ptr<GcsActor> actor) {
         address.set_port(7891);
         address.set_worker_id("test-actor000000000000000000");
         auto client = core_worker_clients_.GetOrConnect(address);
+
+        /*
+        // Do this after GetOrConnect (race condition mentioned in comment below)
+        RAY_CHECK_OK(gcs_actor_table_.Put(actor->GetActorID(), actor->GetActorTableData(),
+                                      [this, actor](Status status) {
+                                        RAY_CHECK_OK(status);
+                                      }));
+        */
+        actor->UpdateAddress(address);
+
         std::unique_ptr<rpc::PushTaskRequest> request(new rpc::PushTaskRequest());
         request->set_intended_worker_id("test-actor000000000000000000");
         request->mutable_task_spec()->CopyFrom(
@@ -109,8 +119,8 @@ void GcsActorScheduler::Schedule(std::shared_ptr<GcsActor> actor) {
 
         client->PushNormalTask(
           std::move(request),
-          [](Status status, const rpc::PushTaskReply &reply) {
-
+          [this, actor](Status status, const rpc::PushTaskReply &reply) {
+            schedule_success_handler_(actor);
           });
         std::cout << "connected" << std::endl;
       }
