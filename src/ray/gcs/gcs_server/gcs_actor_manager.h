@@ -88,6 +88,8 @@ class GcsActor {
     actor_table_data_.set_serialized_runtime_env(task_spec.serialized_runtime_env());
   }
 
+  /// Get the id of the job this actor belongs to.
+  JobID GetJobID() const;
   /// Get the node id on which this actor is created.
   NodeID GetNodeID() const;
   /// Get the id of the worker on which this actor is created.

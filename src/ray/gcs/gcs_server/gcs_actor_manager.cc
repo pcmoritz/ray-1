@@ -30,6 +30,10 @@ bool is_uuid(const std::string &str) {
   return regex_match(str, e);  // note: case sensitive now
 }
 
+JobID GcsActor::GetJobID() const {
+  return JobID::FromBinary(actor_table_data_.job_id());
+}
+
 NodeID GcsActor::GetNodeID() const {
   const auto &raylet_id_binary = actor_table_data_.address().raylet_id();
   if (raylet_id_binary.empty()) {

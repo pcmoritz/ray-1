@@ -49,6 +49,36 @@ GcsActorScheduler::GcsActorScheduler(
   RAY_CHECK(schedule_failure_handler_ != nullptr && schedule_success_handler_ != nullptr);
 }
 
+void GcsActorScheduler::CreateActorOnPod(std::shared_ptr<GcsActor> actor) {
+  std::unique_ptr<rpc::PushTaskRequest> request(new rpc::PushTaskRequest());
+  request->set_intended_worker_id("test-actor000000000000000000");
+  request->mutable_task_spec()->CopyFrom(
+    actor->GetCreationTaskSpecification().GetMessage());
+
+  google::protobuf::RepeatedPtrField<rpc::ResourceMapEntry> resources;
+  request->mutable_resource_mapping()->CopyFrom(resources);
+
+  auto client = core_worker_clients_.GetOrConnect(actor->GetAddress());
+  client->PushNormalTask(
+    std::move(request),
+    [this, actor](Status status, const rpc::PushTaskReply &reply) {
+      if (status.ok()) {
+        schedule_success_handler_(actor);
+      } else {
+        std::cout << "failed connecting: " << status.ToString() << std::endl;
+        std::cout << "retrying" << std::endl;
+        RetryCreatingActorOnPod(actor);
+      }
+  });
+}
+
+void GcsActorScheduler::RetryCreatingActorOnPod(std::shared_ptr<GcsActor> actor) {
+  RAY_UNUSED(execute_after(
+    io_context_, [this, actor] { CreateActorOnPod(actor); },
+    RayConfig::instance().gcs_create_actor_retry_interval_ms()
+  ));
+}
+
 void GcsActorScheduler::Schedule(std::shared_ptr<GcsActor> actor) {
   if (actor->GetCreationTaskSpecification().HasRuntimeEnv()) {
     auto serialized_runtime_env = actor->GetCreationTaskSpecification().SerializedRuntimeEnv();
@@ -67,11 +97,21 @@ void GcsActorScheduler::Schedule(std::shared_ptr<GcsActor> actor) {
         pod_spec << "  containers:" << std::endl;
         pod_spec << "  - image: " << container_image << std::endl;
         pod_spec << "    name: test-actor" << std::endl;
-        pod_spec << "    command: [\"sleep\", \"60000\"]" << std::endl;
+        // TODO: Do not hardcode the path here and make it work no matter how Ray was installed into the docker image
+        // Same for the session_latest path (pass in the right path)
+        std::string worker_startup_command = "python /home/ray/anaconda3/lib/python3.7/site-packages/ray/workers/default_worker.py --node-ip-address $RAY_POD_IP --redis-address 172.17.0.2:6379 --object-store-name /tmp/ray/session_latest/sockets/plasma_store --node-manager-port 12346 --metrics-agent-port 64770 --redis-password=5241590000000000 --raylet-ip-address 172.17.0.2 --worker-type K8S_WORKER";
+        pod_spec << "    command: [\"bash\", \"-c\", \"" << worker_startup_command << "\"]" << std::endl;
         pod_spec << "    volumeMounts:" << std::endl;
         pod_spec << "    - name: ray-dir" << std::endl;
         pod_spec << "      mountPath: /tmp/ray" << std::endl;
         pod_spec << "      mountPropagation: HostToContainer" << std::endl;
+        pod_spec << "    env:" << std::endl;
+        pod_spec << "    - name: RAY_POD_IP" << std::endl;
+        pod_spec << "      valueFrom:" << std::endl;
+        pod_spec << "        fieldRef:" << std::endl;
+        pod_spec << "          fieldPath: status.podIP" << std::endl;
+        pod_spec << "    - name: RAY_JOB_ID" << std::endl;
+        pod_spec << "      value: \"" << actor->GetJobID() << "\""<< std::endl;
         pod_spec << "  volumes:" << std::endl;
         pod_spec << "    - name: ray-dir" << std::endl;
         pod_spec << "      hostPath:" << std::endl;
@@ -98,7 +138,6 @@ void GcsActorScheduler::Schedule(std::shared_ptr<GcsActor> actor) {
         address.set_ip_address("172.17.0.4");
         address.set_port(7891);
         address.set_worker_id("test-actor000000000000000000");
-        auto client = core_worker_clients_.GetOrConnect(address);
 
         /*
         // Do this after GetOrConnect (race condition mentioned in comment below)
@@ -109,20 +148,7 @@ void GcsActorScheduler::Schedule(std::shared_ptr<GcsActor> actor) {
         */
         actor->UpdateAddress(address);
 
-        std::unique_ptr<rpc::PushTaskRequest> request(new rpc::PushTaskRequest());
-        request->set_intended_worker_id("test-actor000000000000000000");
-        request->mutable_task_spec()->CopyFrom(
-          actor->GetCreationTaskSpecification().GetMessage());
-
-        google::protobuf::RepeatedPtrField<rpc::ResourceMapEntry> resources;
-        request->mutable_resource_mapping()->CopyFrom(resources);
-
-        client->PushNormalTask(
-          std::move(request),
-          [this, actor](Status status, const rpc::PushTaskReply &reply) {
-            schedule_success_handler_(actor);
-          });
-        std::cout << "connected" << std::endl;
+        CreateActorOnPod(actor);
       }
     }
     return;

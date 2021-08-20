@@ -248,6 +248,10 @@ class GcsActorScheduler : public GcsActorSchedulerInterface {
   void HandleWorkerLeaseGrantedReply(std::shared_ptr<GcsActor> actor,
                                      const rpc::RequestWorkerLeaseReply &reply);
 
+  void CreateActorOnPod(std::shared_ptr<GcsActor> actor);
+
+  void RetryCreatingActorOnPod(std::shared_ptr<GcsActor> actor);
+
   /// Create the specified actor on the specified worker.
   ///
   /// \param actor The actor to be created.
