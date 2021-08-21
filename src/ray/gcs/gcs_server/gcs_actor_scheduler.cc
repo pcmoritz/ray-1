@@ -51,7 +51,7 @@ GcsActorScheduler::GcsActorScheduler(
 
 void GcsActorScheduler::CreateActorOnPod(std::shared_ptr<GcsActor> actor) {
   std::unique_ptr<rpc::PushTaskRequest> request(new rpc::PushTaskRequest());
-  request->set_intended_worker_id("test-actor000000000000000000");
+  request->set_intended_worker_id(actor->GetWorkerID().Binary());
   request->mutable_task_spec()->CopyFrom(
     actor->GetCreationTaskSpecification().GetMessage());
 
@@ -93,6 +93,8 @@ void GcsActorScheduler::Schedule(std::shared_ptr<GcsActor> actor) {
         pod_spec << "kind: Pod" << std::endl;
         pod_spec << "metadata:" << std::endl;
         pod_spec << "  name: test-actor" << std::endl;
+        pod_spec << "  labels:" << std::endl;
+        pod_spec << "    app: test-actor" << std::endl;
         pod_spec << "spec:" << std::endl;
         pod_spec << "  containers:" << std::endl;
         pod_spec << "  - image: " << container_image << std::endl;
@@ -112,6 +114,8 @@ void GcsActorScheduler::Schedule(std::shared_ptr<GcsActor> actor) {
         pod_spec << "          fieldPath: status.podIP" << std::endl;
         pod_spec << "    - name: RAY_JOB_ID" << std::endl;
         pod_spec << "      value: \"" << actor->GetJobID() << "\""<< std::endl;
+        pod_spec << "    ports:" << std::endl;
+        pod_spec << "    - containerPort: 7891" << std::endl;
         pod_spec << "  volumes:" << std::endl;
         pod_spec << "    - name: ray-dir" << std::endl;
         pod_spec << "      hostPath:" << std::endl;
@@ -125,6 +129,7 @@ void GcsActorScheduler::Schedule(std::shared_ptr<GcsActor> actor) {
         pod_spec << "spec:" << std::endl;
         pod_spec << "  ports:" << std::endl;
         pod_spec << "  - port: 7891" << std::endl;
+        pod_spec << "    protocol: TCP" << std::endl;
         pod_spec << "    targetPort: 7891" << std::endl;
         pod_spec << "  selector:" << std::endl;
         pod_spec << "    app: test-actor" << std::endl;
@@ -134,10 +139,10 @@ void GcsActorScheduler::Schedule(std::shared_ptr<GcsActor> actor) {
         int result = std::system("kubectl apply -f /tmp/actor-pod.yaml");
         std::cout << "result = " << result << std::endl;
         rpc::Address address;
-        // address.set_ip_address("test-actor.default.svc.cluster.local");
-        address.set_ip_address("172.17.0.4");
+        address.set_ip_address("test-actor.default.svc.cluster.local");
         address.set_port(7891);
-        address.set_worker_id("test-actor000000000000000000");
+        // Generate a random worker ID for this actor
+        address.set_worker_id(WorkerID::FromRandom().Binary());
 
         /*
         // Do this after GetOrConnect (race condition mentioned in comment below)

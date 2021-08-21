@@ -139,7 +139,7 @@ void CoreWorkerDirectActorTaskSubmitter::ConnectActor(const ActorID &actor_id,
 
   rpc::Address address1 = address;
 
-  address1.set_ip_address("172.17.0.4");
+  address1.set_ip_address("test-actor.default.svc.cluster.local");
   address1.set_port(7891);
 
   auto queue = client_queues_.find(actor_id);
