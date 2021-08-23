@@ -65,7 +65,7 @@ ray::JobID GetProcessJobID(const ray::CoreWorkerOptions &options) {
   if (options.worker_type == ray::WorkerType::DRIVER) {
     RAY_CHECK(!options.job_id.IsNil());
   } else {
-    // RAY_CHECK(options.job_id.IsNil());
+    RAY_CHECK(options.job_id.IsNil());
   }
 
   if (options.worker_type == ray::WorkerType::WORKER || options.worker_type == ray::WorkerType::K8S_WORKER) {

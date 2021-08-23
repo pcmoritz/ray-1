@@ -1277,7 +1277,7 @@ def connect(node,
 
     # Initialize some fields.
     if mode in (WORKER_MODE, RESTORE_WORKER_MODE, SPILL_WORKER_MODE,
-                UTIL_WORKER_MODE):
+                UTIL_WORKER_MODE, K8S_WORKER_MODE):
         # We should not specify the job_id if it's `WORKER_MODE`.
         assert job_id is None
         job_id = JobID.nil()
@@ -1311,7 +1311,7 @@ def connect(node,
     except Exception as e:
         if mode == SCRIPT_MODE:
             raise e
-        elif mode == WORKER_MODE:
+        elif mode == WORKER_MODE or mode == K8S_WORKER_MODE:
             traceback_str = traceback.format_exc()
             ray._private.utils.push_error_to_driver_through_redis(
                 worker.redis_client,
