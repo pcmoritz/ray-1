@@ -86,22 +86,25 @@ void GcsActorScheduler::Schedule(std::shared_ptr<GcsActor> actor) {
     json runtime_env = json::parse(serialized_runtime_env);
     if (runtime_env.contains("container")) {
       if (runtime_env["container"].contains("image")) {
+        std::string actor_name = "actor-" + actor->GetActorID().Hex();
         std::string container_image = runtime_env["container"]["image"].get<std::string>();
         std::ofstream pod_spec;
         pod_spec.open("/tmp/actor-pod.yaml", std::ios::trunc);
         pod_spec << "apiVersion: v1" << std::endl;
         pod_spec << "kind: Pod" << std::endl;
         pod_spec << "metadata:" << std::endl;
-        pod_spec << "  name: test-actor" << std::endl;
+        pod_spec << "  name: " << actor_name << std::endl;
         pod_spec << "  labels:" << std::endl;
-        pod_spec << "    app: test-actor" << std::endl;
+        pod_spec << "    app: " << actor_name << std::endl;
         pod_spec << "spec:" << std::endl;
         pod_spec << "  containers:" << std::endl;
         pod_spec << "  - image: " << container_image << std::endl;
-        pod_spec << "    name: test-actor" << std::endl;
+        pod_spec << "    name: " << actor_name << std::endl;
         // TODO: Do not hardcode the path here and make it work no matter how Ray was installed into the docker image
         // Same for the session_latest path (pass in the right path)
         std::string worker_startup_command = "python /home/ray/anaconda3/lib/python3.7/site-packages/ray/workers/default_worker.py --node-ip-address $RAY_POD_IP --redis-address 172.17.0.2:6379 --object-store-name /tmp/ray/session_latest/sockets/plasma_store --node-manager-port 12346 --metrics-agent-port 64770 --redis-password=5241590000000000 --raylet-ip-address 172.17.0.2 --worker-type K8S_WORKER";
+        // Exit with error code 0 if the exit was intended (so k8s does not treat it as an error)
+        worker_startup_command = "( " + worker_startup_command + " || if [ $? = 1 ]; then exit 0; fi; )";
         pod_spec << "    command: [\"bash\", \"-c\", \"" << worker_startup_command << "\"]" << std::endl;
         pod_spec << "    volumeMounts:" << std::endl;
         pod_spec << "    - name: ray-dir" << std::endl;
@@ -121,25 +124,29 @@ void GcsActorScheduler::Schedule(std::shared_ptr<GcsActor> actor) {
         pod_spec << "      hostPath:" << std::endl;
         pod_spec << "        path: /tmp/ray" << std::endl;
         pod_spec << "        type: Directory" << std::endl;
+        // Make sure the pod is marked as completed if the actor is
+        // terminated/killed on purpose. In the future we can
+        // automatically re-register the actor if the pods crashed.
+        pod_spec << "  restartPolicy: OnFailure" << std::endl;
         pod_spec << "---" << std::endl;
         pod_spec << "apiVersion: v1" << std::endl;
         pod_spec << "kind: Service" << std::endl;
         pod_spec << "metadata:" << std::endl;
-        pod_spec << "  name: test-actor" << std::endl;
+        pod_spec << "  name: " << actor_name << std::endl;
         pod_spec << "spec:" << std::endl;
         pod_spec << "  ports:" << std::endl;
         pod_spec << "  - port: 7891" << std::endl;
         pod_spec << "    protocol: TCP" << std::endl;
         pod_spec << "    targetPort: 7891" << std::endl;
         pod_spec << "  selector:" << std::endl;
-        pod_spec << "    app: test-actor" << std::endl;
+        pod_spec << "    app: " << actor_name << std::endl;
         pod_spec.close();
         // std::cout << "container_image = " << container_image << std::endl;
         // TODO: Replace this with a REST call to the k8s API server.
         int result = std::system("kubectl apply -f /tmp/actor-pod.yaml");
         std::cout << "result = " << result << std::endl;
         rpc::Address address;
-        address.set_ip_address("test-actor.default.svc.cluster.local");
+        address.set_ip_address(actor_name + ".default.svc.cluster.local");
         address.set_port(7891);
         // Generate a random worker ID for this actor
         address.set_worker_id(WorkerID::FromRandom().Binary());
