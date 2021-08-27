@@ -1201,7 +1201,6 @@ class CoreWorker : public rpc::CoreWorkerServiceHandler {
   /// the new worker to reject messages meant for the old one.
   bool HandleWrongRecipient(const WorkerID &intended_worker_id,
                             rpc::SendReplyCallback send_reply_callback) {
-    /*
     if (intended_worker_id != worker_context_.GetWorkerID()) {
       std::ostringstream stream;
       stream << "Mismatched WorkerID: ignoring RPC for previous worker "
@@ -1214,8 +1213,6 @@ class CoreWorker : public rpc::CoreWorkerServiceHandler {
     } else {
       return false;
     }
-    */
-    return false;
   }
 
   /// Handler if a raylet node is removed from the cluster.

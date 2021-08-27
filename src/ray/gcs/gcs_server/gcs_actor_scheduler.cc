@@ -87,6 +87,8 @@ void GcsActorScheduler::Schedule(std::shared_ptr<GcsActor> actor) {
     if (runtime_env.contains("container")) {
       if (runtime_env["container"].contains("image")) {
         std::string actor_name = "actor-" + actor->GetActorID().Hex();
+        // Generate a random worker ID for this actor
+        auto worker_id = WorkerID::FromRandom();
         std::string container_image = runtime_env["container"]["image"].get<std::string>();
         std::ofstream pod_spec;
         pod_spec.open("/tmp/actor-pod.yaml", std::ios::trunc);
@@ -117,6 +119,8 @@ void GcsActorScheduler::Schedule(std::shared_ptr<GcsActor> actor) {
         pod_spec << "          fieldPath: status.podIP" << std::endl;
         pod_spec << "    - name: RAY_JOB_ID" << std::endl;
         pod_spec << "      value: \"" << actor->GetJobID() << "\""<< std::endl;
+        pod_spec << "    - name: RAY_WORKER_ID" << std::endl;
+        pod_spec << "      value: \"" << worker_id << "\"" << std::endl;
         pod_spec << "    ports:" << std::endl;
         pod_spec << "    - containerPort: 7891" << std::endl;
         pod_spec << "  volumes:" << std::endl;
@@ -148,8 +152,7 @@ void GcsActorScheduler::Schedule(std::shared_ptr<GcsActor> actor) {
         rpc::Address address;
         address.set_ip_address(actor_name + ".default.svc.cluster.local");
         address.set_port(7891);
-        // Generate a random worker ID for this actor
-        address.set_worker_id(WorkerID::FromRandom().Binary());
+        address.set_worker_id(worker_id.Binary());
 
         /*
         // Do this after GetOrConnect (race condition mentioned in comment below)

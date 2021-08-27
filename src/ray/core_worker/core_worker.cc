@@ -119,12 +119,20 @@ void CoreWorkerProcess::Shutdown() {
 
 bool CoreWorkerProcess::IsInitialized() { return core_worker_process != nullptr; }
 
+WorkerID ComputeGlobalWorkerID(const CoreWorkerOptions &options) {
+  WorkerID worker_id =
+    options.worker_type == WorkerType::DRIVER
+      ? ComputeDriverIdFromJob(options.job_id)
+      : (options.num_workers == 1 ? WorkerID::FromRandom() : WorkerID::Nil());
+  if (const char *env_worker_id = std::getenv("RAY_WORKER_ID")) {
+    worker_id = WorkerID::FromHex(env_worker_id);
+  }
+  return worker_id;
+}
+
 CoreWorkerProcess::CoreWorkerProcess(const CoreWorkerOptions &options)
     : options_(options),
-      global_worker_id_(
-          options.worker_type == WorkerType::DRIVER
-              ? ComputeDriverIdFromJob(options_.job_id)
-              : (options_.num_workers == 1 ? WorkerID::FromRandom() : WorkerID::Nil())) {
+      global_worker_id_(ComputeGlobalWorkerID(options)) {
   if (options_.enable_logging) {
     std::stringstream app_name;
     app_name << LanguageString(options_.language) << "-core-"
