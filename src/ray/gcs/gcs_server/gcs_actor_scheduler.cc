@@ -49,36 +49,6 @@ GcsActorScheduler::GcsActorScheduler(
   RAY_CHECK(schedule_failure_handler_ != nullptr && schedule_success_handler_ != nullptr);
 }
 
-void GcsActorScheduler::CreateActorOnPod(std::shared_ptr<GcsActor> actor) {
-  std::unique_ptr<rpc::PushTaskRequest> request(new rpc::PushTaskRequest());
-  request->set_intended_worker_id(actor->GetWorkerID().Binary());
-  request->mutable_task_spec()->CopyFrom(
-    actor->GetCreationTaskSpecification().GetMessage());
-
-  google::protobuf::RepeatedPtrField<rpc::ResourceMapEntry> resources;
-  request->mutable_resource_mapping()->CopyFrom(resources);
-
-  auto client = core_worker_clients_.GetOrConnect(actor->GetAddress());
-  client->PushNormalTask(
-    std::move(request),
-    [this, actor](Status status, const rpc::PushTaskReply &reply) {
-      if (status.ok()) {
-        schedule_success_handler_(actor);
-      } else {
-        std::cout << "failed connecting: " << status.ToString() << std::endl;
-        std::cout << "retrying" << std::endl;
-        RetryCreatingActorOnPod(actor);
-      }
-  });
-}
-
-void GcsActorScheduler::RetryCreatingActorOnPod(std::shared_ptr<GcsActor> actor) {
-  RAY_UNUSED(execute_after(
-    io_context_, [this, actor] { CreateActorOnPod(actor); },
-    RayConfig::instance().gcs_create_actor_retry_interval_ms()
-  ));
-}
-
 void GcsActorScheduler::Schedule(std::shared_ptr<GcsActor> actor) {
   if (actor->GetCreationTaskSpecification().HasRuntimeEnv()) {
     auto serialized_runtime_env = actor->GetCreationTaskSpecification().SerializedRuntimeEnv();
@@ -153,17 +123,9 @@ void GcsActorScheduler::Schedule(std::shared_ptr<GcsActor> actor) {
         address.set_ip_address(actor_name + ".default.svc.cluster.local");
         address.set_port(7891);
         address.set_worker_id(worker_id.Binary());
-
-        /*
-        // Do this after GetOrConnect (race condition mentioned in comment below)
-        RAY_CHECK_OK(gcs_actor_table_.Put(actor->GetActorID(), actor->GetActorTableData(),
-                                      [this, actor](Status status) {
-                                        RAY_CHECK_OK(status);
-                                      }));
-        */
         actor->UpdateAddress(address);
 
-        CreateActorOnPod(actor);
+        Reschedule(actor);
       }
     }
     return;
