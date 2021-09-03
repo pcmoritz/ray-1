@@ -474,26 +474,31 @@ Status WorkerPool::RegisterWorker(const std::shared_ptr<WorkerInterface> &worker
   RAY_CHECK(worker);
 
   auto &state = GetStateForLanguage(worker->GetLanguage());
-  // auto shim_process = Process::FromPid(worker_shim_pid);
-  // worker->SetShimProcess(shim_process);
-  // if (state.starting_worker_processes.count(shim_process) == 0) {
-  //  RAY_LOG(WARNING) << "Received a register request from an unknown worker shim process:"
-  //                   << shim_process.GetId();
-  //  Status status = Status::Invalid("Unknown worker");
-  //  send_reply_callback(status, /*port=*/0);
-  //  return status;
-  // }
-  // auto process = Process::FromPid(pid);
-  // worker->SetProcess(process);
-
   // The port that this worker's gRPC server should listen on. 0 if the worker
   // should bind on a random port.
   int port = 0;
-  Status status = GetNextFreePort(&port);
-  if (!status.ok()) {
+  if (worker->GetWorkerType() != rpc::WorkerType::K8S_WORKER) {
+    auto shim_process = Process::FromPid(worker_shim_pid);
+    worker->SetShimProcess(shim_process);
+    if (state.starting_worker_processes.count(shim_process) == 0) {
+      RAY_LOG(WARNING) << "Received a register request from an unknown worker shim process:"
+                       << shim_process.GetId();
+    Status status = Status::Invalid("Unknown worker");
     send_reply_callback(status, /*port=*/0);
     return status;
+    }
+    auto process = Process::FromPid(pid);
+    worker->SetProcess(process);
+
+    Status status = GetNextFreePort(&port);
+    if (!status.ok()) {
+      send_reply_callback(status, /*port=*/0);
+      return status;
+    }
+  } else {
+    port = 7891;
   }
+
   RAY_LOG(DEBUG) << "Registering worker " << worker->WorkerId() << " with pid " << pid
                  << ", port: " << port
                  << ", worker_type: " << rpc::WorkerType_Name(worker->GetWorkerType());
