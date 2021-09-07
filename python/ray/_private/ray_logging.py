@@ -169,7 +169,7 @@ class StandardFdRedirectionRotatingFileHandler(RotatingFileHandler):
 
 def get_worker_log_file_name(worker_type):
     job_id = os.environ.get("RAY_JOB_ID")
-    if worker_type == "WORKER":
+    if worker_type == "WORKER" or worker_type == "K8S_WORKER":
         assert job_id is not None, (
             "RAY_JOB_ID should be set as an env "
             "variable within default_worker.py. If you see this error, "

@@ -514,7 +514,7 @@ Status WorkerPool::RegisterWorker(const std::shared_ptr<WorkerInterface> &worker
 void WorkerPool::OnWorkerStarted(const std::shared_ptr<WorkerInterface> &worker) {
   auto &state = GetStateForLanguage(worker->GetLanguage());
   const auto &shim_process = worker->GetShimProcess();
-  // RAY_CHECK(shim_process.IsValid());
+  RAY_CHECK(shim_process.IsValid() || worker->GetWorkerType() == rpc::WorkerType::K8S_WORKER);
 
   auto it = state.starting_worker_processes.find(shim_process);
   if (it != state.starting_worker_processes.end()) {
