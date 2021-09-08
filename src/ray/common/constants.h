@@ -51,3 +51,7 @@ constexpr int kMessagePackOffset = 9;
 /// Filename of "shim process" that sets up Python worker environment.
 /// Should be kept in sync with SETUP_WORKER_FILENAME in ray.ray_constants.
 constexpr char kSetupWorkerFilename[] = "setup_worker.py";
+
+// NodeID for all workers that got scheduled by Kubernetes
+constexpr char kKubernetesNodeID[] = "kubernetes_global_node______";
+static_assert(sizeof(kKubernetesNodeID) - 1 == kUniqueIDSize);

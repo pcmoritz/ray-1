@@ -123,6 +123,7 @@ void GcsActorScheduler::Schedule(std::shared_ptr<GcsActor> actor) {
         address.set_ip_address(actor_name + ".default.svc.cluster.local");
         address.set_port(7891);
         address.set_worker_id(worker_id.Binary());
+        address.set_raylet_id(kKubernetesNodeID);
         actor->UpdateAddress(address);
 
         Reschedule(actor);
