@@ -700,7 +700,6 @@ void WorkerPool::PopDeleteWorker(
 }
 
 void WorkerPool::PushWorker(const std::shared_ptr<WorkerInterface> &worker) {
-  RAY_LOG(INFO) << "Push worker " << (void*) worker.get();
   // Since the worker is now idle, unset its assigned task ID.
   RAY_CHECK(worker->GetAssignedTaskId().IsNil())
       << "Idle workers cannot have an assigned task ID";
@@ -722,8 +721,6 @@ void WorkerPool::PushWorker(const std::shared_ptr<WorkerInterface> &worker) {
 }
 
 void WorkerPool::TryKillingIdleWorkers() {
-  RAY_LOG(INFO) << "idle_of_all_languages_.size() = " << idle_of_all_languages_.size();
-  RAY_LOG(INFO) << "idle_of_all_languages_map_.size() = " << idle_of_all_languages_map_.size();
   RAY_CHECK(idle_of_all_languages_.size() == idle_of_all_languages_map_.size());
 
   int64_t now = get_time_();

@@ -260,7 +260,6 @@ void CoreWorkerDirectActorTaskSubmitter::CheckTimeoutTasks() {
 }
 
 void CoreWorkerDirectActorTaskSubmitter::SendPendingTasks(const ActorID &actor_id) {
-  RAY_LOG(INFO) << "SendPendingTasks";
   auto it = client_queues_.find(actor_id);
   RAY_CHECK(it != client_queues_.end());
   if (!it->second.rpc_client) {
@@ -271,7 +270,6 @@ void CoreWorkerDirectActorTaskSubmitter::SendPendingTasks(const ActorID &actor_i
   // Check if there is a pending force kill. If there is, send it and disconnect the
   // client.
   if (client_queue.pending_force_kill) {
-    RAY_LOG(INFO) << "SendPendingTasks 1";
     RAY_LOG(INFO) << "Sending KillActor request to actor " << actor_id;
     // It's okay if this fails because this means the worker is already dead.
     client_queue.rpc_client->KillActor(*client_queue.pending_force_kill, nullptr);
@@ -280,7 +278,6 @@ void CoreWorkerDirectActorTaskSubmitter::SendPendingTasks(const ActorID &actor_i
 
   // Submit all pending requests.
   auto &requests = client_queue.requests;
-  RAY_LOG(INFO) << "requests.size() = " << requests.size();
   auto head = requests.begin();
   while (head != requests.end() &&
          (/*seqno*/ head->first <= client_queue.next_send_position) &&
@@ -292,7 +289,6 @@ void CoreWorkerDirectActorTaskSubmitter::SendPendingTasks(const ActorID &actor_i
     head = requests.erase(head);
 
     RAY_CHECK(!client_queue.worker_id.empty());
-    RAY_LOG(INFO) << "SendPendingTasks 2";
     PushActorTask(client_queue, task_spec, skip_queue);
     client_queue.next_send_position++;
   }
@@ -320,7 +316,6 @@ void CoreWorkerDirectActorTaskSubmitter::ResendOutOfOrderTasks(const ActorID &ac
 void CoreWorkerDirectActorTaskSubmitter::PushActorTask(const ClientQueue &queue,
                                                        const TaskSpecification &task_spec,
                                                        bool skip_queue) {
-  RAY_LOG(INFO) << "PushActorTask 1";
   auto request = std::make_unique<rpc::PushTaskRequest>();
   // NOTE(swang): CopyFrom is needed because if we use Swap here and the task
   // fails, then the task data will be gone when the TaskManager attempts to
@@ -344,20 +339,16 @@ void CoreWorkerDirectActorTaskSubmitter::PushActorTask(const ClientQueue &queue,
       std::move(request), skip_queue,
       [this, addr, task_id, actor_id, actor_counter, task_spec, task_skipped](
           Status status, const rpc::PushTaskReply &reply) {
-        RAY_LOG(INFO) << "PushActorTask 2";
         bool increment_completed_tasks = true;
 
         if (task_skipped) {
-          RAY_LOG(INFO) << "PushActorTask 2a";
           // NOTE(simon):Increment the task counter regardless of the status because the
           // reply for a previously completed task. We are not calling CompletePendingTask
           // because the tasks are pushed directly to the actor, not placed on any queues
           // in task_finisher_.
         } else if (status.ok()) {
-          RAY_LOG(INFO) << "PushActorTask 2b";
           task_finisher_->CompletePendingTask(task_id, reply, addr);
         } else {
-          RAY_LOG(INFO) << "PushActorTask 2c";
           // push task failed due to network error. For example, actor is dead
           // and no process response for the push task.
           absl::MutexLock lock(&mu_);
@@ -439,7 +430,6 @@ void CoreWorkerDirectTaskReceiver::HandleTask(
   RAY_CHECK(waiter_ != nullptr) << "Must call init() prior to use";
   // Use `mutable_task_spec()` here as `task_spec()` returns a const reference
   // which doesn't work with std::move.
-
   TaskSpecification task_spec(
       std::move(*(const_cast<rpc::PushTaskRequest &>(request).mutable_task_spec())));
 

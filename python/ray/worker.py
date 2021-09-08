@@ -59,8 +59,6 @@ from ray.experimental.internal_kv import _internal_kv_get, \
     _internal_kv_initialized
 from ray._private.client_mode_hook import client_mode_hook
 
-# Heads up: These constants are off by one compared to the
-# ones in common.proto!
 SCRIPT_MODE = 0
 WORKER_MODE = 1
 LOCAL_MODE = 2

@@ -339,7 +339,6 @@ void CoreWorkerProcess::RemoveWorker(std::shared_ptr<CoreWorker> worker) {
 
 void CoreWorkerProcess::RunTaskExecutionLoop() {
   EnsureInitialized();
-  RAY_LOG(INFO) << "XXX worker_type = " << core_worker_process->options_.worker_type;
   RAY_CHECK(core_worker_process->options_.worker_type == WorkerType::WORKER ||
             core_worker_process->options_.worker_type == WorkerType::K8S_WORKER);
   if (core_worker_process->options_.num_workers == 1) {
