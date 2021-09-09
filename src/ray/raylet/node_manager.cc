@@ -1172,9 +1172,7 @@ void NodeManager::HandleWorkerAvailable(const std::shared_ptr<ClientConnection> 
 }
 
 void NodeManager::HandleWorkerAvailable(const std::shared_ptr<WorkerInterface> &worker) {
-  if(!worker) {
-    return;
-  }
+  RAY_CHECK(worker);
 
   if (worker->GetWorkerType() == rpc::WorkerType::SPILL_WORKER) {
     // Return the worker to the idle pool.
