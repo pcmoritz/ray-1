@@ -101,6 +101,7 @@ class Proxy:
         print("started thread")
 
     def run(self):
+        import sys
         while True:
             # print("before select")
             writable_fds = []
@@ -114,6 +115,8 @@ class Proxy:
             for fd in r:
                 x = fd.recv(8192)
                 self.out += x
+                if x == b"":
+                    ray.actor.exit_actor()
                 print("x", x)
 
     # def read(self):
@@ -195,31 +198,35 @@ class PTY:
 
 class Shell:
     def __init__(self):
-        pass
+        self.proxy = Proxy.remote()
+        self.pty = PTY()
+
+    def communicate(self, inp):
+        return ray.get(self.proxy.communicate.remote(inp))
     
     def handle(self):
-        pty = PTY()
         data = b""
-        proxy = Proxy.remote()
         while True:
             # print("1")
             writable_fds = []
             if data:
-                writable_fds += [pty]
-            r, w, x = select.select([pty], writable_fds, [], 0.1)
+                writable_fds += [self.pty]
+            r, w, x = select.select([self.pty], writable_fds, [], 0.1)
             for fd in w:
                 fd.write(data)
                 data = b""
             for fd in r:
                 inp = fd.read(8192)
-                data += ray.get(proxy.communicate.remote(inp))
+                data += self.communicate(inp)
             # Maybe read more, this will make sure all output is read
             # even if there were no new inputs
-            data += ray.get(proxy.communicate.remote(b""))
+            data += self.communicate(b"")
             # print("2")
-        del pty
         print("Restoring")
 
 
-shell = Shell()
-shell.handle()
+try:
+    shell = Shell()
+    shell.handle()
+except:
+    del shell.pty
