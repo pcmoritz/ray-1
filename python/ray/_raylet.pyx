@@ -520,6 +520,7 @@ cdef execute_task(
                 class_name = actor.__class__.__name__
                 actor_title = f"{class_name}({args!r}, {kwargs!r})"
                 core_worker.set_actor_title(actor_title.encode("utf-8"))
+                ray.experimental.internal_kv._internal_kv_put("RAY_ACTOR_{}_PPID".format(core_worker.get_actor_id().hex()), os.getppid())
             # Execute the task.
             with core_worker.profile_event(b"task:execute"):
                 task_exception = True
