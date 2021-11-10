@@ -42,7 +42,7 @@ class Proxy:
         self.out = b""
 
         self.sock = socket.socket()
-        self.sock.bind(("127.0.0.1", 10000 + pid))
+        self.sock.bind(("127.0.0.1", 10000 + pid % 50000))
         self.sock.listen(5)
 
         # self.process = launch_process(argv)
@@ -104,7 +104,7 @@ class PTY:
         newattr[3] &= ~termios.ICANON & ~termios.ECHO
 
         # don't handle ^C / ^Z / ^\
-        newattr[6][termios.VINTR] = b'\x00'
+        # newattr[6][termios.VINTR] = b'\x00'
         newattr[6][termios.VQUIT] = b'\x00'
         newattr[6][termios.VSUSP] = b'\x00'
 
@@ -164,14 +164,19 @@ class Shell:
     def close(self):
         self.pty.close()
 
-def execute(argv, actor):
+shell = None
+
+def attach(actor):
+    global shell
     logging.disable(level=logging.ERROR)
     actor_id = actor._ray_actor_id.hex()
     pid_data = ray.experimental.internal_kv._internal_kv_get("RAY_ACTOR_{}_PPID".format(actor_id))
     ray.worker._worker_logs_enabled = False
+    shell = Shell([], int(pid_data))
+
+def interact(actor):
+    global shell
     try:
-        shell = Shell(argv, int(pid_data))
-        actor.f.remote()
         shell.handle()
     except Exception as e:
         print("error", e)

@@ -10,12 +10,12 @@ def background_connect():
     while True:
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.connect(('127.0.0.1', 10000 + os.getpid()))
+            s.connect(('127.0.0.1', 10000 + os.getpid() % 50000))
             break
         except Exception as e:
             print("error", e)
-            with open("/tmp/result.txt", "a") as f:
-                f.write("listening on" + str(10000 + os.getpid()))
+            # with open("/tmp/result.txt", "a") as f:
+            #     f.write("listening on" + str(10000 + os.getpid()))
             time.sleep(4.0)
 
     os.dup2(s.fileno(), 0)
