@@ -9,12 +9,12 @@ import json
 import time
 
 import ray
-from ray.cluster_utils import Cluster, AutoscalingCluster
-from ray._private.services import REDIS_EXECUTABLE, _start_redis_instance
-from ray._private.test_utils import (init_error_pubsub, setup_tls,
-                                     teardown_tls, get_and_run_node_killer)
-import ray.util.client.server.server as ray_client_server
-import ray._private.gcs_utils as gcs_utils
+# from ray.cluster_utils import Cluster, AutoscalingCluster
+# from ray._private.services import REDIS_EXECUTABLE, _start_redis_instance
+# from ray._private.test_utils import (init_error_pubsub, setup_tls,
+#                                      teardown_tls, get_and_run_node_killer)
+# import ray.util.client.server.server as ray_client_server
+# import ray._private.gcs_utils as gcs_utils
 
 
 @pytest.fixture
