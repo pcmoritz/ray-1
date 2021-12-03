@@ -15,6 +15,28 @@ import datetime
 #                                      wait_for_pid_to_exit)
 # from ray.tests.client_test_utils import create_remote_signal_actor
 
+def wait_for_condition(condition_predictor,
+                       timeout=10,
+                       retry_interval_ms=100,
+                       **kwargs):
+    """Wait until a condition is met or time out with an exception.
+
+    Args:
+        condition_predictor: A function that predicts the condition.
+        timeout: Maximum timeout in seconds.
+        retry_interval_ms: Retry interval in milliseconds.
+
+    Raises:
+        RuntimeError: If the condition is not met before the timeout expires.
+    """
+    import time
+    start = time.time()
+    while time.time() - start <= timeout:
+        if condition_predictor(**kwargs):
+            return
+        time.sleep(retry_interval_ms / 1000.0)
+    raise RuntimeError("The condition wasn't met before the timeout expired.")
+
 import ray
 # NOTE: We have to import setproctitle after ray because we bundle setproctitle
 # with ray.
