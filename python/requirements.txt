@@ -45,6 +45,9 @@ dataclasses; python_version < '3.7'
 starlette
 aiorwlock
 
+psutil
+setproctitle
+
 # Requirements for running tests
 pyarrow >= 4.0.1, < 7.0.0
 blist; platform_system != "Windows"
@@ -68,7 +71,7 @@ mypy
 networkx
 numba
 # higher version of llvmlite breaks windows
-llvmlite==0.34.0
+llvmlite
 openpyxl
 opentelemetry-api==1.1.0
 opentelemetry-sdk==1.1.0
@@ -85,7 +88,7 @@ pytest-lazy-fixture
 pytest-timeout
 pytest-virtualenv
 scikit-learn==0.22.2
-tensorflow==2.5.1
+tensorflow
 testfixtures
 werkzeug
 xlrd
@@ -100,3 +103,4 @@ cryptography>=3.0.0
 myst-parser==0.15.2
 myst-nb==0.13.1
 jupytext==1.13.6
+IPython

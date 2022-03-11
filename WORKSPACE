@@ -20,3 +20,22 @@ load("@bazel_skylib//lib:versions.bzl", "versions")
 # When the bazel version is updated, make sure to update it
 # in setup.py as well.
 versions.check(minimum_bazel_version = "4.2.1")
+
+register_toolchains("//:py3_dev_toolchain")
+
+register_execution_platforms(
+    "@local_config_platform//:host",
+    "//:local_hermetic_python_platform",
+)
+
+load("@rules_python//python:pip.bzl", "pip_install", "pip_parse")
+
+pip_parse(
+    name = "py_deps",
+    python_interpreter_target = "@py3_dev_env//:py3_dev_env/bin/python",
+    requirements_lock = "//:python/requirements.bazel",
+)
+
+load("@py_deps//:requirements.bzl", install_py_deps = "install_deps")
+
+install_py_deps()

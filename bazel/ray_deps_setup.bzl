@@ -84,6 +84,21 @@ def auto_http_archive(
     )
 
 def ray_deps_setup():
+    # This can be used to set up a Python environment that is independent of the dev machine and always works
+    http_archive(
+        name = "rules_conda",
+        patches = ["//bazel:rules_conda.patch"],
+        sha256 = "9793f86162ec5cfb32a1f1f13f5bf776e2c06b243c4f1ee314b9ec870144220d",
+        url = "https://github.com/spietras/rules_conda/releases/download/0.1.0/rules_conda-0.1.0.zip",
+    )
+
+    http_archive(
+        name = "rules_python",
+        sha256 = "a30abdfc7126d497a7698c29c46ea9901c6392d6ed315171a6df5ce433aa4502",
+        strip_prefix = "rules_python-0.6.0",
+        url = "https://github.com/bazelbuild/rules_python/archive/0.6.0.tar.gz",
+    )
+
     # Explicitly bring in protobuf dependency to work around
     # https://github.com/ray-project/ray/issues/14117
     http_archive(

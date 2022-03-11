@@ -2580,3 +2580,97 @@ genrule(
     """,
     local = 1,
 )
+
+# Set up Ray unit testing environment
+
+load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_runtime", "py_runtime_pair")
+load("@rules_python//python:pip.bzl", "compile_pip_requirements")
+
+compile_pip_requirements(
+    name = "requirements",
+    extra_args = ["--allow-unsafe"],
+    requirements_in = "python/requirements.txt",
+    requirements_txt = "python/requirements.bazel",
+    visibility = ["//visibility:public"],
+)
+
+# This Python runtime is using a python interpreter that is managed by bazel.
+# This ensures all the right dependencies are installed and the tests run in
+# bazel are not impacted by different python environments on developers' laptops.
+py_runtime(
+    name = "python3_runtime",
+    interpreter = "@py3_dev_env//:py3_dev_env/bin/python",
+    python_version = "PY3",
+    visibility = ["//visibility:public"],
+)
+
+py_runtime_pair(
+    name = "py3_dev_runtime_pair",
+    py2_runtime = None,
+    py3_runtime = ":python3_runtime",
+)
+
+# This is a set of constraints that ensure targets tagged with :run_in_hermetic_python
+# are running in the hermetic python environment we are setting up above (python3_runtime).
+# We learned how to set this up from the docker python environment set up in rules_docker, see
+# https://github.com/bazelbuild/rules_docker/blob/76c708fc979c1bfb65b4db300c654be08f096874/platforms/BUILD#L21
+# The exec_compatible_with makes sure tests with this tag are run in python3_runtime.
+constraint_setting(name = "hermetic")
+
+constraint_value(
+    name = "run_in_hermetic_python",
+    constraint_setting = ":hermetic",
+    visibility = ["//visibility:public"],
+)
+
+platform(
+    name = "local_hermetic_python_platform",
+    constraint_values = [
+        "//:run_in_hermetic_python",
+    ],
+    parents = ["@local_config_platform//:host"],
+    visibility = ["//visibility:public"],
+)
+
+toolchain(
+    name = "py3_dev_toolchain",
+    exec_compatible_with = ["//:run_in_hermetic_python"],
+    toolchain = ":py3_dev_runtime_pair",
+    toolchain_type = "@bazel_tools//tools/python:toolchain_type",
+)
+
+load("@py_deps//:requirements.bzl", "requirement")
+
+py_library(
+    name = "ray",
+    imports = ["python/"],
+    srcs = [":python_sources"],
+    data = ["python/ray/_raylet.so"],
+    deps = [
+        requirement("attrs"),
+        requirement("click"),
+        requirement("filelock"),
+        requirement("grpcio"),
+        requirement("jsonschema"),
+        requirement("msgpack"),
+        requirement("numpy"),
+        requirement("protobuf"),
+        requirement("pyyaml"),
+        requirement("aiosignal"),
+        requirement("frozenlist"),
+        requirement("requests"),
+        requirement("virtualenv"),
+        requirement("setproctitle"),
+        requirement("psutil"),
+    ]
+)
+
+py_binary(
+    name = "ray_shell",
+    srcs = ["scripts/ray_shell.py"],
+    deps = [
+        ":ray",
+        requirement("IPython"),
+    ],
+    exec_compatible_with = ["//:run_in_hermetic_python"],
+)

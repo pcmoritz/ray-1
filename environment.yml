@@ -1,0 +1,6 @@
+name: py3_dev_env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
