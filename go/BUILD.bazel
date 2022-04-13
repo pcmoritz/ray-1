@@ -1,0 +1,14 @@
+load("@bazel_gazelle//:def.bzl", "gazelle")
+
+# gazelle:prefix github.com/ray-project/ray/go
+gazelle(name = "gazelle")
+
+gazelle(
+    name = "gazelle_update_repos",
+    args = [
+        "-from_file=go/go.mod",
+        "-to_macro=bazel/go_deps.bzl%go_dependencies",
+        "-prune",
+    ],
+    command = "update-repos",
+)

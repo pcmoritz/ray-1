@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package apiserver;
+option go_package = "github.com/ray-project/ray/go/apiserver/proto";
+
+import "google/api/annotations.proto";
+
+message Actor {
+  bytes actor_id = 1;
+  // other fields
+}
+
+message ListActorsRequest {
+  string page_token = 1;
+}
+
+message ListActorsReply {
+  repeated Actor actors = 1;
+  string next_page_token = 2;
+}
+
+service ApiService {
+  rpc ListActors(ListActorsRequest) returns (ListActorsReply) {
+    option (google.api.http) = {
+      get: "/v1/actors"
+    };
+  }
+}
