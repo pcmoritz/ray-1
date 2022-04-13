@@ -2469,25 +2469,25 @@ alias(
 filegroup(
     name = "all_py_proto",
     srcs = [
-        "//src/ray/protobuf:agent_manager_py_proto",
-        "//src/ray/protobuf:common_py_proto",
-        "//src/ray/protobuf:core_worker_py_proto",
-        "//src/ray/protobuf:event_py_proto",
-        "//src/ray/protobuf:gcs_py_proto",
-        "//src/ray/protobuf:gcs_service_py_proto",
-        "//src/ray/protobuf:job_agent_py_proto",
-        "//src/ray/protobuf:node_manager_py_proto",
-        "//src/ray/protobuf:ray_client_py_proto",
-        "//src/ray/protobuf:reporter_py_proto",
-        "//src/ray/protobuf:runtime_env_agent_py_proto",
-        "//src/ray/protobuf:runtime_env_common_py_proto",
+        "//python/ray/core/generated:agent_manager_py_proto",
+        "//python/ray/core/generated:common_py_proto",
+        "//python/ray/core/generated:core_worker_py_proto",
+        "//python/ray/core/generated:event_py_proto",
+        "//python/ray/core/generated:gcs_py_proto",
+        "//python/ray/core/generated:gcs_service_py_proto",
+        "//python/ray/core/generated:job_agent_py_proto",
+        "//python/ray/core/generated:node_manager_py_proto",
+        "//python/ray/core/generated:ray_client_py_proto",
+        "//python/ray/core/generated:reporter_py_proto",
+        "//python/ray/core/generated:runtime_env_agent_py_proto",
+        "//python/ray/core/generated:runtime_env_common_py_proto",
     ],
 )
 
 filegroup(
     name = "serve_py_proto",
     srcs = [
-        "//src/ray/protobuf:serve_py_proto",
+        "//python/ray/core/generated:serve_py_proto",
     ],
 )
 
@@ -2644,8 +2644,25 @@ load("@py_deps//:requirements.bzl", "requirement")
 py_library(
     name = "ray",
     imports = ["python/"],
-    srcs = [":python_sources"],
-    data = ["python/ray/_raylet.so"],
+    srcs = [
+        ":python_sources",
+        "//python/ray/core/generated:agent_manager_py_proto",
+        "//python/ray/core/generated:common_py_proto",
+        "//python/ray/core/generated:core_worker_py_proto",
+        "//python/ray/core/generated:event_py_proto",
+        "//python/ray/core/generated:gcs_py_proto",
+        "//python/ray/core/generated:gcs_service_py_proto",
+        "//python/ray/core/generated:job_agent_py_proto",
+        "//python/ray/core/generated:node_manager_py_proto",
+        "//python/ray/core/generated:ray_client_py_proto",
+        "//python/ray/core/generated:reporter_py_proto",
+        "//python/ray/core/generated:runtime_env_agent_py_proto",
+        "//python/ray/core/generated:runtime_env_common_py_proto",
+    ],
+    data = [
+        "python/ray/_raylet.so",
+        ":all_py_proto",
+    ],
     deps = [
         requirement("attrs"),
         requirement("click"),

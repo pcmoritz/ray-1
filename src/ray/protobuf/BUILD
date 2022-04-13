@@ -2,13 +2,14 @@ package(default_visibility = ["//visibility:public"])
 
 load("@rules_proto//proto:defs.bzl", "proto_library")
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_proto_library", "cc_test")
-load("@rules_proto_grpc//python:defs.bzl", "python_grpc_compile")
 
 proto_library(
     name = "common_proto",
     srcs = ["common.proto"],
     deps = [":runtime_env_common_proto"],
-    visibility = ["//java:__subpackages__"],
+    visibility = [
+        "//visibility:public",
+    ],
 )
 
 cc_proto_library(
@@ -16,34 +17,28 @@ cc_proto_library(
     deps = [":common_proto"],
 )
 
-python_grpc_compile(
-    name = "common_py_proto",
-    deps = [":common_proto"],
-)
-
 proto_library(
     name = "gcs_proto",
     srcs = ["gcs.proto"],
-    visibility = ["//java:__subpackages__"],
     deps = [
         ":common_proto",
         ":runtime_env_common_proto",
+    ],
+    visibility = [
+        "//visibility:public",
     ],
 )
 
 proto_library(
     name = "runtime_env_common_proto",
     srcs = ["runtime_env_common.proto"],
-    visibility = ["//java:__subpackages__"],
+    visibility = [
+        "//visibility:public",
+    ],
 )
 
 cc_proto_library(
     name = "runtime_env_common_cc_proto",
-    deps = [":runtime_env_common_proto"],
-)
-
-python_grpc_compile(
-    name = "runtime_env_common_py_proto",
     deps = [":runtime_env_common_proto"],
 )
 
@@ -52,35 +47,22 @@ cc_proto_library(
     deps = [":gcs_proto"],
 )
 
-python_grpc_compile(
-    name = "gcs_py_proto",
-    deps = [":gcs_proto"],
-)
-
 # Function and class dependencies.
 proto_library(
     name = "dependency_proto",
     srcs = ["dependency.proto"],
-)
-
-python_grpc_compile(
-    name = "dependency_py_proto",
-    deps = [":dependency_proto"],
+    visibility = ["//visibility:public"],
 )
 
 # Text logging.
 proto_library(
     name = "logging_proto",
     srcs = ["logging.proto"],
+    visibility = ["//visibility:public"],
 )
 
 cc_proto_library(
     name = "logging_cc_proto",
-    deps = [":logging_proto"],
-)
-
-python_grpc_compile(
-    name = "logging_py_proto",
     deps = [":logging_proto"],
 )
 
@@ -91,15 +73,11 @@ proto_library(
       ":common_proto",
       ":gcs_proto",
     ],
+    visibility = ["//visibility:public"],
 )
 
 cc_proto_library(
     name = "node_manager_cc_proto",
-    deps = [":node_manager_proto"],
-)
-
-python_grpc_compile(
-    name = "node_manager_py_proto",
     deps = [":node_manager_proto"],
 )
 
@@ -110,15 +88,11 @@ proto_library(
         ":common_proto",
         "@io_opencensus_proto//opencensus/proto/metrics/v1:metrics_proto"
     ],
+    visibility = ["//visibility:public"],
 )
 
 cc_proto_library(
     name = "reporter_cc_proto",
-    deps = [":reporter_proto"],
-)
-
-python_grpc_compile(
-    name = "reporter_py_proto",
     deps = [":reporter_proto"],
 )
 
@@ -130,15 +104,11 @@ proto_library(
         ":gcs_proto",
         ":pubsub_proto",
     ],
+    visibility = ["//visibility:public"],
 )
 
 cc_proto_library(
     name = "gcs_service_cc_proto",
-    deps = [":gcs_service_proto"],
-)
-
-python_grpc_compile(
-    name = "gcs_service_py_proto",
     deps = [":gcs_service_proto"],
 )
 
@@ -149,6 +119,7 @@ proto_library(
         ":common_proto",
         ":gcs_proto",
     ],
+    visibility = ["//visibility:public"],
 )
 
 cc_proto_library(
@@ -156,15 +127,11 @@ cc_proto_library(
     deps = [":test_service_proto"],
 )
 
-python_grpc_compile(
-    name = "test_service_py_proto",
-    deps = [":test_service_proto"],
-)
-
 proto_library(
     name = "object_manager_proto",
     srcs = ["object_manager.proto"],
     deps = [":common_proto"],
+    visibility = ["//visibility:public"],
 )
 
 cc_proto_library(
@@ -180,11 +147,7 @@ proto_library(
         ":gcs_service_proto",
         ":pubsub_proto",
     ],
-)
-
-python_grpc_compile(
-    name = "core_worker_py_proto",
-    deps = [":core_worker_proto"],
+    visibility = ["//visibility:public"],
 )
 
 cc_proto_library(
@@ -195,6 +158,7 @@ cc_proto_library(
 proto_library(
     name = "serialization_proto",
     srcs = ["serialization.proto"],
+    visibility = ["//visibility:public"],
 )
 
 cc_proto_library(
@@ -205,15 +169,11 @@ cc_proto_library(
 proto_library(
     name = "event_proto",
     srcs = ["event.proto"],
+    visibility = ["//visibility:public"],
 )
 
 cc_proto_library(
     name = "event_cc_proto",
-    deps = [":event_proto"],
-)
-
-python_grpc_compile(
-    name = "event_py_proto",
     deps = [":event_proto"],
 )
 
@@ -222,11 +182,7 @@ proto_library(
     name = "job_agent_proto",
     srcs = ["job_agent.proto"],
     deps = [":agent_manager_proto"],
-)
-
-python_grpc_compile(
-    name = "job_agent_py_proto",
-    deps = [":job_agent_proto"],
+    visibility = ["//visibility:public"],
 )
 
 # Agent manager gRPC lib.
@@ -234,11 +190,7 @@ proto_library(
     name = "agent_manager_proto",
     srcs = ["agent_manager.proto"],
     deps = [],
-)
-
-python_grpc_compile(
-    name = "agent_manager_py_proto",
-    deps = [":agent_manager_proto"],
+    visibility = ["//visibility:public"],
 )
 
 cc_proto_library(
@@ -251,11 +203,7 @@ proto_library(
     name = "ray_client_proto",
     srcs = ["ray_client.proto"],
     deps = [":common_proto"],
-)
-
-python_grpc_compile(
-    name = "ray_client_py_proto",
-    deps = [":ray_client_proto"],
+    visibility = ["//visibility:public"],
 )
 
 # Pubsub
@@ -269,6 +217,7 @@ proto_library(
         ":logging_proto",
         ":reporter_proto",
     ],
+    visibility = ["//visibility:public"],
 )
 
 cc_proto_library(
@@ -284,11 +233,7 @@ proto_library(
         ":common_proto",
         ":agent_manager_proto",
     ],
-)
-
-python_grpc_compile(
-    name = "runtime_env_agent_py_proto",
-    deps = [":runtime_env_agent_proto"],
+    visibility = ["//visibility:public"],
 )
 
 cc_proto_library(
@@ -299,10 +244,7 @@ cc_proto_library(
 proto_library(
     name = "serve_proto",
     srcs = ["serve.proto"],
-    visibility = ["//java:__subpackages__"],
-)
-
-python_grpc_compile(
-    name = "serve_py_proto",
-    deps = [":serve_proto"],
+    visibility = [
+        "//visibility:public",
+    ],
 )
