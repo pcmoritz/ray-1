@@ -188,6 +188,7 @@ class KuberayNodeProvider(NodeProvider):  # type: ignore
         """Wrapper for REST GET of resource with proper headers."""
         url = url_from_resource(namespace=self.namespace, path=path)
         result = requests.get(url, headers=self.headers, verify=self.verify)
+        print("result", result)
         assert result.status_code == 200
         return result.json()
 
