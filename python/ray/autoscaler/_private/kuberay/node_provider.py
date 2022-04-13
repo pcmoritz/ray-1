@@ -188,7 +188,7 @@ class KuberayNodeProvider(NodeProvider):  # type: ignore
         """Wrapper for REST GET of resource with proper headers."""
         url = url_from_resource(namespace=self.namespace, path=path)
         result = requests.get(url, headers=self.headers, verify=self.verify)
-        print("result", result)
+        print("path", path, "result", result)
         assert result.status_code == 200
         return result.json()
 
@@ -279,7 +279,6 @@ class KuberayNodeProvider(NodeProvider):  # type: ignore
 
             url = "rayclusters/{}".format(self.cluster_name)
             raycluster = self._get(url)
-
             for group_name, nodes in groups.items():
                 group_index = _worker_group_index(raycluster, group_name)
                 prefix = f"/spec/workerGroupSpecs/{group_index}"
