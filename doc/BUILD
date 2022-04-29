@@ -11,27 +11,48 @@ load("//bazel:python.bzl", "py_test_run_all_notebooks")
 py_test(
     name = "dask_xgboost",
     size = "medium",
-    main = "test_myst_doc.py",
     srcs = ["test_myst_doc.py"],
-    tags = ["exclusive", "team:ml", "py37"],
+    args = [
+        "--path",
+        "doc/source/ray-core/examples/dask_xgboost/dask_xgboost.ipynb",
+        "--smoke-test",
+        "--address ''",
+        "--num-actors 4",
+        "--cpus-per-actor 1",
+        "--num-actors-inference 4",
+        "--cpus-per-actor-inference 1",
+    ],
     data = ["//doc/source/ray-core/examples:core_examples"],
-    args = ["--path", "doc/source/ray-core/examples/dask_xgboost/dask_xgboost.ipynb",
-            "--smoke-test", "--address ''", "--num-actors 4", "--cpus-per-actor 1", "--num-actors-inference 4",
-            "--cpus-per-actor-inference 1"]
+    main = "test_myst_doc.py",
+    tags = [
+        "exclusive",
+        "py37",
+        "team:ml",
+    ],
 )
 
 # Support for Modin has been dropped in 3.6.
 py_test(
     name = "modin_xgboost",
     size = "medium",
-    main = "test_myst_doc.py",
     srcs = ["test_myst_doc.py"],
-    tags = ["exclusive", "team:ml", "py37"],
+    args = [
+        "--path",
+        "doc/source/ray-core/examples/modin_xgboost/modin_xgboost.ipynb",
+        "--smoke-test",
+        "--address ''",
+        "--num-actors 4",
+        "--cpus-per-actor 1",
+        "--num-actors-inference 4",
+        "--cpus-per-actor-inference 1",
+    ],
     data = ["//doc/source/ray-core/examples:core_examples"],
-    args = ["--path", "doc/source/ray-core/examples/modin_xgboost/modin_xgboost.ipynb",
-            "--smoke-test", "--address ''", "--num-actors 4",
-            "--cpus-per-actor 1", "--num-actors-inference 4",
-            "--cpus-per-actor-inference 1"]
+    main = "test_myst_doc.py",
+    tags = [
+        "exclusive",
+        "py37",
+        "team:ml",
+    ],
 )
 
 ### Ray Data
@@ -39,55 +60,92 @@ py_test(
     name = "quick_start",
     size = "small",
     srcs = ["source/data/doc_code/quick_start.py"],
-    tags = ["exclusive", "team:ml"]
+    tags = [
+        "exclusive",
+        "team:ml",
+    ],
 )
 
 py_test(
     name = "big_data_ingestion",
     size = "small",
-    main = "test_myst_doc.py",
     srcs = ["test_myst_doc.py"],
-    args = ["--path", "doc/source/data/examples/big_data_ingestion.ipynb"],
+    args = [
+        "--path",
+        "doc/source/data/examples/big_data_ingestion.ipynb",
+    ],
     data = ["//doc/source/data/examples:data_examples"],
-    tags = ["exclusive", "team:core", "py37"]
+    main = "test_myst_doc.py",
+    tags = [
+        "exclusive",
+        "py37",
+        "team:core",
+    ],
 )
 
 py_test(
     name = "datasets_train",
     size = "medium",
     srcs = ["source/ray-core/_examples/datasets_train/datasets_train.py"],
-    tags = ["exclusive", "team:ml", "py37", "datasets_train"],
-    args = ["--smoke-test", "--num-workers=2", "--use-gpu"]
+    args = [
+        "--smoke-test",
+        "--num-workers=2",
+        "--use-gpu",
+    ],
+    tags = [
+        "datasets_train",
+        "exclusive",
+        "py37",
+        "team:ml",
+    ],
 )
 
 py_test(
     name = "plot_hyperparameter",
     size = "small",
-    main = "test_myst_doc.py",
     srcs = ["test_myst_doc.py"],
-    args = ["--path", "doc/source/ray-core/examples/plot_hyperparameter.ipynb"],
+    args = [
+        "--path",
+        "doc/source/ray-core/examples/plot_hyperparameter.ipynb",
+    ],
     data = ["//doc/source/ray-core/examples:core_examples"],
-    tags = ["exclusive", "team:ml"]
+    main = "test_myst_doc.py",
+    tags = [
+        "exclusive",
+        "team:ml",
+    ],
 )
 
 py_test(
     name = "plot_parameter_server",
     size = "medium",
-    main = "test_myst_doc.py",
     srcs = ["test_myst_doc.py"],
-    args = ["--path", "doc/source/ray-core/examples/plot_parameter_server.ipynb"],
+    args = [
+        "--path",
+        "doc/source/ray-core/examples/plot_parameter_server.ipynb",
+    ],
     data = ["//doc/source/ray-core/examples:core_examples"],
-    tags = ["exclusive", "team:ml"]
+    main = "test_myst_doc.py",
+    tags = [
+        "exclusive",
+        "team:ml",
+    ],
 )
 
 py_test(
     name = "plot_pong_example",
     size = "large",
-    main = "test_myst_doc.py",
     srcs = ["test_myst_doc.py"],
-    args = ["--path", "doc/source/ray-core/examples/plot_pong_example.ipynb"],
+    args = [
+        "--path",
+        "doc/source/ray-core/examples/plot_pong_example.ipynb",
+    ],
     data = ["//doc/source/ray-core/examples:core_examples"],
-    tags = ["exclusive", "team:ml"]
+    main = "test_myst_doc.py",
+    tags = [
+        "exclusive",
+        "team:ml",
+    ],
 )
 
 # --------------------------------------------------------------------
@@ -97,42 +155,61 @@ py_test(
 py_test(
     name = "doc_code_tf_example",
     size = "small",
-    main = "source/ray-core/doc_code/tf_example.py",
     srcs = ["source/ray-core/doc_code/tf_example.py"],
-    tags = ["exclusive", "tf", "team:ml"]
+    main = "source/ray-core/doc_code/tf_example.py",
+    tags = [
+        "exclusive",
+        "team:ml",
+        "tf",
+    ],
 )
 
 py_test(
     name = "doc_code_torch_example",
     size = "small",
-    main = "source/ray-core/doc_code/torch_example.py",
     srcs = ["source/ray-core/doc_code/torch_example.py"],
-    tags = ["exclusive", "pytorch", "team:ml"]
+    main = "source/ray-core/doc_code/torch_example.py",
+    tags = [
+        "exclusive",
+        "pytorch",
+        "team:ml",
+    ],
 )
 
 # Ray Serve
 py_test(
     name = "doc_code_metrics_example",
     size = "small",
-    main = "source/ray-core/doc_code/metrics_example.py",
     srcs = ["source/ray-core/doc_code/metrics_example.py"],
-    tags = ["exclusive", "team:serve"]
+    main = "source/ray-core/doc_code/metrics_example.py",
+    tags = [
+        "exclusive",
+        "team:serve",
+    ],
 )
 
 py_test(
     name = "doc_code_runtime_env_example",
     size = "small",
-    main = "source/ray-core/doc_code/runtime_env_example.py",
     srcs = ["source/ray-core/doc_code/runtime_env_example.py"],
-    tags = ["exclusive", "post_wheel_build", "team:serve"]
+    main = "source/ray-core/doc_code/runtime_env_example.py",
+    tags = [
+        "exclusive",
+        "post_wheel_build",
+        "team:serve",
+    ],
 )
 
 py_test(
     name = "doc_code_create_deployment_example",
     size = "small",
-    main = "create_deployment.py",
     srcs = ["//doc/source/serve/doc_code:serve_doc_code"],
-    tags = ["exclusive", "post_wheel_build", "team:serve"]
+    main = "create_deployment.py",
+    tags = [
+        "exclusive",
+        "post_wheel_build",
+        "team:serve",
+    ],
 )
 
 # --------------------------------------------------------------------
@@ -142,9 +219,12 @@ py_test(
 py_test_run_all_notebooks(
     size = "medium",
     include = ["doc/source/tune/examples/*.ipynb"],
-    exclude = [],
     data = ["//doc/source/tune/examples:tune_examples"],
-    tags = ["exclusive", "team:ml"],
+    exclude = [],
+    tags = [
+        "exclusive",
+        "team:ml",
+    ],
 )
 
 # --------------------------------------------------------------------
@@ -156,7 +236,10 @@ py_test_run_all_subdirectory(
     include = ["source/tune/doc_code/*.py"],
     exclude = [],
     extra_srcs = [],
-    tags = ["exclusive", "team:ml"],
+    tags = [
+        "exclusive",
+        "team:ml",
+    ],
 )
 
 # --------------------------------------------------------------------
@@ -168,5 +251,8 @@ py_test_run_all_subdirectory(
     include = ["source/ray-overview/doc_code/*.py"],
     exclude = ["source/ray-overview/doc_code/ray_data.py"],
     extra_srcs = [],
-    tags = ["exclusive", "team:ml"],
+    tags = [
+        "exclusive",
+        "team:ml",
+    ],
 )

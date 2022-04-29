@@ -1,7 +1,10 @@
 py_test(
- name = "test_modin",
- size = "small",
- srcs = ["test_modin.py"],
- deps = ["//:ray_lib"],
- tags = ["team:core", "exclusive"],
+    name = "test_modin",
+    size = "small",
+    srcs = ["test_modin.py"],
+    tags = [
+        "exclusive",
+        "team:core",
+    ],
+    deps = ["//:ray_lib"],
 )

@@ -3,7 +3,7 @@ py_library(
     srcs = glob(["**/*.py"]),
     visibility = [
         "//doc:__subpackages__",
+        "//python/ray/serve:__pkg__",
         "//python/ray/serve:__subpackages__",
-        "//python/ray/serve:__pkg__"
     ],
 )

@@ -94,49 +94,70 @@ py_test(
 
 py_test(
     name = "test_alerts",
-    tags = ["team:ci", "release_unit"],
     size = "small",
-    srcs = ["ray_release/tests/test_alerts.py"]
+    srcs = ["ray_release/tests/test_alerts.py"],
+    tags = [
+        "release_unit",
+        "team:ci",
+    ],
 )
 
 py_test(
     name = "test_buildkite",
-    tags = ["team:ci", "release_unit"],
     size = "small",
-    srcs = ["ray_release/tests/test_buildkite.py"]
+    srcs = ["ray_release/tests/test_buildkite.py"],
+    tags = [
+        "release_unit",
+        "team:ci",
+    ],
 )
 
 py_test(
     name = "test_cluster_manager",
-    tags = ["team:ci", "release_unit"],
     size = "small",
-    srcs = ["ray_release/tests/test_cluster_manager.py"]
+    srcs = ["ray_release/tests/test_cluster_manager.py"],
+    tags = [
+        "release_unit",
+        "team:ci",
+    ],
 )
 
 py_test(
     name = "test_config",
-    tags = ["team:ci", "release_unit"],
     size = "small",
-    srcs = ["ray_release/tests/test_config.py"]
+    srcs = ["ray_release/tests/test_config.py"],
+    tags = [
+        "release_unit",
+        "team:ci",
+    ],
 )
 
 py_test(
     name = "test_glue",
-    tags = ["team:ci", "release_unit"],
     size = "small",
-    srcs = ["ray_release/tests/test_glue.py"]
+    srcs = ["ray_release/tests/test_glue.py"],
+    tags = [
+        "release_unit",
+        "team:ci",
+    ],
 )
 
 py_test(
     name = "test_run_script",
-    tags = ["team:ci", "release_unit"],
     size = "small",
-    srcs = ["ray_release/tests/test_run_script.py"]
+    srcs = ["ray_release/tests/test_run_script.py"],
+    tags = [
+        "release_unit",
+        "team:ci",
+    ],
 )
 
 py_test(
     name = "test_wheels",
-    tags = ["team:ci", "release_unit"],
     size = "small",
-    srcs = ["ray_release/tests/test_wheels.py"]
+    srcs = ["ray_release/tests/test_wheels.py"],
+    tags = [
+        "release_unit",
+        "team:ci",
+    ],
 )

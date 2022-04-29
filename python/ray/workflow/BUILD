@@ -13,20 +13,36 @@ SRCS = [] + select({
     "//conditions:default": [],
 })
 
-LARGE_TESTS = ["tests/test_recovery.py", "tests/test_basic_workflows_2.py", "tests/test_metadata.py"]
+LARGE_TESTS = [
+    "tests/test_recovery.py",
+    "tests/test_basic_workflows_2.py",
+    "tests/test_metadata.py",
+]
 
 py_test_module_list(
-  files = glob(["tests/test_*.py", "examples/**/*.py"], exclude=LARGE_TESTS),
-  size = "medium",
-  extra_srcs = SRCS,
-  tags = ["team:core", "exclusive"],
-  deps = ["//:ray_lib"],
+    size = "medium",
+    extra_srcs = SRCS,
+    files = glob(
+        [
+            "tests/test_*.py",
+            "examples/**/*.py",
+        ],
+        exclude = LARGE_TESTS,
+    ),
+    tags = [
+        "exclusive",
+        "team:core",
+    ],
+    deps = ["//:ray_lib"],
 )
 
 py_test_module_list(
-  files = LARGE_TESTS,
-  size = "large",
-  extra_srcs = SRCS,
-  tags = ["team:core", "exclusive"],
-  deps = ["//:ray_lib"],
+    size = "large",
+    extra_srcs = SRCS,
+    files = LARGE_TESTS,
+    tags = [
+        "exclusive",
+        "team:core",
+    ],
+    deps = ["//:ray_lib"],
 )
