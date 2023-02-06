@@ -121,6 +121,9 @@ void GcsServer::Start() {
 }
 
 void GcsServer::DoStart(const GcsInitData &gcs_init_data) {
+  // Init KV Manager
+  InitKVManager();
+
   // Init cluster resource scheduler.
   InitClusterResourceScheduler();
 
@@ -138,9 +141,6 @@ void GcsServer::DoStart(const GcsInitData &gcs_init_data) {
 
   // Init gcs health check manager.
   InitGcsHealthCheckManager(gcs_init_data);
-
-  // Init KV Manager
-  InitKVManager();
 
   // Init function manager
   InitFunctionManager();

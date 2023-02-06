@@ -22,3 +22,7 @@ cdef class GcsClientOptions:
 
     cdef CGcsClientOptions* native(self):
         return <CGcsClientOptions*>(self.inner.get())
+
+
+# cdef class GcsClient:
+#     pass
