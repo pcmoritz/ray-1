@@ -7,14 +7,9 @@ import asyncio
 from functools import wraps
 from typing import Dict, List, Optional
 
-import grpc
-
 import ray
 from ray._private import ray_constants
-from ray.core.generated import (
-    gcs_service_pb2,
-    gcs_service_pb2_grpc,
-)
+from ray.core.generated import gcs_service_pb2
 
 from ray.core.generated.common_pb2 import ErrorType, JobConfig
 from ray.core.generated.gcs_pb2 import (
@@ -116,6 +111,9 @@ def check_health(address: str, timeout=2, skip_version_check=False) -> bool:
         Returns False if no service is running.
         Raises an exception otherwise.
     """
+    import grpc
+    from ray.core.generated import gcs_service_pb2_grpc
+
     req = gcs_service_pb2.CheckAliveRequest()
     try:
         channel = create_gcs_channel(address)
@@ -148,6 +146,8 @@ _called_freq = {}
 
 
 def _auto_reconnect(f):
+    import grpc
+
     # This is for testing to count the frequence
     # of gcs call
     if inspect.iscoroutinefunction(f):
@@ -244,6 +244,7 @@ class GcsAioClient:
         return self._channel
 
     def _connect(self):
+        from ray.core.generated import gcs_service_pb2_grpc
         self._channel.connect()
         self._kv_stub = gcs_service_pb2_grpc.InternalKVGcsServiceStub(
             self._channel.channel()

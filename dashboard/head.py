@@ -99,6 +99,8 @@ class DashboardHead:
                 Note that available modules could be changed depending on
                 minimal flags.
         """
+        import ray._private.tls_utils
+
         self.minimal = minimal
         self.serve_frontend = serve_frontend
         # If it is the minimal mode, we shouldn't serve frontend.

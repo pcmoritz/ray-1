@@ -132,5 +132,10 @@ class GcsSubscriber {
   const std::unique_ptr<pubsub::SubscriberInterface> subscriber_;
 };
 
+// This client is only supposed to be used from Cython / Python
+class RAY_EXPORT GcsSyncPublisher {
+  Status PublishError(const std::string& key_id, );
+};
+
 }  // namespace gcs
 }  // namespace ray

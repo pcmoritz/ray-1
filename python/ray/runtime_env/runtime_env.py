@@ -7,8 +7,8 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 import ray
 from ray._private.ray_constants import DEFAULT_RUNTIME_ENV_TIMEOUT_SECONDS
-from ray._private.runtime_env.conda import get_uri as get_conda_uri
-from ray._private.runtime_env.pip import get_uri as get_pip_uri
+# from ray._private.runtime_env.conda import get_uri as get_conda_uri
+# from ray._private.runtime_env.pip import get_uri as get_pip_uri
 from ray._private.runtime_env.plugin_schema_manager import RuntimeEnvPluginSchemaManager
 from ray._private.runtime_env.validation import OPTION_TO_VALIDATION_FN
 from ray._private.thirdparty.dacite import from_dict

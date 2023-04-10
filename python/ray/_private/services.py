@@ -452,6 +452,7 @@ def wait_for_node(
         object_store_socket_names = [
             client["ObjectStoreSocketName"] for client in clients
         ]
+        print("XXX", object_store_socket_names)
         if node_plasma_store_socket_name in object_store_socket_names:
             return
         else:

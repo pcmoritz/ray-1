@@ -239,9 +239,9 @@ class Node:
                     self.gcs_address,
                     self._raylet_ip_address,
                 )
-                self._plasma_store_socket_name = node_info.object_store_socket_name
-                self._raylet_socket_name = node_info.raylet_socket_name
-                self._ray_params.node_manager_port = node_info.node_manager_port
+                self._plasma_store_socket_name = node_info["object_store_socket_name"]
+                self._raylet_socket_name = node_info["raylet_socket_name"]
+                self._ray_params.node_manager_port = node_info["node_manager_port"]
         else:
             # If the user specified a socket name, use it.
             self._plasma_store_socket_name = self._prepare_socket_file(
@@ -304,7 +304,7 @@ class Node:
                 self._raylet_ip_address,
             )
             if self._ray_params.node_manager_port == 0:
-                self._ray_params.node_manager_port = node_info.node_manager_port
+                self._ray_params.node_manager_port = node_info["node_manager_port"]
 
         # Makes sure the Node object has valid addresses after setup.
         self.validate_ip_port(self.address)
@@ -1097,9 +1097,9 @@ class Node:
         Check `usage_stats_head.py` for more details.
         """
         # Make sure the cluster metadata wasn't reported before.
-        import ray._private.usage.usage_lib as ray_usage_lib
+        # import ray._private.usage.usage_lib as ray_usage_lib
 
-        ray_usage_lib.put_cluster_metadata(self.get_gcs_client())
+        # ray_usage_lib.put_cluster_metadata(self.get_gcs_client())
         # Make sure GCS is up.
         self.get_gcs_client().internal_kv_put(
             b"session_name",

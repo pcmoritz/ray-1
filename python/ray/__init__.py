@@ -160,13 +160,13 @@ from ray.actor import method  # noqa: E402,F401
 # TODO(qwang): We should remove this exporting in Ray2.0.
 from ray.cross_language import java_function, java_actor_class  # noqa: E402,F401
 from ray.runtime_context import get_runtime_context  # noqa: E402,F401
-from ray import autoscaler  # noqa: E402,F401
-from ray import internal  # noqa: E402,F401
+# from ray import autoscaler  # noqa: E402,F401
+# from ray import internal  # noqa: E402,F401
 from ray import util  # noqa: E402,F401
 from ray import _private  # noqa: E402,F401
 
 # We import ClientBuilder so that modules can inherit from `ray.ClientBuilder`.
-from ray.client_builder import client, ClientBuilder  # noqa: E402,F401
+# from ray.client_builder import client, ClientBuilder  # noqa: E402,F401
 
 
 class _DeprecationWrapper:
@@ -190,7 +190,7 @@ class _DeprecationWrapper:
 worker = _DeprecationWrapper("worker", ray._private.worker)
 ray_constants = _DeprecationWrapper("ray_constants", ray._private.ray_constants)
 serialization = _DeprecationWrapper("serialization", ray._private.serialization)
-state = _DeprecationWrapper("state", ray._private.state)
+# state = _DeprecationWrapper("state", ray._private.state)
 
 
 __all__ = [
