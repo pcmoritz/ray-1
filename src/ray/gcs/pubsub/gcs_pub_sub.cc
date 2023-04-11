@@ -212,5 +212,25 @@ Status GcsSubscriber::SubscribeAllWorkerFailures(
   return Status::OK();
 }
 
+Status PublishWithRetries() {
+  
+}
+
+Status GcsSyncPublisher::PublishError(const std::string &key_id, const rpc::ErrorTableData& error_info) {
+  grpc::ClientContext context;
+
+  rpc::GcsPublishRequest request;
+  auto* message = request.add_pub_messages();
+  message->set_channel_type(rpc::RAY_ERROR_INFO_CHANNEL);
+  message->set_key_id(key_id);
+  message->mutable_error_info_message()->MergeFrom(error_info);
+
+  rpc::GcsPublishReply reply;
+
+  grpc::Status status = pubsub_stub_->GcsPublish(&context, request, &reply);
+
+  return Status::OK();
+}
+
 }  // namespace gcs
 }  // namespace ray

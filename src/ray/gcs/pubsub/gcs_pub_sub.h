@@ -26,6 +26,7 @@
 #include "ray/pubsub/subscriber.h"
 #include "src/ray/protobuf/gcs.pb.h"
 #include "src/ray/protobuf/gcs_service.pb.h"
+#include "src/ray/protobuf/gcs_service.grpc.pb.h"
 
 namespace ray {
 namespace gcs {
@@ -134,7 +135,11 @@ class GcsSubscriber {
 
 // This client is only supposed to be used from Cython / Python
 class RAY_EXPORT GcsSyncPublisher {
-  Status PublishError(const std::string& key_id, );
+  Status PublishError(
+    const std::string &key_id, const rpc::ErrorTableData& data);
+ private:
+  std::unique_ptr<rpc::InternalPubSubGcsService::Stub> pubsub_stub_;
+  std::shared_ptr<grpc::Channel> channel_;
 };
 
 }  // namespace gcs
