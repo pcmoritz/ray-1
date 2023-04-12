@@ -1730,6 +1730,15 @@ cdef class GcsClient:
             }
         return result
 
+cdef class GcsPublisher:
+    """Cython wrapper class of C++ `ray::gcs::GcsPublisher`."""
+    cdef:
+        shared_ptr[CGcsSyncPublisher] inner
+
+    def __cinit__(self, address):
+        cdef GcsClientOptions gcs_options = GcsClientOptions.from_gcs_address(address)
+        self.inner.reset(new CGcsSyncPublisher(gcs_options.native()))
+
 cdef class CoreWorker:
 
     def __cinit__(self, worker_type, store_socket, raylet_socket,

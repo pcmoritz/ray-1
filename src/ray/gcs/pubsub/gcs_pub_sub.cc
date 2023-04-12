@@ -212,6 +212,10 @@ Status GcsSubscriber::SubscribeAllWorkerFailures(
   return Status::OK();
 }
 
+GcsSyncPublisher::GcsSyncPublisher(GcsClientOptions *options) {
+
+}
+
 constexpr int MAX_GCS_PUBLISH_RETRIES = 60;
 
 Status GcsSyncPublisher::PublishWithRetries(grpc::ClientContext *context, const rpc::GcsPublishRequest &request, rpc::GcsPublishReply *reply) {

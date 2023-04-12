@@ -31,6 +31,8 @@
 namespace ray {
 namespace gcs {
 
+class GcsClientOptions;
+
 /// \class GcsPublisher
 ///
 /// Supports publishing per-entity data and errors from GCS. Thread safe.
@@ -135,6 +137,8 @@ class GcsSubscriber {
 
 // This client is only supposed to be used from Cython / Python
 class RAY_EXPORT GcsSyncPublisher {
+ public:
+  explicit GcsSyncPublisher(GcsClientOptions *options);
   Status PublishError(
     const std::string &key_id, const rpc::ErrorTableData& data);
   Status PublishWithRetries(grpc::ClientContext *context, const rpc::GcsPublishRequest &request, rpc::GcsPublishReply *reply);
