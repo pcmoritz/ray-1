@@ -212,8 +212,22 @@ Status GcsSubscriber::SubscribeAllWorkerFailures(
   return Status::OK();
 }
 
-Status PublishWithRetries() {
-  
+constexpr int MAX_GCS_PUBLISH_RETRIES = 60;
+
+Status GcsSyncPublisher::PublishWithRetries(grpc::ClientContext *context, const rpc::GcsPublishRequest &request, rpc::GcsPublishReply *reply) {
+  int count = MAX_GCS_PUBLISH_RETRIES;
+  grpc::Status status;
+  while (count > 0) {
+    status = pubsub_stub_->GcsPublish(context, request, reply);
+    if (status.error_code() == grpc::StatusCode::UNAVAILABLE || status.error_code() == grpc::StatusCode::UNKNOWN) {
+      count -= 1;
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+      continue;
+    } else {
+      return Status::Invalid(status.error_message());
+    }
+  }
+  return Status::TimedOut("Failed to publish after retries: " + status.error_message());
 }
 
 Status GcsSyncPublisher::PublishError(const std::string &key_id, const rpc::ErrorTableData& error_info) {
@@ -227,9 +241,13 @@ Status GcsSyncPublisher::PublishError(const std::string &key_id, const rpc::Erro
 
   rpc::GcsPublishReply reply;
 
-  grpc::Status status = pubsub_stub_->GcsPublish(&context, request, &reply);
+  Status status = PublishWithRetries(&context, request, &reply);
 
-  return Status::OK();
+  if (status.ok()) {
+    return Status::Invalid(reply.status().message());
+  }
+
+  return status;
 }
 
 }  // namespace gcs

@@ -137,6 +137,7 @@ class GcsSubscriber {
 class RAY_EXPORT GcsSyncPublisher {
   Status PublishError(
     const std::string &key_id, const rpc::ErrorTableData& data);
+  Status PublishWithRetries(grpc::ClientContext *context, const rpc::GcsPublishRequest &request, rpc::GcsPublishReply *reply);
  private:
   std::unique_ptr<rpc::InternalPubSubGcsService::Stub> pubsub_stub_;
   std::shared_ptr<grpc::Channel> channel_;
