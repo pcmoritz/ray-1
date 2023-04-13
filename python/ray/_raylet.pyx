@@ -61,6 +61,7 @@ from ray.includes.common cimport (
     CObjectReference,
     CRayObject,
     CRayStatus,
+    CErrorTableData,
     CGcsClientOptions,
     CGcsNodeInfo,
     CJobTableData,
@@ -1738,6 +1739,16 @@ cdef class GcsPublisher:
     def __cinit__(self, address):
         cdef GcsClientOptions gcs_options = GcsClientOptions.from_gcs_address(address)
         self.inner.reset(new CGcsSyncPublisher(gcs_options.native()))
+
+    def publish_error(self, key_id: bytes, error_type: str, message: str, job_id=None):
+        cdef:
+            CErrorTableData error_info
+
+        job_id = job_id or ray.JobID.nil()
+        assert isinstance(job_id, ray.JobID)
+        error_info.set_job_id(job_id.binary())
+        error_info.set_type(error_type)
+        error_type.set_error_message(message)
 
 cdef class CoreWorker:
 

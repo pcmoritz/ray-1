@@ -371,7 +371,14 @@ cdef extern from "src/ray/protobuf/gcs.pb.h" nogil:
         void ParseFromString(const c_string &serialized)
 
     cdef cppclass CErrorTableData "ray::rpc::ErrorTableData":
-        pass
+        c_string job_id() const
+        c_string type() const
+        c_string error_message() const
+        double timestamp() const
+
+        void set_job_id(const c_string &job_id)
+        void set_type(const c_string &type)
+        void set_error_message(const c_string &error_message)
 
     cdef enum CGcsNodeState "ray::rpc::GcsNodeInfo_GcsNodeState":
         ALIVE "ray::rpc::GcsNodeInfo_GcsNodeState_ALIVE",
