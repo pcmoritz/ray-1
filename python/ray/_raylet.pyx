@@ -1750,6 +1750,8 @@ cdef class GcsPublisher:
         error_info.set_type(error_type)
         error_type.set_error_message(message)
 
+        check_status(self.inner.get().PublishError(job_id.hex().encode(), error_info))
+
 cdef class CoreWorker:
 
     def __cinit__(self, worker_type, store_socket, raylet_socket,

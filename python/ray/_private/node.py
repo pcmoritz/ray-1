@@ -335,6 +335,7 @@ class Node:
         """
         import ray._private.usage.usage_lib as ray_usage_lib
 
+        print("YYY", self.get_gcs_client())
         cluster_metadata = ray_usage_lib.get_cluster_metadata(self.get_gcs_client())
         if cluster_metadata is None:
             cluster_metadata = ray_usage_lib.get_cluster_metadata(self.get_gcs_client())
