@@ -7,8 +7,6 @@ import asyncio
 from functools import wraps
 from typing import Dict, List, Optional
 
-import grpc
-
 import ray
 from ray._private import ray_constants
 from ray.core.generated import (

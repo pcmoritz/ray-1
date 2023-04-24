@@ -5,7 +5,6 @@ from collections import defaultdict
 from google.protobuf.json_format import MessageToDict
 
 import ray
-import ray._private.gcs_utils as gcs_utils
 from ray._private.client_mode_hook import client_mode_hook
 from ray._private.resource_spec import NODE_ID_PREFIX
 from ray._private.utils import binary_to_hex, decode, hex_to_binary

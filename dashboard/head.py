@@ -11,7 +11,7 @@ import ray._private.utils
 import ray.dashboard.consts as dashboard_consts
 import ray.dashboard.utils as dashboard_utils
 import ray.experimental.internal_kv as internal_kv
-from ray._private.usage.usage_lib import TagKey, record_extra_usage_tag
+# from ray._private.usage.usage_lib import TagKey, record_extra_usage_tag
 from ray._private import ray_constants
 from ray.dashboard.utils import DashboardHeadModule
 from ray._raylet import GcsClient

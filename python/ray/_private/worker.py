@@ -64,11 +64,11 @@ from ray import ActorID, JobID, Language, ObjectRef
 from ray._private import ray_option_utils
 from ray._private.client_mode_hook import client_mode_hook
 from ray._private.function_manager import FunctionActorManager, make_function_table_key
-from ray._private.gcs_pubsub import (
-    GcsErrorSubscriber,
-    GcsFunctionKeySubscriber,
-    GcsLogSubscriber,
-)
+# from ray._private.gcs_pubsub import (
+#     GcsErrorSubscriber,
+#     GcsFunctionKeySubscriber,
+#     GcsLogSubscriber,
+# )
 from ray._private.inspect_util import is_cython
 from ray._private.ray_logging import (
     global_worker_stdstream_dispatcher,
@@ -77,8 +77,8 @@ from ray._private.ray_logging import (
     setup_logger,
 )
 from ray._private.runtime_env.constants import RAY_JOB_CONFIG_JSON_ENV_VAR
-from ray._private.runtime_env.py_modules import upload_py_modules_if_needed
-from ray._private.runtime_env.working_dir import upload_working_dir_if_needed
+# from ray._private.runtime_env.py_modules import upload_py_modules_if_needed
+# from ray._private.runtime_env.working_dir import upload_working_dir_if_needed
 from ray._private.storage import _load_class
 from ray._private.utils import check_oversized_function, get_ray_doc_version
 from ray.exceptions import ObjectStoreFullError, RayError, RaySystemError, RayTaskError
@@ -1469,12 +1469,12 @@ def init(
         # In this case, we need to start a new cluster.
 
         # Don't collect usage stats in ray.init() unless it's a nightly wheel.
-        from ray._private.usage import usage_lib
+        # from ray._private.usage import usage_lib
 
-        if usage_lib.is_nightly_wheel():
-            usage_lib.show_usage_stats_prompt(cli=False)
-        else:
-            usage_lib.set_usage_stats_enabled_via_env_var(False)
+        # if usage_lib.is_nightly_wheel():
+        #     usage_lib.show_usage_stats_prompt(cli=False)
+        # else:
+        #     usage_lib.set_usage_stats_enabled_via_env_var(False)
 
         # Use a random port by not specifying Redis port / GCS server port.
         ray_params = ray._private.parameter.RayParams(

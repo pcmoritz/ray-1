@@ -1,7 +1,6 @@
 import uuid
 from typing import Any, Dict, List, Optional, Union
 
-import ray._private.gcs_utils as gcs_utils
 from ray.util.annotations import PublicAPI
 
 

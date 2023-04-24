@@ -145,7 +145,7 @@ import ray.cloudpickle as ray_pickle
 from ray.core.generated.common_pb2 import ActorDiedErrorContext
 from ray._private.async_compat import sync_to_async, get_new_event_loop
 from ray._private.client_mode_hook import disable_client_hook
-import ray._private.gcs_utils as gcs_utils
+# import ray._private.gcs_utils as gcs_utils
 import ray._private.memory_monitor as memory_monitor
 import ray._private.profiling as profiling
 from ray._private.utils import decode, DeferSigint
@@ -3059,6 +3059,7 @@ cdef class CoreWorker:
         # We can cache the deserialized job config object here because
         # the job config will not change after a job is submitted.
         if self.job_config is None:
+            import ray._private.gcs_utils as gcs_utils
             c_job_config = CCoreWorkerProcess.GetCoreWorker().GetJobConfig()
             self.job_config = gcs_utils.JobConfig()
             self.job_config.ParseFromString(c_job_config.SerializeAsString())

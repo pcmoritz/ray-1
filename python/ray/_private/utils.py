@@ -35,26 +35,19 @@ from typing import (
     List,
 )
 
-import grpc
-
 # Import psutil after ray so the packaged version is used.
 import psutil
 from google.protobuf import json_format
 
 import ray
 import ray._private.ray_constants as ray_constants
-from ray._private.tls_utils import load_certs_from_env
+# from ray._private.tls_utils import load_certs_from_env
 from ray.core.generated.runtime_env_common_pb2 import (
     RuntimeEnvInfo as ProtoRuntimeEnvInfo,
 )
 
 if TYPE_CHECKING:
     from ray.runtime_env import RuntimeEnv
-
-try:
-    from grpc import aio as aiogrpc
-except ImportError:
-    from grpc.experimental import aio as aiogrpc
 
 
 pwd = None
@@ -1301,6 +1294,13 @@ def init_grpc_channel(
     options: Optional[Sequence[Tuple[str, Any]]] = None,
     asynchronous: bool = False,
 ):
+    import grpc
+
+    try:
+        from grpc import aio as aiogrpc
+    except ImportError:
+        from grpc.experimental import aio as aiogrpc
+
     grpc_module = aiogrpc if asynchronous else grpc
 
     options = options or []
