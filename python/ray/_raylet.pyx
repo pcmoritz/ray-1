@@ -177,6 +177,11 @@ current_task_id_lock = threading.Lock()
 job_config_initialized = False
 job_config_initialization_lock = threading.Lock()
 
+cdef extern from "ray/common/constants.h" nogil:
+    cdef int kResourceUnitScaling
+
+RESOURCE_UNIT_SCALING = kResourceUnitScaling
+
 
 class ObjectRefGenerator:
     def __init__(self, refs):
@@ -1765,7 +1770,7 @@ cdef class GcsPublisher:
 
         job_id = log_json.get("job")
         log_batch.set_ip(log_json.get("ip") if log_json.get("ip") else b"")
-        log_batch.set_pid(str(log_json.get("pid")) if log_json.get("pid") else b"")
+        log_batch.set_pid(str(log_json.get("pid")).encode() if log_json.get("pid") else b"")
         log_batch.set_job_id(job_id.encode() if job_id else b"")
         log_batch.set_is_error(bool(log_json.get("is_err")))
         for line in log_json.get("lines", []):
@@ -2468,7 +2473,7 @@ cdef class CoreWorker:
             unordered_map[c_string, double] c_resources
             CRayFunction ray_function
             c_vector[unique_ptr[CTaskArg]] args_vector
-            optional[c_vector[CObjectReference]] return_refs
+            c_vector[CObjectReference] return_refs
             c_vector[CObjectID] incremented_put_arg_ids
 
         with self.profile_event(b"submit_task"):
@@ -2481,12 +2486,13 @@ cdef class CoreWorker:
                 &incremented_put_arg_ids)
 
             with nogil:
-                return_refs = CCoreWorkerProcess.GetCoreWorker().SubmitActorTask(
+                status = CCoreWorkerProcess.GetCoreWorker().SubmitActorTask(
                     c_actor_id,
                     ray_function,
                     args_vector,
                     CTaskOptions(
-                        name, num_returns, c_resources, concurrency_group_name))
+                        name, num_returns, c_resources, concurrency_group_name),
+                    return_refs)
             # These arguments were serialized and put into the local object
             # store during task submission. The backend increments their local
             # ref count initially to ensure that they remain in scope until we
@@ -2496,28 +2502,25 @@ cdef class CoreWorker:
                 CCoreWorkerProcess.GetCoreWorker().RemoveLocalReference(
                     put_arg_id)
 
-            if return_refs.has_value():
+            if status.ok():
                 # The initial local reference is already acquired internally
                 # when adding the pending task.
-                return VectorToObjectRefs(return_refs.value(),
+                return VectorToObjectRefs(return_refs,
                                           skip_adding_local_ref=True)
             else:
-                actor = self.get_actor_handle(actor_id)
-                actor_handle = (CCoreWorkerProcess.GetCoreWorker()
-                                .GetActorHandle(c_actor_id))
-                raise PendingCallsLimitExceeded("The task {} could not be "
-                                                "submitted to {} because more "
-                                                "than {} tasks are queued on "
-                                                "the actor. This limit "
-                                                "can be adjusted with the "
-                                                "`max_pending_calls` actor "
-                                                "option.".format(
-                                                    function_descriptor
-                                                    .function_name,
-                                                    repr(actor),
-                                                    (dereference(actor_handle)
-                                                        .MaxPendingCalls())
-                                                ))
+                if status.IsOutOfResource():
+                    actor = self.get_actor_handle(actor_id)
+                    actor_handle = (CCoreWorkerProcess.GetCoreWorker()
+                                    .GetActorHandle(c_actor_id))
+                    raise PendingCallsLimitExceeded(
+                        f"The task {function_descriptor.function_name} could not be "
+                        f"submitted to {repr(actor)} because more than"
+                        f" {(dereference(actor_handle).MaxPendingCalls())}"
+                        " tasks are queued on the actor. This limit can be adjusted"
+                        " with the `max_pending_calls` actor option.")
+                else:
+                    raise Exception(f"Failed to submit task to actor {actor_id} "
+                                    f"due to {status.message()}")
 
     def kill_actor(self, ActorID actor_id, c_bool no_restart):
         cdef:
