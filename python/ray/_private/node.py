@@ -310,7 +310,7 @@ class Node:
         # Makes sure the Node object has valid addresses after setup.
         self.validate_ip_port(self.address)
         self.validate_ip_port(self.gcs_address)
-        self._record_stats()
+        # self._record_stats()
 
     @staticmethod
     def validate_ip_port(ip_port):
@@ -334,11 +334,12 @@ class Node:
         Raises:
             Exception: An exception is raised if there is a version mismatch.
         """
-        import ray._private.usage.usage_lib as ray_usage_lib
+        # import ray._private.usage.usage_lib as ray_usage_lib
 
-        cluster_metadata = ray_usage_lib.get_cluster_metadata(self.get_gcs_client())
-        if cluster_metadata is None:
-            cluster_metadata = ray_usage_lib.get_cluster_metadata(self.get_gcs_client())
+        # cluster_metadata = ray_usage_lib.get_cluster_metadata(self.get_gcs_client())
+        # if cluster_metadata is None:
+        #     cluster_metadata = ray_usage_lib.get_cluster_metadata(self.get_gcs_client())
+        cluster_metadata = None
 
         if not cluster_metadata:
             return

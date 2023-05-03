@@ -3,6 +3,8 @@ from typing import Any, Dict, List, Optional, Union
 
 from ray.util.annotations import PublicAPI
 
+from ray.core.generated.common_pb2 import JobConfig as JobConfigProto
+
 
 @PublicAPI
 class JobConfig:
@@ -76,10 +78,10 @@ class JobConfig:
 
     def set_default_actor_lifetime(self, default_actor_lifetime: str) -> None:
         if default_actor_lifetime == "detached":
-            self._default_actor_lifetime = gcs_utils.JobConfig.ActorLifetime.DETACHED
+            self._default_actor_lifetime = JobConfigProto.ActorLifetime.DETACHED
         elif default_actor_lifetime == "non_detached":
             self._default_actor_lifetime = (
-                gcs_utils.JobConfig.ActorLifetime.NON_DETACHED
+                JobConfigProto.ActorLifetime.NON_DETACHED
             )
         else:
             raise ValueError(
@@ -104,7 +106,7 @@ class JobConfig:
         from ray._private.utils import get_runtime_env_info
 
         if self._cached_pb is None:
-            pb = gcs_utils.JobConfig()
+            pb = JobConfigProto()
             if self.ray_namespace is None:
                 pb.ray_namespace = str(uuid.uuid4())
             else:
