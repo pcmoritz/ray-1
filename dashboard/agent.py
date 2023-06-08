@@ -16,14 +16,14 @@ import ray._private.utils
 import ray.dashboard.consts as dashboard_consts
 import ray.dashboard.utils as dashboard_utils
 from ray.dashboard.consts import _PARENT_DEATH_THREASHOLD
-from ray._private.gcs_pubsub import GcsAioPublisher
+# from ray._private.gcs_pubsub import GcsAioPublisher
 from ray._raylet import GcsClient
-from ray._private.gcs_utils import GcsAioClient
+# from ray._private.gcs_utils import GcsAioClient
 from ray._private.ray_logging import (
     setup_component_logger,
     configure_log_file,
 )
-from ray.core.generated import agent_manager_pb2, agent_manager_pb2_grpc
+from ray.core.generated import agent_manager_pb2
 from ray.experimental.internal_kv import (
     _initialize_internal_kv,
     _internal_kv_initialized,
@@ -31,11 +31,6 @@ from ray.experimental.internal_kv import (
 
 # Import psutil after ray so the packaged version is used.
 import psutil
-
-try:
-    from grpc import aio as aiogrpc
-except ImportError:
-    from grpc.experimental import aio as aiogrpc
 
 
 # Publishes at most this number of lines of Raylet logs, when the Raylet dies
@@ -52,19 +47,6 @@ except AttributeError:
     create_task = asyncio.ensure_future
 
 logger = logging.getLogger(__name__)
-
-# We would want to suppress deprecating warnings from aiogrpc library
-# with the usage of asyncio.get_event_loop() in python version >=3.10
-# This could be removed once https://github.com/grpc/grpc/issues/32526
-# is released, and we used higher versions of grpcio that that.
-if sys.version_info.major >= 3 and sys.version_info.minor >= 10:
-    import warnings
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", category=DeprecationWarning)
-        aiogrpc.init_grpc_aio()
-else:
-    aiogrpc.init_grpc_aio()
 
 
 class DashboardAgent:
@@ -122,29 +104,9 @@ class DashboardAgent:
 
         # Setup raylet channel
         options = ray_constants.GLOBAL_GRPC_OPTIONS
-        self.aiogrpc_raylet_channel = ray._private.utils.init_grpc_channel(
-            f"{self.ip}:{self.node_manager_port}", options, asynchronous=True
-        )
-
-        # Setup grpc server
-        self.server = aiogrpc.server(options=(("grpc.so_reuseport", 0),))
-        grpc_ip = "127.0.0.1" if self.ip == "127.0.0.1" else "0.0.0.0"
-        try:
-            self.grpc_port = ray._private.tls_utils.add_port_to_grpc_server(
-                self.server, f"{grpc_ip}:{self.dashboard_agent_port}"
-            )
-        except Exception:
-            # TODO(SongGuyang): Catch the exception here because there is
-            # port conflict issue which brought from static port. We should
-            # remove this after we find better port resolution.
-            logger.exception(
-                "Failed to add port to grpc server. Agent will stay alive but "
-                "disable the grpc service."
-            )
-            self.server = None
-            self.grpc_port = None
-        else:
-            logger.info("Dashboard agent grpc address: %s:%s", grpc_ip, self.grpc_port)
+        # self.aiogrpc_raylet_channel = ray._private.utils.init_grpc_channel(
+        #     f"{self.ip}:{self.node_manager_port}", options, asynchronous=True
+        # )
 
         # If the agent is started as non-minimal version, http server should
         # be configured to communicate with the dashboard in a head node.
@@ -156,8 +118,8 @@ class DashboardAgent:
         self.gcs_client = GcsClient(address=self.gcs_address)
         _initialize_internal_kv(self.gcs_client)
         assert _internal_kv_initialized()
-        self.gcs_aio_client = GcsAioClient(address=self.gcs_address)
-        self.publisher = GcsAioPublisher(address=self.gcs_address)
+        # self.gcs_aio_client = GcsAioClient(address=self.gcs_address)
+        # self.publisher = GcsAioPublisher(address=self.gcs_address)
 
     async def _configure_http_server(self, modules):
         from ray.dashboard.http_server_agent import HttpServerAgent
@@ -286,11 +248,10 @@ class DashboardAgent:
         if sys.platform not in ["win32", "cygwin"]:
             check_parent_task = create_task(_check_parent())
 
-        # Start a grpc asyncio server.
-        if self.server:
-            await self.server.start()
-
         modules = self._load_modules()
+
+        if self.minimal:
+            await asyncio.sleep(3600)
 
         # Setup http server if necessary.
         if not self.minimal:

@@ -7,7 +7,6 @@ from concurrent.futures import Future
 from queue import Queue
 
 import ray._private.services
-import ray._private.tls_utils
 import ray._private.utils
 import ray.dashboard.consts as dashboard_consts
 import ray.dashboard.utils as dashboard_utils
@@ -16,7 +15,6 @@ from ray._private.usage.usage_lib import TagKey, record_extra_usage_tag
 from ray._private import ray_constants
 from ray.dashboard.utils import DashboardHeadModule
 from ray._raylet import GcsClient
-from ray._private.gcs_utils import GcsAioClient, check_health
 from ray.dashboard.datacenter import DataOrganizer
 from ray.dashboard.utils import async_loop_forever
 from ray.dashboard.consts import DASHBOARD_METRIC_PORT
@@ -24,10 +22,7 @@ from ray.dashboard.dashboard_metrics import DashboardPrometheusMetrics
 
 from typing import Optional, Set
 
-try:
-    from grpc import aio as aiogrpc
-except ImportError:
-    from grpc.experimental import aio as aiogrpc
+
 
 try:
     import prometheus_client
@@ -37,12 +32,29 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-aiogrpc.init_grpc_aio()
 GRPC_CHANNEL_OPTIONS = (
     *ray_constants.GLOBAL_GRPC_OPTIONS,
     ("grpc.max_send_message_length", ray_constants.GRPC_CPP_MAX_MESSAGE_SIZE),
     ("grpc.max_receive_message_length", ray_constants.GRPC_CPP_MAX_MESSAGE_SIZE),
 )
+
+def initialize_grpc_port_and_server(grpc_ip):
+    try:
+        from grpc import aio as aiogrpc
+    except ImportError:
+        from grpc.experimental import aio as aiogrpc
+
+    import ray._private.tls_utils
+
+    aiogrpc.init_grpc_aio()
+
+    server = aiogrpc.server(options=(("grpc.so_reuseport", 0),))
+
+    grpc_port = ray._private.tls_utils.add_port_to_grpc_server(
+        server, f"{grpc_ip}:{grpc_port}"
+    )
+
+    return server, grpc_port
 
 
 class GCSHealthCheckThread(threading.Thread):
@@ -53,10 +65,14 @@ class GCSHealthCheckThread(threading.Thread):
         super().__init__(daemon=True)
 
     def run(self) -> None:
-        while True:
-            future = self.work_queue.get()
-            check_result = check_health(self.gcs_address)
-            future.set_result(check_result)
+        # from ray._private.gcs_utils import check_health
+
+        # while True:
+        #     future = self.work_queue.get()
+        #     check_result = check_health(self.gcs_address)
+        #     future.set_result(check_result)
+        import time
+        time.sleep(3600)
 
     async def check_once(self) -> bool:
         """Ask the thread to perform a health check."""
@@ -131,11 +147,9 @@ class DashboardHead:
         self.ip = node_ip_address
         DataOrganizer.head_node_ip = self.ip
 
-        self.server = aiogrpc.server(options=(("grpc.so_reuseport", 0),))
         grpc_ip = "127.0.0.1" if self.ip == "127.0.0.1" else "0.0.0.0"
-        self.grpc_port = ray._private.tls_utils.add_port_to_grpc_server(
-            self.server, f"{grpc_ip}:{grpc_port}"
-        )
+        self.grpc_port, self.server = None, None # initialize_grpc_port_and_server(grpc_ip)
+
         logger.info("Dashboard head grpc address: %s:%s", grpc_ip, self.grpc_port)
         # If the dashboard is started as non-minimal version, http server should
         # be configured to expose APIs.
@@ -228,7 +242,7 @@ class DashboardHead:
         logger.info("Loaded %d modules. %s", len(modules), modules)
         return modules
 
-    async def _setup_metrics(self, gcs_aio_client: GcsAioClient):
+    async def _setup_metrics(self, gcs_aio_client):
         metrics = DashboardPrometheusMetrics()
 
         # Setup prometheus metrics export server
@@ -263,14 +277,17 @@ class DashboardHead:
         return metrics
 
     async def run(self):
+        # from ray._private.gcs_utils import GcsAioClient
+
         gcs_address = self.gcs_address
 
         # Dashboard will handle connection failure automatically
         self.gcs_client = GcsClient(address=gcs_address, nums_reconnect_retry=0)
         internal_kv._initialize_internal_kv(self.gcs_client)
-        self.gcs_aio_client = GcsAioClient(address=gcs_address, nums_reconnect_retry=0)
-        self.aiogrpc_gcs_channel = self.gcs_aio_client.channel.channel()
-        self.metrics = await self._setup_metrics(self.gcs_aio_client)
+        # self.gcs_aio_client = GcsAioClient(address=gcs_address, nums_reconnect_retry=0)
+        # self.aiogrpc_gcs_channel = self.gcs_aio_client.channel.channel()
+        # self.metrics = await self._setup_metrics(self.gcs_aio_client)
+        self.metrics = None
         try:
             assert internal_kv._internal_kv_initialized()
             # Note: We always record the usage, but it is not reported
@@ -287,7 +304,7 @@ class DashboardHead:
         self.health_check_thread.start()
 
         # Start a grpc asyncio server.
-        await self.server.start()
+        # await self.server.start()
 
         async def _async_notify():
             """Notify signals from queue."""
@@ -316,6 +333,7 @@ class DashboardHead:
             if self.http_host != ray_constants.DEFAULT_DASHBOARD_IP
             else http_host
         )
+        """
         await asyncio.gather(
             self.gcs_aio_client.internal_kv_put(
                 ray_constants.DASHBOARD_ADDRESS.encode(),
@@ -330,6 +348,7 @@ class DashboardHead:
                 namespace=ray_constants.KV_NAMESPACE_DASHBOARD,
             ),
         )
+        """
 
         # Freeze signal after all modules loaded.
         dashboard_utils.SignalManager.freeze()

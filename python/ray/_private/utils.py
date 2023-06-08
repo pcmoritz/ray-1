@@ -1338,12 +1338,15 @@ def check_dashboard_dependencies_installed() -> bool:
     than just blindly importing the relevant packages.
 
     """
+    '''
     try:
         import ray.dashboard.optional_deps  # noqa: F401
 
         return True
     except ImportError:
         return False
+    '''
+    return False
 
 
 def internal_kv_list_with_retry(gcs_client, prefix, namespace, num_retries=20):
