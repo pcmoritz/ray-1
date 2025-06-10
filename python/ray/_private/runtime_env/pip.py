@@ -19,7 +19,14 @@ default_logger = logging.getLogger(__name__)
 
 
 def _get_pip_hash(pip_dict: Dict) -> str:
-    serialized_pip_spec = json.dumps(pip_dict, sort_keys=True)
+    # Create a copy to avoid modifying the original dict
+    dict_to_hash = pip_dict.copy()
+    if dict_to_hash.get("use_uv"):
+        # Add a distinguishable element if use_uv is True.
+        # The actual key and value don't matter as much as ensuring
+        # the hash is different when uv is used.
+        dict_to_hash["_uv_marker_"] = True
+    serialized_pip_spec = json.dumps(dict_to_hash, sort_keys=True)
     hash_val = hashlib.sha1(serialized_pip_spec.encode("utf-8")).hexdigest()
     return hash_val
 
@@ -65,6 +72,15 @@ class PipProcessor:
         self._pip_config = self._runtime_env.pip_config()
         self._pip_env = os.environ.copy()
         self._pip_env.update(self._runtime_env.env_vars())
+
+        self._use_uv = self._pip_config.get("use_uv", False)
+        self._uv_options = {}
+        if self._use_uv:
+            self._uv_options["uv_version"] = self._pip_config.get("uv_version")  # Can be None
+            self._uv_options["uv_check"] = self._pip_config.get("uv_check", False)
+            self._uv_options["uv_pip_install_options"] = self._pip_config.get(
+                "uv_pip_install_options", ["--no-cache"]
+            )
 
     @classmethod
     async def _ensure_pip_version(
@@ -118,8 +134,35 @@ class PipProcessor:
 
         logger.info("Pip check on %s successfully.", path)
 
+    # Renamed from _pip_check
+    async def _check_with_pip(
+        self,
+        path: str,
+        pip_check: bool,
+        cwd: str,
+        pip_env: Dict,
+        logger: logging.Logger,
+    ):
+        """Run the pip check command to check python dependency conflicts.
+        If exists conflicts, the exit code of pip check command will be non-zero.
+        """
+        if not pip_check:
+            logger.info("Skip pip check.")
+            return
+        python = virtualenv_utils.get_virtualenv_python(path)
+
+        await check_output_cmd(
+            [python, "-m", "pip", "check", "--disable-pip-version-check"],
+            logger=logger,
+            cwd=cwd,
+            env=pip_env,
+        )
+
+        logger.info("Pip check on %s successfully.", path)
+
     @classmethod
-    async def _install_pip_packages(
+    # Renamed from _install_pip_packages
+    async def _install_packages_with_pip(
         cls,
         path: str,
         pip_packages: List[str],
@@ -166,6 +209,98 @@ class PipProcessor:
 
         await check_output_cmd(pip_install_cmd, logger=logger, cwd=cwd, env=pip_env)
 
+    async def _install_uv(
+        self,
+        path: str,
+        cwd: str,
+        pip_env: dict,
+        logger: logging.Logger,
+    ):
+        """Install uv into the virtualenv."""
+        python = virtualenv_utils.get_virtualenv_python(path)
+        uv_version = self._uv_options.get("uv_version")
+        cmd = [
+            python,
+            "-m",
+            "pip",
+            "install",
+            "--disable-pip-version-check",
+            "--no-cache-dir",
+        ]
+        if uv_version:
+            cmd.append(f"uv=={uv_version}")
+            logger.info(f"Installing uv {uv_version} into {path}")
+        else:
+            cmd.append("uv")
+            logger.info(f"Installing latest uv into {path}")
+
+        await check_output_cmd(cmd, logger=logger, cwd=cwd, env=pip_env)
+        # Verify uv is installed
+        await check_output_cmd(
+            [python, "-m", "uv", "--version"], logger=logger, cwd=cwd, env=pip_env
+        )
+        logger.info("uv installed successfully.")
+
+    async def _check_uv_existence(
+        self, path: str, cwd: str, env: dict, logger: logging.Logger
+    ) -> bool:
+        """Check if uv is installed in the virtualenv."""
+        python = virtualenv_utils.get_virtualenv_python(path)
+        try:
+            await check_output_cmd(
+                [python, "-m", "uv", "--version"],
+                logger=logger,
+                cwd=cwd,
+                env=env,
+                capture_output=True,  # Suppress output unless there's an error
+            )
+            logger.debug("uv is already installed in %s", path)
+            return True
+        except Exception:
+            logger.debug("uv is not installed in %s", path)
+            return False
+
+    async def _uv_check(self, python: str, cwd: str, logger: logging.Logger):
+        """Run `uv pip check`."""
+        logger.info("Running `uv pip check` in %s", cwd)
+        cmd = [python, "-m", "uv", "pip", "check"]
+        await check_output_cmd(cmd, logger=logger, cwd=cwd, env=self._pip_env)
+        logger.info("`uv pip check` successful.")
+
+    async def _install_uv_packages(
+        self,
+        path: str,
+        uv_packages: List[str],
+        cwd: str,
+        pip_env: Dict,
+        logger: logging.Logger,
+    ):
+        """Install packages using `uv pip install`."""
+        if not await self._check_uv_existence(path, cwd, pip_env, logger):
+            logger.info("uv not found, installing uv first.")
+            await self._install_uv(path, cwd, pip_env, logger)
+
+        python = virtualenv_utils.get_virtualenv_python(path)
+        pip_requirements_file = dependency_utils.get_requirements_file(path, uv_packages)
+
+        loop = get_running_loop()
+        await loop.run_in_executor(
+            None,
+            dependency_utils.gen_requirements_txt,
+            pip_requirements_file,
+            uv_packages,
+        )
+
+        install_cmd = [python, "-m", "uv", "pip", "install", "-r", pip_requirements_file]
+        install_options = self._uv_options.get("uv_pip_install_options", ["--no-cache"])
+        install_cmd.extend(install_options)
+
+        logger.info(
+            f"Installing python requirements with uv to {path}: {uv_packages}"
+        )
+        await check_output_cmd(install_cmd, logger=logger, cwd=cwd, env=pip_env)
+        logger.info("Packages installed successfully with uv.")
+
     async def _run(self):
         path = self._target_dir
         logger = self._logger
@@ -179,30 +314,49 @@ class PipProcessor:
             await virtualenv_utils.create_or_get_virtualenv(path, exec_cwd, logger)
             python = virtualenv_utils.get_virtualenv_python(path)
             async with dependency_utils.check_ray(python, exec_cwd, logger):
-                # Ensure pip version.
-                await self._ensure_pip_version(
-                    path,
-                    self._pip_config.get("pip_version", None),
-                    exec_cwd,
-                    self._pip_env,
-                    logger,
-                )
-                # Install pip packages.
-                await self._install_pip_packages(
-                    path,
-                    pip_packages,
-                    exec_cwd,
-                    self._pip_env,
-                    logger,
-                )
-                # Check python environment for conflicts.
-                await self._pip_check(
-                    path,
-                    self._pip_config.get("pip_check", False),
-                    exec_cwd,
-                    self._pip_env,
-                    logger,
-                )
+                if self._use_uv:
+                    # Using uv for package installation
+                    logger.info("Using uv for pip package installation.")
+                    await self._install_uv_packages(
+                        path,
+                        pip_packages,
+                        exec_cwd,
+                        self._pip_env,
+                        logger,
+                    )
+                    if self._uv_options.get("uv_check", False):
+                        await self._uv_check(
+                            python,
+                            exec_cwd,
+                            logger,
+                        )
+                else:
+                    # Using traditional pip for package installation
+                    logger.info("Using pip for package installation.")
+                    # Ensure pip version.
+                    await self._ensure_pip_version(
+                        path,
+                        self._pip_config.get("pip_version", None),
+                        exec_cwd,
+                        self._pip_env,
+                        logger,
+                    )
+                    # Install pip packages.
+                    await self._install_packages_with_pip( # Renamed method
+                        path,
+                        pip_packages,
+                        exec_cwd,
+                        self._pip_env,
+                        logger,
+                    )
+                    # Check python environment for conflicts.
+                    await self._check_with_pip( # Renamed method
+                        path,
+                        self._pip_config.get("pip_check", False),
+                        exec_cwd,
+                        self._pip_env,
+                        logger,
+                    )
         except Exception:
             logger.info("Delete incomplete virtualenv: %s", path)
             shutil.rmtree(path, ignore_errors=True)

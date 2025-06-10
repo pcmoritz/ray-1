@@ -11,7 +11,7 @@ from ray._private.runtime_env.conda import get_uri as get_conda_uri
 from ray._private.runtime_env.default_impl import get_image_uri_plugin_cls
 from ray._private.runtime_env.pip import get_uri as get_pip_uri
 from ray._private.runtime_env.plugin_schema_manager import RuntimeEnvPluginSchemaManager
-from ray._private.runtime_env.uv import get_uri as get_uv_uri
+# REMOVED: from ray._private.runtime_env.uv import get_uri as get_uv_uri
 from ray._private.runtime_env.validation import (
     OPTION_TO_VALIDATION_FN,
     OPTION_TO_NO_PATH_VALIDATION_FN,
@@ -287,7 +287,7 @@ class RuntimeEnv(dict):
         "working_dir",
         "conda",
         "pip",
-        "uv",
+        # "uv", # REMOVED
         "container",
         "excludes",
         "env_vars",
@@ -323,7 +323,7 @@ class RuntimeEnv(dict):
         _validate: bool = True,
         mpi: Optional[Dict] = None,
         image_uri: Optional[str] = None,
-        uv: Optional[List[str]] = None,
+        # uv: Optional[List[str]] = None, # REMOVED
         **kwargs,
     ):
         super().__init__()
@@ -337,8 +337,8 @@ class RuntimeEnv(dict):
             runtime_env["working_dir"] = working_dir
         if pip is not None:
             runtime_env["pip"] = pip
-        if uv is not None:
-            runtime_env["uv"] = uv
+        # if uv is not None: # REMOVED
+        #     runtime_env["uv"] = uv # REMOVED
         if conda is not None:
             runtime_env["conda"] = conda
         if nsight is not None:
@@ -364,15 +364,12 @@ class RuntimeEnv(dict):
         if not _validate:
             return
 
-        if (self.get("conda") is not None) + (self.get("pip") is not None) + (
-            self.get("uv") is not None
-        ) > 1:
+        if (self.get("conda") is not None) + (self.get("pip") is not None) > 1:
             raise ValueError(
-                "The 'pip' field, 'uv' field, and 'conda' field of "
-                "runtime_env cannot be specified at the same time.\n"
+                "The 'pip' field and 'conda' field of runtime_env "
+                "cannot be specified at the same time.\n"
                 f"specified pip field: {self.get('pip')}\n"
                 f"specified conda field: {self.get('conda')}\n"
-                f"specified uv field: {self.get('uv')}\n"
                 "To use pip with conda, please only set the 'conda'"
                 "field, and specify your pip dependencies within the conda YAML "
                 "config dict: see https://conda.io/projects/conda/en/latest/"
@@ -498,10 +495,10 @@ class RuntimeEnv(dict):
             return get_pip_uri(self)
         return None
 
-    def uv_uri(self) -> Optional[str]:
-        if "uv" in self:
-            return get_uv_uri(self)
-        return None
+    # def uv_uri(self) -> Optional[str]: # REMOVED
+    #     if "uv" in self: # REMOVED
+    #         return get_uv_uri(self) # REMOVED
+    #     return None # REMOVED
 
     def plugin_uris(self) -> List[str]:
         """Not implemented yet, always return a empty list"""
@@ -552,10 +549,10 @@ class RuntimeEnv(dict):
             return True
         return False
 
-    def has_uv(self) -> bool:
-        if self.get("uv"):
-            return True
-        return False
+    # def has_uv(self) -> bool: # REMOVED
+    #     if self.get("uv"): # REMOVED
+    #         return True # REMOVED
+    #     return False # REMOVED
 
     def virtualenv_name(self) -> Optional[str]:
         if not self.has_pip() or not isinstance(self["pip"], str):
@@ -569,12 +566,12 @@ class RuntimeEnv(dict):
         self["pip"] = self["pip"]
         return self["pip"]
 
-    def uv_config(self) -> Dict:
-        if not self.has_uv() or isinstance(self["uv"], str):
-            return {}
-        # Parse and validate field pip on method `__setitem__`
-        self["uv"] = self["uv"]
-        return self["uv"]
+    # def uv_config(self) -> Dict: # REMOVED
+    #     if not self.has_uv() or isinstance(self["uv"], str): # REMOVED
+    #         return {} # REMOVED
+    #     # Parse and validate field pip on method `__setitem__` # REMOVED
+    #     self["uv"] = self["uv"] # REMOVED
+    #     return self["uv"] # REMOVED
 
     def get_extension(self, key) -> Optional[str]:
         if key not in RuntimeEnv.extensions_fields:

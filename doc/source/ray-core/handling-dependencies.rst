@@ -560,29 +560,21 @@ The ``runtime_env`` is a Python dictionary or a Python class :class:`ray.runtime
   When specifying a path to a ``requirements.txt`` file, the file must be present on your local machine and it must be a valid absolute path or relative filepath relative to your local current working directory, *not* relative to the ``working_dir`` specified in the ``runtime_env``.
   Furthermore, referencing local files *within* a ``requirements.txt`` file isn't directly supported (e.g., ``-r ./my-laptop/more-requirements.txt``, ``./my-pkg.whl``). Instead, use the ``${RAY_RUNTIME_ENV_CREATE_WORKING_DIR}`` environment variable in the creation process. For example, use ``-r ${RAY_RUNTIME_ENV_CREATE_WORKING_DIR}/my-laptop/more-requirements.txt`` or ``${RAY_RUNTIME_ENV_CREATE_WORKING_DIR}/my-pkg.whl`` to reference local files, while ensuring they're in the ``working_dir``.
 
-- ``uv`` (dict | List[str] | str): Alpha version feature. This plugin is the ``uv pip`` version of the ``pip`` plugin above. If you
-  are looking for ``uv run`` support with ``pyproject.toml`` and ``uv.lock`` support, use
-  :ref:`the uv run runtime environment plugin <use-uv-for-package-management>` instead.
+  To use `uv <https://github.com/astral-sh/uv>`_ as the package installer instead of pip, you can specify additional options within the dictionary form of the ``pip`` field:
 
-  Either (1) a list of uv `requirements specifiers <https://pip.pypa.io/en/stable/cli/pip_install/#requirement-specifiers>`_, (2) a string containing
-  the path to a local uv `“requirements.txt” <https://pip.pypa.io/en/stable/user_guide/#requirements-files>`_ file, or (3) a python dictionary that has three fields: (a) ``packages`` (required, List[str]): a list of uv packages,
-  (b) ``uv_version`` (optional, str): the version of uv; Ray will spell the package name "uv" in front of the ``uv_version`` to form the final requirement string.
-  (c) ``uv_check`` (optional, bool): whether to enable pip check at the end of uv install, default to False.
-  (d) ``uv_pip_install_options`` (optional, List[str]): user-provided options for ``uv pip install`` command, default to ``["--no-cache"]``.
-  To override the default options and install without any options, use an empty list ``[]`` as install option value.
-  The syntax of a requirement specifier is the same as ``pip`` requirements.
-  This will be installed in the Ray workers at runtime.  Packages in the preinstalled cluster environment will still be available.
-  To use a library like Ray Serve or Ray Tune, you will need to include ``"ray[serve]"`` or ``"ray[tune]"`` here.
-  The Ray version must match that of the cluster.
+  *   ``use_uv`` (optional, bool): If set to ``True``, `uv pip` will be used for installing packages instead of `pip`. Defaults to ``False``.
+  *   ``uv_version`` (optional, str): The specific version of `uv` to install (e.g., ``"0.1.18"``). If not provided, the latest available version of `uv` will be installed. This applies only if ``use_uv`` is ``True``.
+  *   ``uv_check`` (optional, bool): Whether to enable ``uv pip check`` at the end of the installation. Defaults to ``False``. This applies only if ``use_uv`` is ``True``.
+  *   ``uv_pip_install_options`` (optional, List[str]): User-provided options for the ``uv pip install`` command (e.g., ``["--system"]``). Defaults to ``["--no-cache"]`` if not specified and ``use_uv`` is ``True``. To install without any default options, provide an empty list ``[]``. This applies only if ``use_uv`` is ``True``.
 
-  - Example: ``["requests==1.0.0", "aiohttp", "ray[serve]"]``
+  When ``use_uv`` is ``True``, the ``pip_check`` and ``pip_version`` fields are ignored.
 
-  - Example: ``"./requirements.txt"``
+  - Example (using uv via pip field): ``{"packages":["tensorflow", "requests"], "use_uv": True, "uv_version": "0.1.18", "uv_check": True}``
 
-  - Example: ``{"packages":["tensorflow", "requests"], "uv_version": "==0.4.0;python_version=='3.8.11'"}``
-
-  When specifying a path to a ``requirements.txt`` file, the file must be present on your local machine and it must be a valid absolute path or relative filepath relative to your local current working directory, *not* relative to the ``working_dir`` specified in the ``runtime_env``.
-  Furthermore, referencing local files *within* a ``requirements.txt`` file isn't directly supported (e.g., ``-r ./my-laptop/more-requirements.txt``, ``./my-pkg.whl``). Instead, use the ``${RAY_RUNTIME_ENV_CREATE_WORKING_DIR}`` environment variable in the creation process. For example, use ``-r ${RAY_RUNTIME_ENV_CREATE_WORKING_DIR}/my-laptop/more-requirements.txt`` or ``${RAY_RUNTIME_ENV_CREATE_WORKING_DIR}/my-pkg.whl`` to reference local files, while ensuring they're in the ``working_dir``.
+  .. note::
+     **Migration from standalone `uv` field:**
+     Previously, `uv` could be specified as a separate top-level field in the runtime environment (e.g., ``runtime_env={"uv": ["requests"]}``). This standalone ``uv`` field is now removed.
+     To use `uv`, please use the ``pip`` field with the ``use_uv: True`` option as described above. For example, ``runtime_env={"pip": {"packages": ["requests"], "use_uv": True}}``.
 
 - ``conda`` (dict | str): Either (1) a dict representing the conda environment YAML, (2) a string containing the path to a local
   `conda “environment.yml” <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#create-env-file-manually>`_ file,

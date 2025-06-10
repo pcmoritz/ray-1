@@ -2,7 +2,7 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://github.com/ray-project/ray/runtime_env/pip_schema.json",
     "title": "pip",
-    "description": "A pip environment specification.",
+    "description": "Schema for pip runtime environment. Can optionally use uv as the installer.",
     "oneOf": [
       {
         "type": "object",
@@ -14,21 +14,44 @@
                 "items": {
                   "type": "string"
                 },
-                "description": "a list of pip packages"
+                "description": "A list of pip packages to install."
               },
               {
                 "type": "string",
-                "description": "the path to a pip `requirements.txt` file"
+                "description": "The path to a pip `requirements.txt` file."
               }
-            ]
+            ],
+            "description": "List of pip packages or path to requirements.txt."
           },
           "pip_check": {
             "type": "boolean",
-            "description": "whether to enable pip check at the end of pip install"
+            "description": "Whether to run 'pip check' after installation. Applies only when not using uv. Defaults to false."
           },
           "pip_version": {
             "type": "string",
-            "description": "the version of pip"
+            "description": "Specific pip version to use (e.g., '==22.0.2'). Ray prepends 'pip' to this version. Applies only when not using uv."
+          },
+          "use_uv": {
+            "type": "boolean",
+            "default": false,
+            "description": "If true, use 'uv pip' for installing packages instead of 'pip'. Defaults to false."
+          },
+          "uv_version": {
+            "type": "string",
+            "description": "Specific version of 'uv' to install (e.g., '0.1.18'). If not provided, the latest available will be used. Applies only if use_uv is true."
+          },
+          "uv_check": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to run 'uv pip check' after installation. Applies only if use_uv is true. Defaults to false."
+          },
+          "uv_pip_install_options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": ["--no-cache"],
+            "description": "Additional options to pass to 'uv pip install'. Applies only if use_uv is true. Defaults to [\"--no-cache\"] if not specified and use_uv is true."
           }
         },
         "required": [
@@ -37,14 +60,14 @@
       },
       {
         "type": "string",
-        "description": "the path to a pip `requirements.txt` file"
+        "description": "The path to a pip `requirements.txt` file. Equivalent to `{\"packages\": \"path/to/requirements.txt\"}`."
       },
       {
         "type": "array",
         "items": {
           "type": "string"
         },
-        "description": "a list of pip requirements specifiers"
+        "description": "A list of pip requirements specifiers. Equivalent to `{\"packages\": [\"req1\", \"req2\"]}`."
       }
     ]
   }
